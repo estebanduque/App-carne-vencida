@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1D9E75">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mis Carnes">
+  <title>Mis Carnes</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f0; color: #1a1a1a; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+
+    .header { background: #fff; border-bottom: 1px solid #e5e5e0; padding: 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header-date { font-size: 12px; color: #888; }
+
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+    .stat { background: #fff; border-radius: 12px; padding: 14px; text-align: center; border: 1px solid #e5e5e0; }
+    .stat-num { font-size: 24px; font-weight: 600; }
+    .stat-label { font-size: 12px; color: #888; margin-top: 2px; }
+
+    .section-title { font-size: 12px; font-weight: 600; color: #888; padding: 0 14px 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .items { padding: 0 14px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .item-card { background: #fff; border: 1px solid #e5e5e0; border-radius: 14px; padding: 13px 14px; display: flex; align-items: center; gap: 12px; }
+    .item-card.danger { border-color: #E24B4A; background: #fff8f8; }
+    .item-card.warning { border-color: #EF9F27; background: #fffbf5; }
+    .item-card.ok { border-color: #639922; background: #f8fff2; }
+    .icon-circle { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; background: #f5f5f0; }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 15px; font-weight: 600; }
+    .item-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .badge { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .badge.danger { background: #fde8e8; color: #A32D2D; }
+    .badge.warning { background: #fef3dc; color: #854F0B; }
+    .badge.ok { background: #eaf5d5; color: #3B6D11; }
+    .delete-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 20px; padding: 4px; flex-shrink: 0; }
+    .delete-btn:active { color: #E24B4A; }
+
+    .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px 24px; }
+    .add-btn { display: flex; align-items: center; justify-content: center; gap: 7px; background: #fff; border: 1px solid #ddd; border-radius: 14px; padding: 14px 10px; cursor: pointer; font-size: 14px; color: #555; font-family: inherit; }
+    .add-btn.primary { background: #1D9E75; border-color: #1D9E75; color: #fff; font-weight: 600; }
+    .add-btn.primary:active { background: #0F6E56; }
+    .add-btn:active { background: #f5f5f0; }
+
+    .empty { text-align: center; padding: 40px 16px; color: #aaa; font-size: 14px; }
+    .empty-icon { font-size: 40px; display: block; margin-bottom: 10px; }
+    .separator { height: 1px; background: #e5e5e0; margin: 4px 14px 12px; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+    .modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 18px; }
+    .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+
+    .form-row { margin-bottom: 13px; }
+    .form-row label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; font-weight: 500; }
+    .form-row input, .form-row select {
+      width: 100%; padding: 11px 13px; font-size: 15px;
+      border: 1px solid #ddd; border-radius: 10px;
+      background: #fafafa; color: #1a1a1a; font-family: inherit;
+    }
+    .form-row input:focus, .form-row select:focus { outline: none; border-color: #1D9E75; background: #fff; }
+
+    .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+    .btn-cancel { background: #f5f5f0; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #555; font-family: inherit; }
+    .btn-save { background: #1D9E75; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
+    .btn-save:active { background: #0F6E56; }
+
+    /* Foto */
+    .photo-zone { border: 2px dashed #ddd; border-radius: 14px; padding: 22px; text-align: center; cursor: pointer; margin-bottom: 14px; background: #fafafa; }
+    .photo-zone img { max-width: 100%; border-radius: 10px; max-height: 160px; object-fit: cover; display: none; }
+    .photo-hint { font-size: 13px; color: #aaa; margin-top: 8px; }
+    .photo-icon { font-size: 36px; }
+
+    .scanning-msg { display: none; background: #f0faf6; border-radius: 10px; padding: 12px; font-size: 13px; color: #0F6E56; text-align: center; margin-bottom: 12px; }
+    .scanning-msg.active { display: block; }
+    .prefilled-msg { display: none; background: #e8f5e1; border-radius: 10px; padding: 10px 13px; font-size: 13px; color: #3B6D11; margin-bottom: 12px; font-weight: 500; }
+    .prefilled-msg.show { display: block; }
+
+    .ai-badge { display: inline-flex; align-items: center; gap: 5px; background: #EEEDFE; color: #534AB7; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+
+    #photo-input { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🥩 Mis Carnes</h1>
+  <span class="header-date" id="today-label"></span>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num" id="stat-total">0</div>
+    <div class="stat-label">Total registradas</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-alert" style="color:#E24B4A;">0</div>
+    <div class="stat-label">Vencen pronto</div>
+  </div>
+</div>
+
+<div class="separator"></div>
+<p class="section-title">Inventario</p>
+<div class="items" id="items-list"></div>
+
+<div class="add-row">
+  <button class="add-btn primary" onclick="openPhotoModal()">
+    📷 Foto de etiqueta
+  </button>
+  <button class="add-btn" onclick="openManualModal()">
+    ✏️ Manual
+  </button>
+</div>
+
+<!-- Modal foto -->
+<div class="modal-overlay" id="modal-photo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📷 Escanear etiqueta</h2>
+    <div class="ai-badge">✨ Lectura automática con IA</div>
+
+    <input type="file" id="photo-input" accept="image/*" capture="environment">
+    <div class="photo-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()">
+      <div class="photo-icon" id="photo-icon">📷</div>
+      <img id="photo-preview" alt="Vista previa">
+      <p class="photo-hint" id="photo-hint">Toca para tomar foto o elegir de galería</p>
+    </div>
+
+    <div class="scanning-msg" id="scanning-msg">⏳ Analizando etiqueta con IA…</div>
+    <div class="prefilled-msg" id="prefilled-msg">✅ IA detectó los datos — revisa y confirma</div>
+
+    <div class="form-row">
+      <label>Tipo de carne</label>
+      <select id="p-tipo">
+        <option>Res / ternera</option><option>Pollo</option><option>Cerdo</option>
+        <option>Pescado</option><option>Mariscos</option><option>Embutidos</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Descripción</label>
+      <input type="text" id="p-desc" placeholder="Ej: milanesas, muslos, filete…">
+    </div>
+    <div class="form-row">
+      <label>Fecha de vencimiento (DLC)</label>
+      <input type="date" id="p-fecha">
+    </div>
+    <div class="form-row">
+      <label>Ubicación</label>
+      <select id="p-ubicacion"><option>Refrigerador</option><option>Congelador</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save" onclick="savePhoto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal manual -->
+<div class="modal-overlay" id="modal-manual">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>✏️ Agregar manualmente</h2>
+    <div class="form-row">
+      <label>Tipo de carne</label>
+      <select id="m-tipo">
+        <option>Res / ternera</option><option>Pollo</option><option>Cerdo</option>
+        <option>Pescado</option><option>Mariscos</option><option>Embutidos</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="m-desc" placeholder="Ej: milanesas, muslos, filete…">
+    </div>
+    <div class="form-row">
+      <label>Fecha de vencimiento</label>
+      <input type="date" id="m-fecha">
+    </div>
+    <div class="form-row">
+      <label>Ubicación</label>
+      <select id="m-ubicacion"><option>Refrigerador</option><option>Congelador</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save" onclick="saveManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
+const STORAGE_KEY = 'mis_carnes_v1';
+
+function loadItems() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+}
+function saveItems() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+let items = loadItems();
+
+function daysFromNow(n) {
+  const d = new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0];
+}
+function daysUntil(s) {
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((new Date(s+'T00:00:00') - t) / 86400000);
+}
+function statusOf(s) {
+  const d = daysUntil(s);
+  if (d <= 3) return 'danger';
+  if (d <= 7) return 'warning';
+  return 'ok';
+}
+function badgeText(s) {
+  const d = daysUntil(s);
+  if (d < 0) return `Venció hace ${Math.abs(d)}d`;
+  if (d === 0) return '¡Hoy!';
+  if (d === 1) return 'Mañana';
+  return `${d} días`;
+}
+
+function render() {
+  const list = document.getElementById('items-list');
+  const alerts = items.filter(i => statusOf(i.fecha) !== 'ok').length;
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('stat-alert').textContent = alerts;
+  if (!items.length) {
+    list.innerHTML = '<div class="empty"><span class="empty-icon">📦</span>Sin carnes registradas.<br>Toca el botón para agregar.</div>';
+    return;
+  }
+  const sorted = [...items].sort((a,b) => daysUntil(a.fecha)-daysUntil(b.fecha));
+  list.innerHTML = sorted.map(it => {
+    const st = statusOf(it.fecha);
+    return `<div class="item-card ${st}">
+      <div class="icon-circle">${EMOJIS[it.tipo]||'🍖'}</div>
+      <div class="item-info">
+        <div class="item-name">${it.tipo}</div>
+        <div class="item-sub">${it.desc ? it.desc+' · ':''} ${it.ubicacion}</div>
+      </div>
+      <span class="badge ${st}">${badgeText(it.fecha)}</span>
+      <button class="delete-btn" onclick="del(${it.id})" aria-label="Eliminar">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function del(id) {
+  if (confirm('¿Eliminar este registro?')) {
+    items = items.filter(i => i.id !== id);
+    saveItems(); render();
+  }
+}
+
+function openPhotoModal() {
+  document.getElementById('modal-photo').classList.add('open');
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-icon').style.display = '';
+  document.getElementById('photo-hint').style.display = '';
+  document.getElementById('scanning-msg').classList.remove('active');
+  document.getElementById('prefilled-msg').classList.remove('show');
+  document.getElementById('p-desc').value = '';
+  document.getElementById('p-fecha').value = '';
+  document.getElementById('photo-input').value = '';
+}
+function openManualModal() {
+  document.getElementById('modal-manual').classList.add('open');
+  document.getElementById('m-desc').value = '';
+  document.getElementById('m-fecha').value = '';
+}
+function closeModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+}
+
+document.getElementById('photo-input').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('photo-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('photo-icon').style.display = 'none';
+    document.getElementById('photo-hint').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+
+  document.getElementById('scanning-msg').textContent = '⏳ Analizando etiqueta con IA…';
+  document.getElementById('scanning-msg').classList.add('active');
+  document.getElementById('prefilled-msg').classList.remove('show');
+
+  try {
+    const b64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: file.type, data: b64 } },
+            { type: 'text', text: `Analiza esta etiqueta de producto cárnico. Extrae SOLO un JSON con estas claves exactas:
+- "tipo": uno de ["Res / ternera","Pollo","Cerdo","Pescado","Mariscos","Embutidos","Otro"]
+- "desc": descripción corta del corte o producto (máx 30 chars, en español)
+- "fecha": fecha de vencimiento en formato YYYY-MM-DD (DLC, caducidad, best before, use by, etc.)
+Si no puedes detectar algún campo, ponlo como null. Responde SOLO el JSON sin texto extra ni backticks.` }
+          ]
+        }]
+      })
+    });
+
+    const data = await resp.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '{}';
+    let parsed;
+    try { parsed = JSON.parse(text.replace(/```json|```/g,'').trim()); } catch { parsed = {}; }
+
+    document.getElementById('scanning-msg').classList.remove('active');
+    if (parsed.tipo) {
+      const sel = document.getElementById('p-tipo');
+      for (let o of sel.options) { if (o.value === parsed.tipo) { sel.value = parsed.tipo; break; } }
+    }
+    if (parsed.desc) document.getElementById('p-desc').value = parsed.desc;
+    if (parsed.fecha) document.getElementById('p-fecha').value = parsed.fecha;
+    document.getElementById('prefilled-msg').classList.add('show');
+
+  } catch(e) {
+    document.getElementById('scanning-msg').textContent = '⚠️ No se pudo leer la etiqueta. Llena los datos manualmente.';
+  }
+});
+
+function savePhoto() {
+  const fecha = document.getElementById('p-fecha').value;
+  if (!fecha) { alert('Falta la fecha de vencimiento'); return; }
+  items.push({ id: Date.now(), tipo: document.getElementById('p-tipo').value, desc: document.getElementById('p-desc').value.trim(), fecha, ubicacion: document.getElementById('p-ubicacion').value });
+  saveItems(); closeModals(); render();
+}
+function saveManual() {
+  const fecha = document.getElementById('m-fecha').value;
+  if (!fecha) { alert('Falta la fecha de vencimiento'); return; }
+  items.push({ id: Date.now(), tipo: document.getElementById('m-tipo').value, desc: document.getElementById('m-desc').value.trim(), fecha, ubicacion: document.getElementById('m-ubicacion').value });
+  saveItems(); closeModals(); render();
+}
+
+document.getElementById('today-label').textContent = new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+render();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
