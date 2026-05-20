@@ -303,30 +303,13 @@ document.getElementById('photo-input').addEventListener('change', async function
       r.readAsDataURL(file);
     });
 
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('/.netlify/functions/analizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: file.type, data: b64 } },
-            { type: 'text', text: `Analiza esta etiqueta de producto cárnico. Extrae SOLO un JSON con estas claves exactas:
-- "tipo": uno de ["Res / ternera","Pollo","Cerdo","Pescado","Mariscos","Embutidos","Otro"]
-- "desc": descripción corta del corte o producto (máx 30 chars, en español)
-- "fecha": fecha de vencimiento en formato YYYY-MM-DD (DLC, caducidad, best before, use by, etc.)
-Si no puedes detectar algún campo, ponlo como null. Responde SOLO el JSON sin texto extra ni backticks.` }
-          ]
-        }]
-      })
+      body: JSON.stringify({ imageData: b64, mediaType: file.type })
     });
 
-    const data = await resp.json();
-    const text = data.content?.find(b => b.type === 'text')?.text || '{}';
-    let parsed;
-    try { parsed = JSON.parse(text.replace(/```json|```/g,'').trim()); } catch { parsed = {}; }
+    const parsed = await resp.json();
 
     document.getElementById('scanning-msg').classList.remove('active');
     if (parsed.tipo) {
