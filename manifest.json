@@ -2,7 +2,7 @@
   "name": "Mis Carnes",
   "short_name": "Mis Carnes",
   "description": "Control de vencimiento de carnes con IA",
-  "start_url": "/",
+  "start_url": "/App-carne-vencida/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1D9E75",
