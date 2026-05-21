@@ -316,7 +316,7 @@ document.getElementById('photo-input').addEventListener('change', async function
       img.src = URL.createObjectURL(file);
     });
 
-    const resp = await fetch('/.netlify/functions/analizar', {
+    const resp = await fetch('https://long-breeze-5893.duqes-j.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imageData: b64, mediaType: file.type })
