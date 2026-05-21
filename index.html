@@ -309,16 +309,28 @@ document.getElementById('photo-input').addEventListener('change', async function
       body: JSON.stringify({ imageData: b64, mediaType: file.type })
     });
 
-    const parsed = await resp.json();
+    const rawText = await resp.text();
+    console.log('Respuesta IA:', rawText);
+    let parsed;
+    try { parsed = JSON.parse(rawText); } catch(e) { parsed = {}; }
 
     document.getElementById('scanning-msg').classList.remove('active');
-    if (parsed.tipo) {
+
+    // Intentar rellenar campos con diferentes variantes de claves
+    const tipo = parsed.tipo || parsed.type || parsed.Tipo || null;
+    const desc = parsed.desc || parsed.descripcion || parsed.description || parsed.Desc || null;
+    const fecha = parsed.fecha || parsed.date || parsed.vencimiento || parsed.expiry || parsed.Fecha || null;
+
+    if (tipo) {
       const sel = document.getElementById('p-tipo');
-      for (let o of sel.options) { if (o.value === parsed.tipo) { sel.value = parsed.tipo; break; } }
+      for (let o of sel.options) { if (o.value === tipo) { sel.value = tipo; break; } }
     }
-    if (parsed.desc) document.getElementById('p-desc').value = parsed.desc;
-    if (parsed.fecha) document.getElementById('p-fecha').value = parsed.fecha;
+    if (desc) document.getElementById('p-desc').value = desc;
+    if (fecha) document.getElementById('p-fecha').value = fecha;
     document.getElementById('prefilled-msg').classList.add('show');
+    document.getElementById('prefilled-msg').textContent = fecha
+      ? '✅ IA detectó los datos — revisa y confirma'
+      : '⚠️ IA leyó la imagen pero no encontró la fecha — ingrésala manualmente';
 
   } catch(e) {
     document.getElementById('scanning-msg').textContent = '⚠️ No se pudo leer la etiqueta. Llena los datos manualmente.';
