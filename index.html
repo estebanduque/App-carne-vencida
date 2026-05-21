@@ -369,6 +369,65 @@ render();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+
+// Notificaciones
+async function pedirPermisoNotificaciones() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') revisarVencimientos();
+  } else if (Notification.permission === 'granted') {
+    revisarVencimientos();
+  }
+}
+
+function revisarVencimientos() {
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const ultimaRevision = localStorage.getItem('ultima_revision');
+  const hoyStr = hoy.toISOString().split('T')[0];
+  if (ultimaRevision === hoyStr) return;
+  localStorage.setItem('ultima_revision', hoyStr);
+
+  items.forEach(item => {
+    const d = daysUntil(item.fecha);
+    if (d === 2) {
+      new Notification('⚠️ Vence en 2 días', {
+        body: `${item.tipo}${item.desc ? ' · ' + item.desc : ''} vence el ${item.fecha}`,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png'
+      });
+    } else if (d === 1) {
+      new Notification('🚨 ¡Vence mañana!', {
+        body: `${item.tipo}${item.desc ? ' · ' + item.desc : ''} vence mañana`,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png'
+      });
+    } else if (d === 0) {
+      new Notification('🔴 ¡Vence hoy!', {
+        body: `${item.tipo}${item.desc ? ' · ' + item.desc : ''} vence hoy`,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png'
+      });
+    }
+  });
+}
+
+// Botón de activar notificaciones
+function mostrarBotonNotificaciones() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') return;
+  const btn = document.createElement('div');
+  btn.style.cssText = 'margin: 0 14px 14px; background: #FEF3DC; border: 1px solid #EF9F27; border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer;';
+  btn.innerHTML = '<span style="font-size:20px;">🔔</span><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#854F0B;">Activar notificaciones</div><div style="font-size:12px;color:#854F0B;opacity:0.8;">Recibe alertas de vencimiento</div></div>';
+  btn.onclick = () => { pedirPermisoNotificaciones(); btn.remove(); };
+  document.querySelector('.add-row').before(btn);
+}
+
+setTimeout(() => {
+  mostrarBotonNotificaciones();
+  if (Notification.permission === 'granted') revisarVencimientos();
+}, 1000);
 </script>
 </body>
 </html>
