@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mis Carnes">
-  <title>Mis Carnes</title>
+  <title>Mi App</title>
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -90,6 +90,8 @@
 </head>
 <body>
 
+<div class="section active" id="section-carnes">
+<div class="page active" id="page-carnes">
 <div class="header">
   <h1>🥩 Mis Carnes</h1>
   <span class="header-date" id="today-label"></span>
@@ -117,6 +119,133 @@
   <button class="add-btn" onclick="openManualModal()">
     ✏️ Manual
   </button>
+</div>
+</div>
+
+<!-- SECCIÓN GYM -->
+<div class="section" id="section-gym">
+  <div class="header">
+    <h1>💪 Mi Gym</h1>
+    <span class="header-date" id="gym-date-label"></span>
+  </div>
+  <div style="height:14px"></div>
+  <div id="gym-groups-list"></div>
+  <button class="gym-add-btn" onclick="openGymModal()">+ Registrar ejercicio</button>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-carnes" onclick="switchTab('carnes')">
+    <span class="tab-icon">🥩</span>
+    <span>Mis Carnes</span>
+  </button>
+  <button class="tab-btn" id="tab-gym" onclick="switchTab('gym')">
+    <span class="tab-icon">💪</span>
+    <span>Gym</span>
+  </button>
+</div>
+
+<!-- Modal gym -->
+<div class="modal-overlay" id="modal-gym">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>💪 Registrar ejercicio</h2>
+    <div class="form-row">
+      <label>Grupo muscular</label>
+      <select id="g-grupo">
+        <option>Pecho</option><option>Espalda</option><option>Piernas</option>
+        <option>Hombros</option><option>Bíceps</option><option>Tríceps</option>
+        <option>Abdomen</option><option>Glúteos</option><option>Cardio</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Máquina / Ejercicio</label>
+      <input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea, Sentadilla...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="form-row">
+        <label>Series</label>
+        <input type="number" id="g-series" placeholder="3" min="1">
+      </div>
+      <div class="form-row">
+        <label>Reps</label>
+        <input type="number" id="g-reps" placeholder="12" min="1">
+      </div>
+      <div class="form-row">
+        <label>Peso (kg)</label>
+        <input type="number" id="g-peso" placeholder="20" min="0" step="0.5">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save" onclick="saveGym()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-carnes" onclick="switchPage('carnes')">
+    <span class="tab-icon">🥩</span>
+    <span>Mis Carnes</span>
+  </button>
+  <button class="tab-btn" id="tab-gym" onclick="switchPage('gym')">
+    <span class="tab-icon">💪</span>
+    <span>Gym</span>
+  </button>
+</div>
+
+<!-- PÁGINA GYM -->
+<div class="page" id="page-gym">
+  <div class="header">
+    <h1>💪 Mi Gym</h1>
+    <span style="font-size:12px;color:#888;" id="gym-date"></span>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="gym-stat-num" id="stat-ej">0</div>
+      <div class="stat-label">Ejercicios hoy</div>
+    </div>
+    <div class="stat">
+      <div class="gym-stat-num" id="stat-gr">0</div>
+      <div class="stat-label">Grupos trabajados</div>
+    </div>
+  </div>
+  <div class="separator"></div>
+  <p class="section-title">Rutina de hoy</p>
+  <div id="gym-groups-list"></div>
+  <button class="gym-add-btn" onclick="openGymModal()">+ Registrar ejercicio</button>
+</div>
+
+<!-- Modal gym -->
+<div class="modal-overlay" id="modal-gym">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>💪 Nuevo ejercicio</h2>
+    <div class="form-row">
+      <label>Grupo muscular</label>
+      <select id="g-grupo">
+        <option>Pecho</option><option>Espalda</option><option>Piernas</option>
+        <option>Hombros</option><option>Bíceps</option><option>Tríceps</option>
+        <option>Abdomen</option><option>Glúteos</option><option>Cardio</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Máquina / Ejercicio</label>
+      <input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea alta...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="form-row" style="margin:0"><label>Series</label><input type="number" id="g-series" placeholder="3" min="1"></div>
+      <div class="form-row" style="margin:0"><label>Reps</label><input type="number" id="g-reps" placeholder="12" min="1"></div>
+      <div class="form-row" style="margin:0"><label>Peso kg</label><input type="number" id="g-peso" placeholder="20" min="0" step="0.5"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save" onclick="saveGym()">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal foto -->
@@ -365,6 +494,158 @@ function saveManual() {
 
 document.getElementById('today-label').textContent = new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short'});
 render();
+
+// GYM
+const GYM_KEY = 'mis_gym_v1';
+const GRUPOS_EMOJIS = {'Pecho':'🫁','Espalda':'🔙','Piernas':'🦵','Hombros':'🏋️','Bíceps':'💪','Tríceps':'💪','Abdomen':'🎯','Glúteos':'🍑','Cardio':'🏃','Otro':'⚡'};
+
+function loadGym() { try { return JSON.parse(localStorage.getItem(GYM_KEY)) || []; } catch { return []; } }
+function saveGym_() { localStorage.setItem(GYM_KEY, JSON.stringify(gymItems)); }
+let gymItems = loadGym();
+
+function renderGym() {
+  const list = document.getElementById('gym-groups-list');
+  if (!gymItems.length) {
+    list.innerHTML = '<div class="gym-empty">Sin ejercicios registrados.<br>Toca el botón para agregar.</div>';
+    return;
+  }
+  const grupos = {};
+  gymItems.forEach(item => {
+    if (!grupos[item.grupo]) grupos[item.grupo] = [];
+    grupos[item.grupo].push(item);
+  });
+  list.innerHTML = Object.entries(grupos).map(([grupo, exs]) => `
+    <div class="gym-group">
+      <div class="gym-group-header">
+        <span class="gym-group-title">${GRUPOS_EMOJIS[grupo]||'⚡'} ${grupo}</span>
+        <span class="gym-group-badge">${exs.length} ejercicio${exs.length>1?'s':''}</span>
+      </div>
+      <div class="gym-exercises">
+        ${exs.map(ex => `<div class="gym-exercise">
+          <div class="gym-ex-info">
+            <div class="gym-ex-name">${ex.maquina}</div>
+            <div class="gym-ex-detail">${ex.series} series × ${ex.reps} reps${ex.peso ? ' · ' + ex.peso + ' kg' : ''}</div>
+          </div>
+          <button class="delete-btn" onclick="delGym(${ex.id})" aria-label="Eliminar">🗑</button>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function openGymModal() {
+  document.getElementById('modal-gym').classList.add('open');
+  document.getElementById('g-maquina').value = '';
+  document.getElementById('g-series').value = '';
+  document.getElementById('g-reps').value = '';
+  document.getElementById('g-peso').value = '';
+}
+
+function saveGym() {
+  const maquina = document.getElementById('g-maquina').value.trim();
+  const series = document.getElementById('g-series').value;
+  const reps = document.getElementById('g-reps').value;
+  if (!maquina || !series || !reps) { alert('Faltan datos'); return; }
+  gymItems.push({
+    id: Date.now(),
+    grupo: document.getElementById('g-grupo').value,
+    maquina, series, reps,
+    peso: document.getElementById('g-peso').value || null,
+    fecha: new Date().toISOString().split('T')[0]
+  });
+  saveGym_(); closeModals(); renderGym();
+}
+
+function delGym(id) {
+  if (confirm('¿Eliminar este ejercicio?')) {
+    gymItems = gymItems.filter(i => i.id !== id);
+    saveGym_(); renderGym();
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+document.getElementById('gym-date-label').textContent = new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+renderGym();
+
+// GYM JS
+const GYM_KEY = 'mis_gym_v1';
+const GYM_ICONS = {'Pecho':'🫁','Espalda':'🔙','Piernas':'🦵','Hombros':'🏋️','Bíceps':'💪','Tríceps':'💪','Abdomen':'🎯','Glúteos':'🍑','Cardio':'🏃','Otro':'⚡'};
+let gymItems = [];
+let openGroups = new Set();
+
+try { gymItems = JSON.parse(localStorage.getItem(GYM_KEY)) || []; } catch { gymItems = []; }
+
+function saveGymData() { localStorage.setItem(GYM_KEY, JSON.stringify(gymItems)); }
+
+function renderGym() {
+  const grupos = {};
+  gymItems.forEach(i => { if(!grupos[i.grupo]) grupos[i.grupo]=[]; grupos[i.grupo].push(i); });
+  document.getElementById('stat-ej').textContent = gymItems.length;
+  document.getElementById('stat-gr').textContent = Object.keys(grupos).length;
+  const list = document.getElementById('gym-groups-list');
+  if(!gymItems.length) { list.innerHTML='<div style="text-align:center;padding:40px 16px;color:#aaa;font-size:14px;">Sin ejercicios registrados.<br>Toca el botón para agregar.</div>'; return; }
+  list.innerHTML = Object.entries(grupos).map(([grupo, exs]) => {
+    const isOpen = openGroups.has(grupo);
+    return `<div class="group-card">
+      <div class="group-header" onclick="toggleGrupo('${grupo}')">
+        <div class="group-icon ic-${grupo}">${GYM_ICONS[grupo]||'⚡'}</div>
+        <div class="group-info">
+          <div class="group-name">${grupo}</div>
+          <div class="group-sub">${exs.length} ejercicio${exs.length>1?'s':''} · ${exs.reduce((a,e)=>a+parseInt(e.series),0)} series</div>
+        </div>
+        <span class="chevron ${isOpen?'open':''}">▾</span>
+      </div>
+      <div class="exercises ${isOpen?'open':''}">
+        ${exs.map((ex,i) => `<div class="exercise-row">
+          <div class="ex-num">${i+1}</div>
+          <div class="ex-info">
+            <div class="ex-name">${ex.maquina}</div>
+            <div class="ex-detail">${ex.series} series × ${ex.reps} reps</div>
+          </div>
+          ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
+          <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGrupo(grupo) {
+  if(openGroups.has(grupo)) openGroups.delete(grupo); else openGroups.add(grupo);
+  renderGym();
+}
+
+function openGymModal() { document.getElementById('modal-gym').classList.add('open'); }
+
+function saveGym() {
+  const maquina = document.getElementById('g-maquina').value.trim();
+  const series = document.getElementById('g-series').value;
+  const reps = document.getElementById('g-reps').value;
+  if(!maquina||!series||!reps){alert('Faltan datos');return;}
+  const grupo = document.getElementById('g-grupo').value;
+  gymItems.push({id:Date.now(),grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:parseFloat(document.getElementById('g-peso').value)||null});
+  openGroups.add(grupo);
+  saveGymData(); closeModals(); renderGym();
+}
+
+function delGym(id) {
+  if(confirm('¿Eliminar este ejercicio?')) { gymItems=gymItems.filter(i=>i.id!==id); saveGymData(); renderGym(); }
+}
+
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('tab-'+page).classList.add('active');
+}
+
+document.getElementById('gym-date').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'short'});
+renderGym();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
