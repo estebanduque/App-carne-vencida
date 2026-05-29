@@ -148,6 +148,7 @@
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
     .notif-banner-sub { font-size: 12px; color: rgba(250,199,117,0.7); margin-top: 1px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="app">
@@ -306,7 +307,7 @@
     <h2>👖 Nueva prenda</h2>
     <div class="form-row"><label>Tipo de prenda</label>
       <select id="r-tipo">
-        <option>Pantalón</option><option>Bermudas</option><option>Jeans</option><option>Sábana</option><option>Toalla</option>
+        <option>Pantalón</option><option>Jeans</option><option>Sábana</option><option>Toalla</option>
         <option>Camisa</option><option>Camiseta</option><option>Zapatos</option><option>Otro</option>
       </select>
     </div>
@@ -319,21 +320,66 @@
 </div>
 
 <script>
+// ===== CONFIGURACIÓN SUPABASE =====
+const SUPABASE_URL = 'TU_PROJECT_URL';
+const SUPABASE_KEY = 'TU_ANON_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
-const STORAGE_KEY = 'mis_carnes_v1';
-const GYM_KEY = 'mis_gym_v1';
 const GYM_ICONS = {'Pecho':'🫁','Espalda':'🔙','Piernas':'🦵','Hombros':'🏋️','Bíceps':'💪','Tríceps':'💪','Abdomen':'🎯','Glúteos':'🍑','Cardio':'🏃','Otro':'⚡'};
 
 let items = [];
 let gymItems = [];
+let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
 
-try { items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { items = []; }
-try { gymItems = JSON.parse(localStorage.getItem(GYM_KEY)) || []; } catch { gymItems = []; }
+// ===== CARNES =====
+async function loadItems() {
+  const {data,error} = await sb.from('carnes').select('*').order('fecha');
+  if(!error) { items = data || []; render(); }
+}
+async function saveItem(item) {
+  const {data,error} = await sb.from('carnes').insert([{tipo:item.tipo,desc:item.desc,fecha:item.fecha,ubicacion:item.ubicacion}]).select();
+  if(!error && data) { items.push(data[0]); render(); }
+}
+async function deleteItem(id) {
+  await sb.from('carnes').delete().eq('id',id);
+  items = items.filter(i=>i.id!==id); render();
+}
 
-function saveItems() { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
-function saveGymData() { localStorage.setItem(GYM_KEY, JSON.stringify(gymItems)); }
+// ===== GYM =====
+async function loadGym() {
+  const {data,error} = await sb.from('gym').select('*').order('created_at');
+  if(!error) { gymItems = data || []; renderGym(); }
+}
+async function saveGymItem(item) {
+  const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso}]).select();
+  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); }
+}
+async function deleteGymItem(id) {
+  await sb.from('gym').delete().eq('id',id);
+  gymItems = gymItems.filter(i=>i.id!==id); renderGym();
+}
+
+// ===== ROPA =====
+async function loadRopa() {
+  const {data,error} = await sb.from('ropa').select('*').order('created_at');
+  if(!error) { ropaItems = data || []; renderRopa(); }
+}
+async function saveRopaItem(item) {
+  const {data,error} = await sb.from('ropa').insert([{tipo:item.tipo,nombre:item.nombre,usos:0}]).select();
+  if(!error && data) { ropaItems.push(data[0]); renderRopa(); }
+}
+async function updateUsos(id, usos) {
+  await sb.from('ropa').update({usos}).eq('id',id);
+  const item = ropaItems.find(i=>i.id===id);
+  if(item) { item.usos = usos; renderRopa(); }
+}
+async function deleteRopaItem(id) {
+  await sb.from('ropa').delete().eq('id',id);
+  ropaItems = ropaItems.filter(i=>i.id!==id); renderRopa();
+}
 
 function daysUntil(s) {
   const t = new Date(); t.setHours(0,0,0,0);
@@ -367,7 +413,7 @@ function render() {
   }).join('');
 }
 
-function delItem(id){if(confirm('¿Eliminar?')){items=items.filter(i=>i.id!==id);saveItems();render();}}
+function delItem(id){if(confirm('¿Eliminar?')){deleteItem(id);}}
 
 function renderGym(){
   const grupos={};
@@ -403,7 +449,7 @@ function renderGym(){
 }
 
 function toggleGrupo(g){if(openGroups.has(g))openGroups.delete(g);else openGroups.add(g);renderGym();}
-function delGym(id){if(confirm('¿Eliminar?')){gymItems=gymItems.filter(i=>i.id!==id);saveGymData();renderGym();}}
+function delGym(id){if(confirm('¿Eliminar?')){deleteGymItem(id);}}
 
 function toggleMenu(menu){
   const body=document.getElementById('body-'+menu);
@@ -478,14 +524,14 @@ document.getElementById('photo-input').addEventListener('change', async function
 function savePhoto(){
   const fecha=document.getElementById('p-fecha').value;
   if(!fecha){alert('Falta la fecha de vencimiento');return;}
-  items.push({id:Date.now(),tipo:document.getElementById('p-tipo').value,desc:document.getElementById('p-desc').value.trim(),fecha,ubicacion:document.getElementById('p-ubicacion').value});
-  saveItems();closeModals();render();
+  saveItem({tipo:document.getElementById('p-tipo').value,desc:document.getElementById('p-desc').value.trim(),fecha,ubicacion:document.getElementById('p-ubicacion').value});
+  closeModals();
 }
 function saveManual(){
   const fecha=document.getElementById('m-fecha').value;
   if(!fecha){alert('Falta la fecha de vencimiento');return;}
-  items.push({id:Date.now(),tipo:document.getElementById('m-tipo').value,desc:document.getElementById('m-desc').value.trim(),fecha,ubicacion:document.getElementById('m-ubicacion').value});
-  saveItems();closeModals();render();
+  saveItem({tipo:document.getElementById('m-tipo').value,desc:document.getElementById('m-desc').value.trim(),fecha,ubicacion:document.getElementById('m-ubicacion').value});
+  closeModals();
 }
 function saveGym(){
   const maquina=document.getElementById('g-maquina').value.trim();
@@ -493,8 +539,8 @@ function saveGym(){
   const reps=document.getElementById('g-reps').value;
   if(!maquina||!series||!reps){alert('Faltan datos');return;}
   const grupo=document.getElementById('g-grupo').value;
-  gymItems.push({id:Date.now(),grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:parseFloat(document.getElementById('g-peso').value)||null});
-  openGroups.add(grupo);saveGymData();closeModals();renderGym();
+  saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:parseFloat(document.getElementById('g-peso').value)||null});
+  closeModals();
 }
 
 // Notificaciones
@@ -525,15 +571,15 @@ function mostrarBotonNotificaciones(){
 }
 
 document.getElementById('main-date').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-render();renderGym();
+// Cargar datos desde Supabase
+loadItems();
+loadGym();
+loadRopa();
 setTimeout(()=>{mostrarBotonNotificaciones();if(Notification.permission==='granted')revisarVencimientos();},1000);
 
 // ROPA JS
-const ROPA_KEY = 'mi_ropa_v1';
 const ROPA_EMOJIS = {'Pantalón':'👖','Jeans':'👖','Sábana':'🛏️','Toalla':'🛁','Camisa':'👔','Camiseta':'👕','Zapatos':'👟','Otro':'👗'};
-let ropaItems = [];
-try { ropaItems = JSON.parse(localStorage.getItem(ROPA_KEY)) || []; } catch { ropaItems = []; }
-function saveRopaData() { localStorage.setItem(ROPA_KEY, JSON.stringify(ropaItems)); }
+
 
 function renderRopa() {
   const list = document.getElementById('ropa-list');
@@ -562,16 +608,16 @@ function renderRopa() {
 function cambiarUso(id, delta) {
   const item = ropaItems.find(i=>i.id===id);
   if(!item) return;
-  item.usos = Math.max(0, item.usos + delta);
-  saveRopaData(); renderRopa();
+  const newUsos = Math.max(0, item.usos + delta);
+  updateUsos(id, newUsos);
 }
-function delRopa(id){if(confirm('¿Eliminar?')){ropaItems=ropaItems.filter(i=>i.id!==id);saveRopaData();renderRopa();}}
+function delRopa(id){if(confirm('¿Eliminar?')){deleteRopaItem(id);}}
 function openRopaModal(){document.getElementById('modal-ropa').classList.add('open');document.getElementById('r-nombre').value='';}
 function saveRopa(){
   const nombre=document.getElementById('r-nombre').value.trim();
   if(!nombre){alert('Falta el nombre');return;}
-  ropaItems.push({id:Date.now(),tipo:document.getElementById('r-tipo').value,nombre,usos:0});
-  saveRopaData();closeModals();renderRopa();
+  saveRopaItem({tipo:document.getElementById('r-tipo').value,nombre});
+  closeModals();
 }
 renderRopa();
 
