@@ -125,6 +125,25 @@
     .ai-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(83,74,183,0.25); color: #AFA9EC; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
     #photo-input { display: none; }
 
+  .lentes-container { padding: 16px; }
+  .lentes-circle-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0 16px; }
+  .lentes-circle { position: relative; width: 160px; height: 160px; }
+  .lentes-circle svg { transform: rotate(-90deg); }
+  .lentes-circle-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .lentes-days-num { font-size: 48px; font-weight: 700; line-height: 1; }
+  .lentes-days-label { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .lentes-status { font-size: 13px; font-weight: 600; text-align: center; margin-top: 4px; padding: 5px 16px; border-radius: 20px; }
+  .lentes-status.ok { background: rgba(29,158,117,0.2); color: #5DCAA5; }
+  .lentes-status.warning { background: rgba(239,159,39,0.2); color: #FAC775; }
+  .lentes-status.danger { background: rgba(226,75,74,0.2); color: #F09595; }
+  .lentes-info { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; }
+  .lentes-info-item { text-align: center; }
+  .lentes-info-val { font-size: 15px; font-weight: 600; color: #fff; }
+  .lentes-info-lbl { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .lentes-btn { width: 100%; background: #1a7ab5; border: none; border-radius: 14px; padding: 14px; font-size: 14px; color: #fff; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .lentes-btn:active { background: #115e8a; }
+  .menu-icon.lentes { background: rgba(26,122,181,0.2); }
+
   .ropa-card { margin: 0 16px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; display: flex; align-items: center; gap: 12px; }
   .ropa-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
   .ropa-info { flex: 1; }
@@ -233,6 +252,53 @@
     </div>
   </div>
 </div>
+
+  <!-- ===== MENÚ LENTES ===== -->
+  <div class="menu-section" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-lentes" onclick="toggleMenu('lentes')">
+      <div class="menu-icon lentes">👁️</div>
+      <div class="menu-title">
+        <h2>Lentes de Contacto</h2>
+        <p id="lentes-menu-sub">Toca para ver el estado</p>
+      </div>
+      <span class="menu-chevron" id="chevron-lentes">▾</span>
+    </button>
+    <div class="menu-body" id="body-lentes">
+      <div class="menu-inner">
+        <div class="lentes-container">
+          <div class="lentes-circle-wrap">
+            <div class="lentes-circle">
+              <svg width="160" height="160" viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
+                <circle id="lentes-arc" cx="80" cy="80" r="70" fill="none" stroke="#1a7ab5" stroke-width="12" stroke-linecap="round"
+                  stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+              </svg>
+              <div class="lentes-circle-text">
+                <span class="lentes-days-num" id="lentes-num">—</span>
+                <span class="lentes-days-label">días usados</span>
+              </div>
+            </div>
+            <div class="lentes-status ok" id="lentes-status">Cargando…</div>
+          </div>
+          <div class="lentes-info">
+            <div class="lentes-info-item">
+              <div class="lentes-info-val" id="lentes-inicio">—</div>
+              <div class="lentes-info-lbl">Inicio</div>
+            </div>
+            <div class="lentes-info-item">
+              <div class="lentes-info-val" id="lentes-cambio">—</div>
+              <div class="lentes-info-lbl">Cambiar el</div>
+            </div>
+            <div class="lentes-info-item">
+              <div class="lentes-info-val" id="lentes-restantes">—</div>
+              <div class="lentes-info-lbl">Días restantes</div>
+            </div>
+          </div>
+          <button class="lentes-btn" id="lentes-btn" onclick="resetLentes()">🔄 Cambié los lentes hoy</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <!-- Modal foto -->
 <div class="modal-overlay" id="modal-photo">
@@ -620,6 +686,75 @@ function saveRopa(){
   closeModals();
 }
 renderRopa();
+
+// LENTES JS
+const LENTES_KEY = 'lentes_inicio_v1';
+const LENTES_DIAS = 15;
+
+function getLentesData() {
+  const fecha = localStorage.getItem(LENTES_KEY);
+  if(!fecha) return null;
+  return fecha;
+}
+
+function renderLentes() {
+  const fechaInicio = getLentesData();
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+  if(!fechaInicio) {
+    document.getElementById('lentes-num').textContent = '—';
+    document.getElementById('lentes-status').textContent = 'Toca el botón para empezar';
+    document.getElementById('lentes-status').className = 'lentes-status ok';
+    document.getElementById('lentes-inicio').textContent = '—';
+    document.getElementById('lentes-cambio').textContent = '—';
+    document.getElementById('lentes-restantes').textContent = '—';
+    document.getElementById('lentes-arc').style.strokeDashoffset = '439.8';
+    document.getElementById('lentes-btn').textContent = '👁️ Empecé lentes hoy';
+    document.getElementById('lentes-menu-sub').textContent = 'Sin registro aún';
+    return;
+  }
+
+  const inicio = new Date(fechaInicio + 'T00:00:00');
+  const diasUsados = Math.round((hoy - inicio) / 86400000);
+  const diasRestantes = Math.max(0, LENTES_DIAS - diasUsados);
+  const fechaCambio = new Date(inicio); fechaCambio.setDate(fechaCambio.getDate() + LENTES_DIAS);
+  const progreso = Math.min(diasUsados / LENTES_DIAS, 1);
+  const circumference = 439.8;
+  const offset = circumference - (progreso * circumference);
+
+  document.getElementById('lentes-num').textContent = Math.min(diasUsados, LENTES_DIAS);
+  document.getElementById('lentes-arc').style.strokeDashoffset = offset;
+  document.getElementById('lentes-inicio').textContent = inicio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('lentes-cambio').textContent = fechaCambio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('lentes-restantes').textContent = diasRestantes + 'd';
+  document.getElementById('lentes-btn').textContent = '🔄 Cambié los lentes hoy';
+
+  let color, statusText, menuSub;
+  if(diasUsados >= LENTES_DIAS) {
+    color = 'danger'; statusText = '🔴 ¡Tiempo de cambiarlos!'; menuSub = '¡Cambiar ahora!';
+    document.getElementById('lentes-arc').setAttribute('stroke','#E24B4A');
+    document.getElementById('lentes-num').style.color = '#F09595';
+  } else if(diasRestantes <= 3) {
+    color = 'warning'; statusText = `⚠️ Cambiarlos en ${diasRestantes} día${diasRestantes===1?'':'s'}`; menuSub = `Faltan ${diasRestantes} días`;
+    document.getElementById('lentes-arc').setAttribute('stroke','#EF9F27');
+    document.getElementById('lentes-num').style.color = '#FAC775';
+  } else {
+    color = 'ok'; statusText = `✅ ${diasRestantes} días restantes`; menuSub = `${diasRestantes} días restantes`;
+    document.getElementById('lentes-arc').setAttribute('stroke','#1a7ab5');
+    document.getElementById('lentes-num').style.color = '#fff';
+  }
+  document.getElementById('lentes-status').textContent = statusText;
+  document.getElementById('lentes-status').className = 'lentes-status ' + color;
+  document.getElementById('lentes-menu-sub').textContent = menuSub;
+}
+
+function resetLentes() {
+  const hoy = new Date().toISOString().split('T')[0];
+  localStorage.setItem(LENTES_KEY, hoy);
+  renderLentes();
+}
+
+renderLentes();
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
