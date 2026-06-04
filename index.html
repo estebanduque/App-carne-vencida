@@ -251,7 +251,6 @@
       </div>
     </div>
   </div>
-</div>
 
   <!-- ===== MENÚ LENTES ===== -->
   <div class="menu-section" style="margin-top:12px;">
@@ -294,11 +293,18 @@
               <div class="lentes-info-lbl">Días restantes</div>
             </div>
           </div>
-          <button class="lentes-btn" id="lentes-btn" onclick="resetLentes()">🔄 Cambié los lentes hoy</button>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;">
+            <div>
+              <label style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;">Fecha de inicio</label>
+              <input type="date" id="lentes-fecha-input" style="width:100%;padding:11px 13px;font-size:15px;border:1px solid rgba(255,255,255,0.15);border-radius:10px;background:rgba(255,255,255,0.07);color:#fff;font-family:inherit;">
+            </div>
+            <button class="lentes-btn" id="lentes-btn" onclick="resetLentes()" style="width:auto;padding:11px 16px;white-space:nowrap;">✅ Guardar</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
 <!-- Modal foto -->
 <div class="modal-overlay" id="modal-photo">
@@ -388,7 +394,7 @@
 <script>
 // ===== CONFIGURACIÓN SUPABASE =====
 const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTc5OTEzOSwiZXhwIjoyMDk1Mzc1MTM5fQ.lZvZjrB5vKqQa4l4HlWAWmyjgNmoarh5j1memlb4CmQ';
+const SUPABASE_KEY = 'TU_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
@@ -727,7 +733,8 @@ function renderLentes() {
   document.getElementById('lentes-inicio').textContent = inicio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
   document.getElementById('lentes-cambio').textContent = fechaCambio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
   document.getElementById('lentes-restantes').textContent = diasRestantes + 'd';
-  document.getElementById('lentes-btn').textContent = '🔄 Cambié los lentes hoy';
+  const input = document.getElementById('lentes-fecha-input');
+  if(input) input.value = fechaInicio || new Date().toISOString().split('T')[0];
 
   let color, statusText, menuSub;
   if(diasUsados >= LENTES_DIAS) {
@@ -749,8 +756,10 @@ function renderLentes() {
 }
 
 function resetLentes() {
-  const hoy = new Date().toISOString().split('T')[0];
-  localStorage.setItem(LENTES_KEY, hoy);
+  const input = document.getElementById('lentes-fecha-input');
+  const fecha = input ? input.value : new Date().toISOString().split('T')[0];
+  if(!fecha) { alert('Elige la fecha de inicio'); return; }
+  localStorage.setItem(LENTES_KEY, fecha);
   renderLentes();
 }
 
