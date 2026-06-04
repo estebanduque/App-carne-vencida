@@ -647,6 +647,7 @@ document.getElementById('main-date').textContent=new Date().toLocaleDateString('
 loadItems();
 loadGym();
 loadRopa();
+loadLentes();
 setTimeout(()=>{mostrarBotonNotificaciones();if(Notification.permission==='granted')revisarVencimientos();},1000);
 
 // ROPA JS
@@ -694,13 +695,21 @@ function saveRopa(){
 renderRopa();
 
 // LENTES JS
-const LENTES_KEY = 'lentes_inicio_v1';
 const LENTES_DIAS = 15;
+let lentesData = null;
+
+async function loadLentes() {
+  const {data,error} = await sb.from('lentes').select('*').order('created_at', {ascending:false}).limit(1);
+  if(!error && data && data.length > 0) {
+    lentesData = data[0];
+  } else {
+    lentesData = null;
+  }
+  renderLentes();
+}
 
 function getLentesData() {
-  const fecha = localStorage.getItem(LENTES_KEY);
-  if(!fecha) return null;
-  return fecha;
+  return lentesData ? lentesData.fecha_inicio : null;
 }
 
 function renderLentes() {
@@ -755,12 +764,14 @@ function renderLentes() {
   document.getElementById('lentes-menu-sub').textContent = menuSub;
 }
 
-function resetLentes() {
+async function resetLentes() {
   const input = document.getElementById('lentes-fecha-input');
   const fecha = input ? input.value : new Date().toISOString().split('T')[0];
   if(!fecha) { alert('Elige la fecha de inicio'); return; }
-  localStorage.setItem(LENTES_KEY, fecha);
-  renderLentes();
+  // Borrar registro anterior e insertar nuevo
+  await sb.from('lentes').delete().neq('id', 0);
+  const {data, error} = await sb.from('lentes').insert([{fecha_inicio: fecha}]).select();
+  if(!error) { await loadLentes(); }
 }
 
 renderLentes();
