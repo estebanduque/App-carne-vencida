@@ -359,8 +359,7 @@
     </div>
   </div>
 </div>
-
-  </div>
+</div>
 <div class="desktop-only" id="desktop-grid">
   <div class="desktop-grid" id="desktop-grid-inner">
     <!-- Carnes -->
@@ -532,7 +531,7 @@
 <script>
 // ===== CONFIGURACIÓN SUPABASE =====
 const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
+const SUPABASE_KEY = 'TU_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
@@ -547,7 +546,7 @@ let openMenus = new Set();
 // ===== CARNES =====
 async function loadItems() {
   const {data,error} = await sb.from('carnes').select('*').order('fecha');
-  if(!error) { items = data || []; render(); }
+  if(!error) { items = data || []; render(); renderDesktop(); }
 }
 async function saveItem(item) {
   const {data,error} = await sb.from('carnes').insert([{tipo:item.tipo,desc:item.desc,fecha:item.fecha,ubicacion:item.ubicacion}]).select();
@@ -561,7 +560,7 @@ async function deleteItem(id) {
 // ===== GYM =====
 async function loadGym() {
   const {data,error} = await sb.from('gym').select('*').order('created_at');
-  if(!error) { gymItems = data || []; renderGym(); }
+  if(!error) { gymItems = data || []; renderGym(); renderDesktop(); }
 }
 async function saveGymItem(item) {
   const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso}]).select();
