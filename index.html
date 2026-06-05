@@ -126,8 +126,8 @@
     #photo-input { display: none; }
 
   @media (min-width: 768px) {
-    body { background: #0A1628; }
-    .app { max-width: 1100px; }
+    body { background: #0A1628; display: flex; justify-content: center; }
+    .app { max-width: 1100px; width: 100%; }
     .main-header { padding: 28px 24px 16px; }
     .main-header h1 { font-size: 26px; }
     .notif-banner { margin: 0 24px 12px; }
@@ -229,6 +229,7 @@
     <p id="main-date"></p>
   </div>
 
+  <div class="mobile-only">
   <!-- ===== MENÚ CARNES ===== -->
   <div class="menu-section">
     <button class="menu-toggle" id="toggle-carnes" onclick="toggleMenu('carnes')">
@@ -359,6 +360,7 @@
   </div>
 </div>
 
+  </div>
 <div class="desktop-only" id="desktop-grid">
   <div class="desktop-grid" id="desktop-grid-inner">
     <!-- Carnes -->
