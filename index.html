@@ -125,6 +125,59 @@
     .ai-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(83,74,183,0.25); color: #AFA9EC; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
     #photo-input { display: none; }
 
+  @media (min-width: 768px) {
+    body { background: #0A1628; }
+    .app { max-width: 1100px; }
+    .main-header { padding: 28px 24px 16px; }
+    .main-header h1 { font-size: 26px; }
+    .notif-banner { margin: 0 24px 12px; }
+
+    .desktop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 24px 40px; }
+    .desktop-card { background: #1A2D45; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; overflow: hidden; }
+    .desktop-card-header { padding: 16px 20px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .desktop-card-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .desktop-card-title { font-size: 16px; font-weight: 600; color: #fff; }
+    .desktop-card-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .desktop-card-body { padding: 14px 20px; }
+    .desktop-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .desktop-stat { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; text-align: center; }
+    .desktop-stat-num { font-size: 20px; font-weight: 700; }
+    .desktop-stat-lbl { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .desktop-item { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; }
+    .desktop-item:last-child { border-bottom: none; }
+    .desktop-item-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.06); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .desktop-item-name { font-size: 13px; font-weight: 500; color: #fff; }
+    .desktop-item-sub { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .desktop-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; margin-left: auto; white-space: nowrap; }
+    .desktop-badge.danger { background: rgba(226,75,74,0.2); color: #F09595; }
+    .desktop-badge.warning { background: rgba(239,159,39,0.2); color: #FAC775; }
+    .desktop-badge.ok { background: rgba(29,158,117,0.2); color: #5DCAA5; }
+    .desktop-add-btn { width: 100%; margin-top: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px; font-size: 13px; color: rgba(255,255,255,0.5); font-family: inherit; cursor: pointer; }
+    .desktop-add-btn:hover { background: rgba(255,255,255,0.1); }
+    .desktop-empty { text-align: center; padding: 20px; color: rgba(255,255,255,0.3); font-size: 13px; }
+    .desktop-lentes-wrap { display: flex; flex-direction: column; align-items: center; padding: 4px 0 10px; }
+    .desktop-lentes-circle { position: relative; width: 110px; height: 110px; }
+    .desktop-lentes-circle svg { transform: rotate(-90deg); }
+    .desktop-lentes-circle-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .desktop-lentes-num { font-size: 32px; font-weight: 700; color: #fff; }
+    .desktop-lentes-lbl { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .desktop-lentes-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .desktop-lentes-info { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px; text-align: center; }
+    .desktop-lentes-val { font-size: 13px; font-weight: 600; color: #fff; }
+    .desktop-lentes-sublbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .desktop-lentes-date-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 10px; }
+    .desktop-lentes-date-row label { font-size: 11px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 4px; }
+    .desktop-lentes-date-row input[type=date] { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .desktop-lentes-save-btn { background: #1a7ab5; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; color: #fff; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; }
+
+    .mobile-only { display: none !important; }
+    .desktop-only { display: block; }
+  }
+  @media (max-width: 767px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block; }
+  }
+
   .lentes-container { padding: 16px; }
   .lentes-circle-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0 16px; }
   .lentes-circle { position: relative; width: 160px; height: 160px; }
@@ -306,6 +359,89 @@
   </div>
 </div>
 
+<div class="desktop-only" id="desktop-grid">
+  <div class="desktop-grid" id="desktop-grid-inner">
+    <!-- Carnes -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(29,158,117,0.2);">🥩</div>
+        <div><div class="desktop-card-title">Mis Carnes</div><div class="desktop-card-sub">Control de vencimiento</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#5DCAA5;" id="d-stat-total">0</div><div class="desktop-stat-lbl">Registradas</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#F09595;" id="d-stat-alert">0</div><div class="desktop-stat-lbl">Vencen pronto</div></div>
+        </div>
+        <div id="d-items-list"></div>
+        <button class="desktop-add-btn" onclick="openPhotoModal()">+ Agregar carne</button>
+      </div>
+    </div>
+    <!-- Gym -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(224,90,20,0.2);">💪</div>
+        <div><div class="desktop-card-title">Mi Gym</div><div class="desktop-card-sub">Rutinas y ejercicios</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#E05A14;" id="d-stat-ej">0</div><div class="desktop-stat-lbl">Ejercicios</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#E05A14;" id="d-stat-gr">0</div><div class="desktop-stat-lbl">Grupos</div></div>
+        </div>
+        <div id="d-gym-list"></div>
+        <button class="desktop-add-btn" onclick="openGymModal()">+ Registrar ejercicio</button>
+      </div>
+    </div>
+    <!-- Ropa -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(83,74,183,0.2);">👖</div>
+        <div><div class="desktop-card-title">Mi Ropa</div><div class="desktop-card-sub">Contador de usos</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#AFA9EC;" id="d-stat-prendas">0</div><div class="desktop-stat-lbl">Prendas</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#AFA9EC;" id="d-stat-usos">0</div><div class="desktop-stat-lbl">Usos totales</div></div>
+        </div>
+        <div id="d-ropa-list"></div>
+        <button class="desktop-add-btn" onclick="openRopaModal()">+ Agregar prenda</button>
+      </div>
+    </div>
+    <!-- Lentes -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(26,122,181,0.2);">👁️</div>
+        <div><div class="desktop-card-title">Lentes de Contacto</div><div class="desktop-card-sub" id="d-lentes-sub">Sin registro</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-lentes-wrap">
+          <div class="desktop-lentes-circle">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
+              <circle id="d-lentes-arc" cx="55" cy="55" r="46" fill="none" stroke="#1a7ab5" stroke-width="10" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/>
+            </svg>
+            <div class="desktop-lentes-circle-text">
+              <span class="desktop-lentes-num" id="d-lentes-num">—</span>
+              <span class="desktop-lentes-lbl">días usados</span>
+            </div>
+          </div>
+        </div>
+        <div class="desktop-lentes-row">
+          <div class="desktop-lentes-info"><div class="desktop-lentes-val" id="d-lentes-inicio">—</div><div class="desktop-lentes-sublbl">Inicio</div></div>
+          <div class="desktop-lentes-info"><div class="desktop-lentes-val" id="d-lentes-cambio">—</div><div class="desktop-lentes-sublbl">Cambiar el</div></div>
+          <div class="desktop-lentes-info"><div class="desktop-lentes-val" id="d-lentes-restantes">—</div><div class="desktop-lentes-sublbl">Restantes</div></div>
+        </div>
+        <div class="desktop-lentes-date-row">
+          <div>
+            <label>Fecha de inicio</label>
+            <input type="date" id="d-lentes-fecha">
+          </div>
+          <button class="desktop-lentes-save-btn" onclick="resetLentesDesktop()">✅ Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal foto -->
 <div class="modal-overlay" id="modal-photo">
   <div class="modal">
@@ -394,7 +530,7 @@
 <script>
 // ===== CONFIGURACIÓN SUPABASE =====
 const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
+const SUPABASE_KEY = 'TU_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
@@ -775,6 +911,118 @@ async function resetLentes() {
 }
 
 renderLentes();
+
+// ===== DESKTOP RENDER =====
+function renderDesktop() {
+  if(window.innerWidth < 768) return;
+
+  // Carnes
+  const alerts = items.filter(i=>statusOf(i.fecha)!=='ok').length;
+  document.getElementById('d-stat-total').textContent = items.length;
+  document.getElementById('d-stat-alert').textContent = alerts;
+  const dList = document.getElementById('d-items-list');
+  if(!items.length) { dList.innerHTML='<div class="desktop-empty">Sin carnes registradas.</div>'; }
+  else {
+    const sorted=[...items].sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha));
+    dList.innerHTML = sorted.slice(0,4).map(it => {
+      const st=statusOf(it.fecha);
+      return `<div class="desktop-item">
+        <div class="desktop-item-icon">${EMOJIS[it.tipo]||'🍖'}</div>
+        <div><div class="desktop-item-name">${it.tipo}</div><div class="desktop-item-sub">${it.desc?it.desc+' · ':''}${it.ubicacion}</div></div>
+        <span class="desktop-badge ${st}">${badgeText(it.fecha)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Gym
+  const grupos={};
+  gymItems.forEach(i=>{if(!grupos[i.grupo])grupos[i.grupo]=[];grupos[i.grupo].push(i);});
+  document.getElementById('d-stat-ej').textContent = gymItems.length;
+  document.getElementById('d-stat-gr').textContent = Object.keys(grupos).length;
+  const dGym = document.getElementById('d-gym-list');
+  if(!gymItems.length) { dGym.innerHTML='<div class="desktop-empty">Sin ejercicios registrados.</div>'; }
+  else {
+    dGym.innerHTML = gymItems.slice(0,4).map(ex =>
+      `<div class="desktop-item">
+        <div class="desktop-item-icon">${GYM_ICONS[ex.grupo]||'⚡'}</div>
+        <div><div class="desktop-item-name">${ex.maquina}</div><div class="desktop-item-sub">${ex.grupo} · ${ex.series}×${ex.reps}${ex.peso?' · '+ex.peso+'kg':''}</div></div>
+      </div>`).join('');
+  }
+
+  // Ropa
+  document.getElementById('d-stat-prendas').textContent = ropaItems.length;
+  document.getElementById('d-stat-usos').textContent = ropaItems.reduce((a,i)=>a+i.usos,0);
+  const dRopa = document.getElementById('d-ropa-list');
+  if(!ropaItems.length) { dRopa.innerHTML='<div class="desktop-empty">Sin prendas registradas.</div>'; }
+  else {
+    dRopa.innerHTML = ropaItems.slice(0,4).map(item =>
+      `<div class="desktop-item">
+        <div class="desktop-item-icon">${({'Pantalón':'👖','Jeans':'👖','Sábana':'🛏️','Toalla':'🛁','Camisa':'👔','Camiseta':'👕','Zapatos':'👟','Otro':'👗'})[item.tipo]||'👗'}</div>
+        <div><div class="desktop-item-name">${item.nombre}</div><div class="desktop-item-sub">${item.tipo}</div></div>
+        <span class="desktop-badge ok">${item.usos} usos</span>
+      </div>`).join('');
+  }
+
+  // Lentes
+  renderLentesDesktop();
+}
+
+function renderLentesDesktop() {
+  const fechaInicio = getLentesData();
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const input = document.getElementById('d-lentes-fecha');
+
+  if(!fechaInicio) {
+    document.getElementById('d-lentes-num').textContent = '—';
+    document.getElementById('d-lentes-arc').style.strokeDashoffset = '289';
+    document.getElementById('d-lentes-inicio').textContent = '—';
+    document.getElementById('d-lentes-cambio').textContent = '—';
+    document.getElementById('d-lentes-restantes').textContent = '—';
+    document.getElementById('d-lentes-sub').textContent = 'Sin registro';
+    if(input) input.value = new Date().toISOString().split('T')[0];
+    return;
+  }
+
+  const inicio = new Date(fechaInicio + 'T00:00:00');
+  const diasUsados = Math.round((hoy - inicio) / 86400000);
+  const diasRestantes = Math.max(0, LENTES_DIAS - diasUsados);
+  const fechaCambio = new Date(inicio); fechaCambio.setDate(fechaCambio.getDate() + LENTES_DIAS);
+  const progreso = Math.min(diasUsados / LENTES_DIAS, 1);
+  const offset = 289 - (progreso * 289);
+
+  document.getElementById('d-lentes-num').textContent = Math.min(diasUsados, LENTES_DIAS);
+  document.getElementById('d-lentes-arc').style.strokeDashoffset = offset;
+  document.getElementById('d-lentes-inicio').textContent = inicio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('d-lentes-cambio').textContent = fechaCambio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('d-lentes-restantes').textContent = diasRestantes + 'd';
+  document.getElementById('d-lentes-sub').textContent = diasRestantes > 0 ? diasRestantes + ' días restantes' : '¡Cambiar ahora!';
+  if(input) input.value = fechaInicio;
+
+  const arc = document.getElementById('d-lentes-arc');
+  const num = document.getElementById('d-lentes-num');
+  if(diasUsados >= LENTES_DIAS) { arc.setAttribute('stroke','#E24B4A'); num.style.color='#F09595'; }
+  else if(diasRestantes <= 3) { arc.setAttribute('stroke','#EF9F27'); num.style.color='#FAC775'; }
+  else { arc.setAttribute('stroke','#1a7ab5'); num.style.color='#fff'; }
+}
+
+async function resetLentesDesktop() {
+  const input = document.getElementById('d-lentes-fecha');
+  const fecha = input ? input.value : new Date().toISOString().split('T')[0];
+  if(!fecha) { alert('Elige la fecha de inicio'); return; }
+  await sb.from('lentes').delete().neq('id', 0);
+  await sb.from('lentes').insert([{fecha_inicio: fecha}]);
+  await loadLentes();
+}
+
+// Hookear render desktop a las funciones de carga
+const _origRender = render;
+render = function() { _origRender(); renderDesktop(); };
+const _origRenderGym = renderGym;
+renderGym = function() { _origRenderGym(); renderDesktop(); };
+const _origRenderRopa = renderRopa;
+renderRopa = function() { _origRenderRopa(); renderDesktop(); };
+const _origRenderLentes = renderLentes;
+renderLentes = function() { _origRenderLentes(); renderLentesDesktop(); };
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
