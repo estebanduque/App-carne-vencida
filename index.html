@@ -748,7 +748,8 @@ function saveGym(){
   const reps=document.getElementById('g-reps').value;
   if(!maquina||!series||!reps){alert('Faltan datos');return;}
   const grupo=document.getElementById('g-grupo').value;
-  saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:parseFloat(document.getElementById('g-peso').value)||null});
+  const pesoVal = document.getElementById('g-peso').value;
+  saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null});
   closeModals();
 }
 
