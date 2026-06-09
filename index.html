@@ -563,7 +563,9 @@ async function loadGym() {
   if(!error) { gymItems = data || []; renderGym(); renderDesktop(); }
 }
 async function saveGymItem(item) {
+  console.log('Enviando a gym:', JSON.stringify(item));
   const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso}]).select();
+  console.log('Respuesta gym:', JSON.stringify({data,error}));
   if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); }
 }
 async function deleteGymItem(id) {
