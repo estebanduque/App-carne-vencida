@@ -531,7 +531,7 @@
 <script>
 // ===== CONFIGURACIÓN SUPABASE =====
 const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
+const SUPABASE_KEY = 'TU_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
@@ -550,11 +550,11 @@ async function loadItems() {
 }
 async function saveItem(item) {
   const {data,error} = await sb.from('carnes').insert([{tipo:item.tipo,desc:item.desc,fecha:item.fecha,ubicacion:item.ubicacion}]).select();
-  if(!error && data) { items.push(data[0]); render(); }
+  if(!error && data) { items.push(data[0]); render(); renderDesktop(); }
 }
 async function deleteItem(id) {
   await sb.from('carnes').delete().eq('id',id);
-  items = items.filter(i=>i.id!==id); render();
+  items = items.filter(i=>i.id!==id); render(); renderDesktop();
 }
 
 // ===== GYM =====
@@ -564,11 +564,11 @@ async function loadGym() {
 }
 async function saveGymItem(item) {
   const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso}]).select();
-  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); }
+  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); }
 }
 async function deleteGymItem(id) {
   await sb.from('gym').delete().eq('id',id);
-  gymItems = gymItems.filter(i=>i.id!==id); renderGym();
+  gymItems = gymItems.filter(i=>i.id!==id); renderGym(); renderDesktop();
 }
 
 // ===== ROPA =====
@@ -578,16 +578,16 @@ async function loadRopa() {
 }
 async function saveRopaItem(item) {
   const {data,error} = await sb.from('ropa').insert([{tipo:item.tipo,nombre:item.nombre,usos:0}]).select();
-  if(!error && data) { ropaItems.push(data[0]); renderRopa(); }
+  if(!error && data) { ropaItems.push(data[0]); renderRopa(); renderDesktop(); }
 }
 async function updateUsos(id, usos) {
   await sb.from('ropa').update({usos}).eq('id',id);
   const item = ropaItems.find(i=>i.id===id);
-  if(item) { item.usos = usos; renderRopa(); }
+  if(item) { item.usos = usos; renderRopa(); renderDesktop(); }
 }
 async function deleteRopaItem(id) {
   await sb.from('ropa').delete().eq('id',id);
-  ropaItems = ropaItems.filter(i=>i.id!==id); renderRopa();
+  ropaItems = ropaItems.filter(i=>i.id!==id); renderRopa(); renderDesktop();
 }
 
 function daysUntil(s) {
