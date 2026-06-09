@@ -494,13 +494,19 @@
     <div class="modal-handle"></div>
     <h2>💪 Nuevo ejercicio</h2>
     <div class="form-row"><label>Grupo muscular</label>
-      <select id="g-grupo"><option>Pecho</option><option>Espalda</option><option>Piernas</option><option>Hombros</option><option>Bíceps</option><option>Tríceps</option><option>Abdomen</option><option>Glúteos</option><option>Cardio</option><option>Otro</option></select>
+      <select id="g-grupo" onchange="toggleCamposGym(this.value)"><option>Pecho</option><option>Espalda</option><option>Piernas</option><option>Hombros</option><option>Bíceps</option><option>Tríceps</option><option>Abdomen</option><option>Glúteos</option><option>Cardio</option><option>Otro</option></select>
     </div>
-    <div class="form-row"><label>Máquina / Ejercicio</label><input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea alta…"></div>
-    <div class="three-col">
-      <div class="form-row" style="margin:0"><label>Series</label><input type="number" id="g-series" placeholder="3" min="1"></div>
-      <div class="form-row" style="margin:0"><label>Reps</label><input type="number" id="g-reps" placeholder="12" min="1"></div>
-      <div class="form-row" style="margin:0"><label>Peso kg</label><input type="number" id="g-peso" placeholder="20" min="0" step="0.5"></div>
+    <div id="g-campos-fuerza">
+      <div class="form-row"><label>Máquina / Ejercicio</label><input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea alta…"></div>
+      <div class="three-col">
+        <div class="form-row" style="margin:0"><label>Series</label><input type="number" id="g-series" placeholder="3" min="1"></div>
+        <div class="form-row" style="margin:0"><label>Reps</label><input type="number" id="g-reps" placeholder="12" min="1"></div>
+        <div class="form-row" style="margin:0"><label>Peso kg</label><input type="number" id="g-peso" placeholder="20" min="0" step="0.5"></div>
+      </div>
+    </div>
+    <div id="g-campos-cardio" style="display:none;">
+      <div class="form-row"><label>Actividad</label><input type="text" id="g-actividad" placeholder="Ej: Correr, Bicicleta, Elíptica…"></div>
+      <div class="form-row"><label>Tiempo (minutos)</label><input type="number" id="g-tiempo" placeholder="30" min="1"></div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
@@ -564,7 +570,7 @@ async function loadGym() {
 }
 async function saveGymItem(item) {
   console.log('Enviando a gym:', JSON.stringify(item));
-  const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso}]).select();
+  const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso,tiempo:item.tiempo}]).select();
   console.log('Respuesta gym:', JSON.stringify({data,error}));
   if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); }
 }
@@ -649,9 +655,10 @@ function renderGym(){
           <div class="ex-num">${i+1}</div>
           <div class="ex-info">
             <div class="ex-name">${ex.maquina}</div>
-            <div class="ex-detail">${ex.series} series × ${ex.reps} reps</div>
+            <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.series+' series × '+ex.reps+' reps'}</div>
           </div>
           ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
+          ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
           <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
         </div>`).join('')}
       </div>
@@ -687,6 +694,8 @@ function openGymModal(){
   document.getElementById('modal-gym').classList.add('open');
   document.getElementById('g-maquina').value='';document.getElementById('g-series').value='';
   document.getElementById('g-reps').value='';document.getElementById('g-peso').value='';
+  document.getElementById('g-actividad').value='';document.getElementById('g-tiempo').value='';
+  document.getElementById('g-grupo').value='Pecho';toggleCamposGym('Pecho');
 }
 
 document.getElementById('photo-input').addEventListener('change', async function(){
@@ -744,14 +753,27 @@ function saveManual(){
   saveItem({tipo:document.getElementById('m-tipo').value,desc:document.getElementById('m-desc').value.trim(),fecha,ubicacion:document.getElementById('m-ubicacion').value});
   closeModals();
 }
+function toggleCamposGym(grupo) {
+  const esCardio = grupo === 'Cardio';
+  document.getElementById('g-campos-fuerza').style.display = esCardio ? 'none' : 'block';
+  document.getElementById('g-campos-cardio').style.display = esCardio ? 'block' : 'none';
+}
+
 function saveGym(){
-  const maquina=document.getElementById('g-maquina').value.trim();
-  const series=document.getElementById('g-series').value;
-  const reps=document.getElementById('g-reps').value;
-  if(!maquina||!series||!reps){alert('Faltan datos');return;}
-  const grupo=document.getElementById('g-grupo').value;
-  const pesoVal = document.getElementById('g-peso').value;
-  saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null});
+  const grupo = document.getElementById('g-grupo').value;
+  if(grupo === 'Cardio') {
+    const actividad = document.getElementById('g-actividad').value.trim();
+    const tiempo = document.getElementById('g-tiempo').value;
+    if(!actividad||!tiempo){alert('Faltan datos');return;}
+    saveGymItem({grupo, maquina:actividad, series:null, reps:null, peso:null, tiempo:parseInt(tiempo)});
+  } else {
+    const maquina=document.getElementById('g-maquina').value.trim();
+    const series=document.getElementById('g-series').value;
+    const reps=document.getElementById('g-reps').value;
+    if(!maquina||!series||!reps){alert('Faltan datos');return;}
+    const pesoVal = document.getElementById('g-peso').value;
+    saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null});
+  }
   closeModals();
 }
 
@@ -946,10 +968,11 @@ function renderDesktop() {
   const dGym = document.getElementById('d-gym-list');
   if(!gymItems.length) { dGym.innerHTML='<div class="desktop-empty">Sin ejercicios registrados.</div>'; }
   else {
-    dGym.innerHTML = gymItems.slice(0,4).map(ex =>
+    dGym.innerHTML = gymItems.map(ex =>
       `<div class="desktop-item">
         <div class="desktop-item-icon">${GYM_ICONS[ex.grupo]||'⚡'}</div>
-        <div><div class="desktop-item-name">${ex.maquina}</div><div class="desktop-item-sub">${ex.grupo} · ${ex.series}×${ex.reps}${ex.peso?' · '+ex.peso+'kg':''}</div></div>
+        <div style="flex:1"><div class="desktop-item-name">${ex.maquina}</div><div class="desktop-item-sub">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')}</div></div>
+        <button onclick="delGym(${ex.id})" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:16px;padding:4px;flex-shrink:0;" onmouseover="this.style.color='#E24B4A'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">🗑</button>
       </div>`).join('');
   }
 
