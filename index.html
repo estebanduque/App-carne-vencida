@@ -273,6 +273,7 @@
           <div class="stat"><div class="stat-num orange" id="stat-gr">0</div><div class="stat-label">Grupos trabajados</div></div>
         </div>
         <p class="inner-title">Rutina de hoy</p>
+        <div id="gym-alert-mobile" class="gym-alert warn" style="display:none;margin:0 0 8px;"></div>
         <div id="gym-groups-list"></div>
         <div class="gym-add-row">
           <button class="gym-add-full" onclick="openGymModal()">+ Registrar ejercicio</button>
@@ -387,6 +388,7 @@
           <div class="desktop-stat"><div class="desktop-stat-num" style="color:#E05A14;" id="d-stat-ej">0</div><div class="desktop-stat-lbl">Ejercicios</div></div>
           <div class="desktop-stat"><div class="desktop-stat-num" style="color:#E05A14;" id="d-stat-gr">0</div><div class="desktop-stat-lbl">Grupos</div></div>
         </div>
+        <div id="gym-alert-desktop" class="gym-alert warn" style="display:none;padding:10px 12px;margin:0 0 8px;font-size:12px;"></div>
         <div id="d-gym-list"></div>
         <button class="desktop-add-btn" onclick="openGymModal()">+ Registrar ejercicio</button>
       </div>
@@ -566,13 +568,13 @@ async function deleteItem(id) {
 // ===== GYM =====
 async function loadGym() {
   const {data,error} = await sb.from('gym').select('*').order('created_at');
-  if(!error) { gymItems = data || []; renderGym(); renderDesktop(); }
+  if(!error) { gymItems = data || []; renderGym(); renderDesktop(); renderGymAlerta(); }
 }
 async function saveGymItem(item) {
   console.log('Enviando a gym:', JSON.stringify(item));
   const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso,tiempo:item.tiempo}]).select();
   console.log('Respuesta gym:', JSON.stringify({data,error}));
-  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); }
+  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); renderGymAlerta(); }
 }
 async function deleteGymItem(id) {
   await sb.from('gym').delete().eq('id',id);
@@ -979,10 +981,7 @@ function renderDesktop() {
     dGym.innerHTML = gymItems.map(ex =>
       `<div class="desktop-item">
         <div class="desktop-item-icon">${GYM_ICONS[ex.grupo]||'⚡'}</div>
-        <div style="flex:1">
-          <div class="desktop-item-name">${ex.maquina}</div>
-          <div class="desktop-item-sub">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')} · ${formatFechaGym(ex.created_at)}</div>
-        </div>
+        <div style="flex:1"><div class="desktop-item-name">${ex.maquina}</div><div class="desktop-item-sub">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')}</div></div>
         <button onclick="delGym(${ex.id})" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:16px;padding:4px;flex-shrink:0;" onmouseover="this.style.color='#E24B4A'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">🗑</button>
       </div>`).join('');
   }
