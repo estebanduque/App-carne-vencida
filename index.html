@@ -632,33 +632,59 @@ function render() {
 
 function delItem(id){if(confirm('¿Eliminar?')){deleteItem(id);}}
 
+function formatFechaGym(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
+}
+
 function renderGym(){
-  const grupos={};
-  gymItems.forEach(i=>{if(!grupos[i.grupo])grupos[i.grupo]=[];grupos[i.grupo].push(i);});
-  document.getElementById('stat-ej').textContent=gymItems.length;
-  document.getElementById('stat-gr').textContent=Object.keys(grupos).length;
-  const list=document.getElementById('gym-groups-list');
+  // Agrupar por día (fecha)
+  const dias = {};
+  gymItems.forEach(i => {
+    const fecha = i.created_at ? i.created_at.split('T')[0] : 'Sin fecha';
+    if(!dias[fecha]) dias[fecha] = [];
+    dias[fecha].push(i);
+  });
+
+  // Stats totales
+  const grupos = new Set(gymItems.map(i=>i.grupo));
+  document.getElementById('stat-ej').textContent = gymItems.length;
+  document.getElementById('stat-gr').textContent = grupos.size;
+
+  const list = document.getElementById('gym-groups-list');
   if(!gymItems.length){list.innerHTML='<div class="empty-msg">Sin ejercicios registrados.</div>';return;}
-  list.innerHTML=Object.entries(grupos).map(([grupo,exs])=>{
-    const isOpen=openGroups.has(grupo);
-    return`<div class="group-card">
-      <div class="group-header" onclick="toggleGrupo('${grupo}')">
-        <div class="group-icon-gym">${GYM_ICONS[grupo]||'⚡'}</div>
+
+  // Ordenar días más reciente primero
+  const diasOrdenados = Object.entries(dias).sort((a,b) => b[0].localeCompare(a[0]));
+
+  list.innerHTML = diasOrdenados.map(([fecha, exs]) => {
+    const isOpen = openGroups.has(fecha);
+    const totalSeries = exs.filter(e=>e.grupo!=='Cardio').reduce((a,e)=>a+parseInt(e.series||0),0);
+    const tiempoCardio = exs.filter(e=>e.grupo==='Cardio').reduce((a,e)=>a+parseInt(e.tiempo||0),0);
+    const subtext = [
+      exs.length + ' ejercicio' + (exs.length>1?'s':''),
+      totalSeries > 0 ? totalSeries + ' series' : '',
+      tiempoCardio > 0 ? tiempoCardio + ' min cardio' : ''
+    ].filter(Boolean).join(' · ');
+
+    return `<div class="group-card">
+      <div class="group-header" onclick="toggleGrupo('${fecha}')">
+        <div class="group-icon-gym">📅</div>
         <div class="group-info">
-          <div class="group-name">${grupo}</div>
-          <div class="group-sub">${exs.length} ejercicio${exs.length>1?'s':''} · ${exs.reduce((a,e)=>a+parseInt(e.series),0)} series</div>
+          <div class="group-name">${formatFechaGym(fecha)}</div>
+          <div class="group-sub">${subtext}</div>
         </div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
       <div class="exercises ${isOpen?'open':''}">
-        ${exs.map((ex,i)=>`<div class="exercise-row">
-          <div class="ex-num">${i+1}</div>
+        ${exs.map((ex,i) => `<div class="exercise-row">
+          <div class="ex-num">${GYM_ICONS[ex.grupo]||'⚡'}</div>
           <div class="ex-info">
             <div class="ex-name">${ex.maquina}</div>
-            <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.series+' series × '+ex.reps+' reps'}</div>
+            <div class="ex-detail">${ex.grupo==='Cardio' ? ex.tiempo+' min' : ex.grupo+' · '+ex.series+' series × '+ex.reps+' reps'}</div>
           </div>
-          ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
-          ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
+          ${ex.peso ? `<span class="ex-peso">${ex.peso} kg</span>` : ''}
+          ${ex.tiempo && ex.grupo==='Cardio' ? `<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>` : ''}
           <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
         </div>`).join('')}
       </div>
