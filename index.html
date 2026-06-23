@@ -384,13 +384,27 @@
         <div><div class="desktop-card-title">Mi Gym</div><div class="desktop-card-sub">Rutinas y ejercicios</div></div>
       </div>
       <div class="desktop-card-body">
-        <div class="desktop-stats">
-          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#E05A14;" id="d-stat-ej">0</div><div class="desktop-stat-lbl">Ejercicios</div></div>
-          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#E05A14;" id="d-stat-gr">0</div><div class="desktop-stat-lbl">Grupos</div></div>
+        <div id="d-gym-sin-ir" style="border-radius:10px;padding:14px;text-align:center;margin-bottom:12px;">
+          <div id="d-gym-dias-num" style="font-size:40px;font-weight:700;line-height:1;">—</div>
+          <div id="d-gym-dias-lbl" style="font-size:12px;margin-top:4px;opacity:0.8;">días sin ir al gym</div>
+          <div id="d-gym-ultimo" style="font-size:11px;margin-top:4px;opacity:0.6;"></div>
         </div>
-        <div id="gym-alert-desktop" class="gym-alert warn" style="display:none;padding:10px 12px;margin:0 0 8px;font-size:12px;"></div>
-        <div id="d-gym-list"></div>
-        <button class="desktop-add-btn" onclick="openGymModal()">+ Registrar ejercicio</button>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Días entrenados</p>
+        <div id="d-gym-fechas" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+      <div style="padding:0 20px 14px;border-top:1px solid rgba(255,255,255,0.05);">
+        <button class="desktop-add-btn" onclick="openGymModal()" style="margin-top:10px;">+ Registrar ejercicio</button>
+      </div>
+    </div>
+
+    <!-- Modal ejercicios por día -->
+    <div id="gym-day-modal" onclick="if(event.target===this)closeGymDayModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#1A2D45;border-radius:16px;padding:20px;width:400px;max-height:80vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div id="gym-day-modal-title" style="font-size:16px;font-weight:600;color:#fff;"></div>
+          <button onclick="closeGymDayModal()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:22px;line-height:1;padding:2px 6px;" aria-label="Cerrar">✕</button>
+        </div>
+        <div id="gym-day-modal-body"></div>
       </div>
     </div>
     <!-- Ropa -->
@@ -568,7 +582,7 @@ async function deleteItem(id) {
 // ===== GYM =====
 async function loadGym() {
   const {data,error} = await sb.from('gym').select('*').order('created_at');
-  if(!error) { gymItems = data || []; renderGym(); renderDesktop(); renderGymAlerta(); }
+  if(!error) { gymItems = data || []; openGroups.clear(); renderGym(); renderDesktop(); renderGymAlerta(); }
 }
 async function saveGymItem(item) {
   console.log('Enviando a gym:', JSON.stringify(item));
@@ -1013,44 +1027,65 @@ function renderDesktop() {
     }).join('');
   }
 
-    // Gym
-  const gruposSetD = new Set(gymItems.map(i=>i.grupo));
-  document.getElementById('d-stat-ej').textContent = gymItems.length;
-  document.getElementById('d-stat-gr').textContent = gruposSetD.size;
-  const dGym = document.getElementById('d-gym-list');
-  if(!gymItems.length) { dGym.innerHTML='<div class="desktop-empty">Sin ejercicios registrados.</div>'; }
-  else {
-    const diasD={};
-    gymItems.forEach(i=>{
-      const fecha = i.created_at ? i.created_at.split('T')[0] : 'Sin fecha';
-      if(!diasD[fecha]) diasD[fecha]=[];
-      diasD[fecha].push(i);
-    });
-    const diasOrdenadosD = Object.entries(diasD).sort((a,b)=>b[0].localeCompare(a[0]));
-    dGym.innerHTML = diasOrdenadosD.map(([fecha,exs],idx) => {
-      const dayId = 'd-day-'+fecha;
-      const isFirst = idx===0;
-      return `<div style="margin-bottom:4px;">
-        <div class="desktop-day-header" onclick="toggleDesktopDay('${dayId}')">
-          <span class="desktop-day-title">📅 ${new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</span>
-          <span style="font-size:11px;color:rgba(255,255,255,0.3);">${exs.length} ejercicio${exs.length>1?'s':''}</span>
-          <span class="desktop-day-chevron ${isFirst?'open':''}" id="${dayId}-chevron">▾</span>
-        </div>
-        <div class="desktop-day-items" id="${dayId}" style="max-height:${isFirst?'2000px':'0'};">
-          ${exs.map(ex=>`<div class="desktop-item">
-            <div class="desktop-item-icon">${GYM_ICONS[ex.grupo]||'⚡'}</div>
-            <div style="flex:1">
-              <div class="desktop-item-name">${ex.maquina}</div>
-              <div class="desktop-item-sub">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')}</div>
-            </div>
-            <button onclick="delGym(${ex.id})" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:16px;padding:4px;flex-shrink:0;" onmouseover="this.style.color='#E24B4A'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">🗑</button>
-          </div>`).join('')}
-        </div>
-      </div>`;
-    }).join('');
+    // Gym - nuevo diseño desktop
+  const sinIrEl = document.getElementById('d-gym-sin-ir');
+  const diasNumEl = document.getElementById('d-gym-dias-num');
+  const diasLblEl = document.getElementById('d-gym-dias-lbl');
+  const ultimoEl = document.getElementById('d-gym-ultimo');
+  const fechasEl = document.getElementById('d-gym-fechas');
+
+  if(sinIrEl && diasNumEl && fechasEl) {
+    // Calcular días sin ir
+    const hoyD = new Date(); hoyD.setHours(0,0,0,0);
+    let diasSinIr = null;
+    let ultimaFecha = null;
+
+    if(gymItems.length > 0) {
+      const fechasGym = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+      const masRecienteStr = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
+      if(masRecienteStr) {
+        ultimaFecha = masRecienteStr;
+        const ultima = new Date(masRecienteStr+'T12:00:00');
+        diasSinIr = Math.round((hoyD - ultima) / 86400000);
+      }
+    }
+
+    // Color según días sin ir
+    let color, bg;
+    if(diasSinIr === null) { color='rgba(255,255,255,0.5)'; bg='rgba(255,255,255,0.05)'; }
+    else if(diasSinIr <= 1) { color='#5DCAA5'; bg='rgba(29,158,117,0.15)'; }
+    else if(diasSinIr <= 4) { color='#FAC775'; bg='rgba(239,159,39,0.15)'; }
+    else { color='#F09595'; bg='rgba(226,75,74,0.15)'; }
+
+    sinIrEl.style.background = bg;
+    diasNumEl.style.color = color;
+    diasNumEl.textContent = diasSinIr !== null ? diasSinIr : '—';
+    diasLblEl.style.color = color;
+    if(ultimaFecha) {
+      ultimoEl.textContent = 'último entreno: ' + new Date(ultimaFecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+    }
+
+    // Lista de fechas
+    if(!gymItems.length) {
+      fechasEl.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">Sin ejercicios registrados.</div>';
+    } else {
+      const diasMap = {};
+      gymItems.forEach(i=>{
+        const f = i.created_at?i.created_at.split('T')[0]:'';
+        if(f) { if(!diasMap[f]) diasMap[f]=[]; diasMap[f].push(i); }
+      });
+      const diasOrden = Object.entries(diasMap).sort((a,b)=>b[0].localeCompare(a[0]));
+      fechasEl.innerHTML = diasOrden.map(([fecha, exs])=>`
+        <div onclick="openGymDayModal('${fecha}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;background:rgba(255,255,255,0.03);" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+          <div style="width:8px;height:8px;border-radius:50%;background:#E05A14;flex-shrink:0;"></div>
+          <div style="flex:1;font-size:13px;font-weight:500;color:#fff;">${new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);">${exs.length} ejercicio${exs.length>1?'s':''}</div>
+          <div style="font-size:14px;color:rgba(255,255,255,0.3);">›</div>
+        </div>`).join('');
+    }
   }
 
-  // Ropa
+// Ropa
   document.getElementById('d-stat-prendas').textContent = ropaItems.length;
   document.getElementById('d-stat-usos').textContent = ropaItems.reduce((a,i)=>a+i.usos,0);
   const dRopa = document.getElementById('d-ropa-list');
@@ -1124,6 +1159,41 @@ const _origRenderRopa = renderRopa;
 renderRopa = function() { _origRenderRopa(); renderDesktop(); };
 const _origRenderLentes = renderLentes;
 renderLentes = function() { _origRenderLentes(); renderLentesDesktop(); };
+
+function toggleDesktopDay(dayId) {
+  const el = document.getElementById(dayId);
+  const chevron = document.getElementById(dayId + '-chevron');
+  if(!el) return;
+  const isOpen = el.dataset.open === '1';
+  el.dataset.open = isOpen ? '0' : '1';
+  el.style.maxHeight = isOpen ? '0px' : '2000px';
+  if(chevron) chevron.classList.toggle('open', !isOpen);
+}
+
+function openGymDayModal(fecha) {
+  const diasMap = {};
+  gymItems.forEach(i=>{
+    const f = i.created_at?i.created_at.split('T')[0]:'';
+    if(f){ if(!diasMap[f]) diasMap[f]=[]; diasMap[f].push(i); }
+  });
+  const exs = diasMap[fecha] || [];
+  const titulo = new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('gym-day-modal-title').textContent = titulo;
+  document.getElementById('gym-day-modal-body').innerHTML = exs.map(ex=>`
+    <div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">${GYM_ICONS[ex.grupo]||'⚡'}</div>
+      <div>
+        <div style="font-size:14px;font-weight:500;color:#fff;">${ex.maquina}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')}</div>
+      </div>
+    </div>`).join('');
+  const modal = document.getElementById('gym-day-modal');
+  modal.style.display = 'flex';
+}
+
+function closeGymDayModal() {
+  document.getElementById('gym-day-modal').style.display = 'none';
+}
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
