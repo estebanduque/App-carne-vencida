@@ -822,45 +822,43 @@ async function pedirPermisoNotificaciones(){
   else if(Notification.permission==='granted')revisarVencimientos();
 }
 function revisarVencimientos(){
-  const hoyStr=new Date().toISOString().split('T')[0];
-  if(localStorage.getItem('ultima_revision')===hoyStr)return;
-  localStorage.setItem('ultima_revision',hoyStr);
+  if(Notification.permission !== 'granted') return;
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const horaActual = new Date().getHours();
+  const cacheKey = 'ultima_revision_' + hoyStr;
+  if(localStorage.getItem(cacheKey)) return;
+  if(horaActual < 8) return;
+  localStorage.setItem(cacheKey, '1');
 
-  // Notificaciones de carnes
-  items.forEach(item=>{
-    const d=daysUntil(item.fecha);
-    if(d===2)new Notification('⚠️ Carne vence en 2 días',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence el ${item.fecha}`,icon:'icon-192.png'});
-    else if(d===1)new Notification('🚨 Carne vence mañana',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence mañana`,icon:'icon-192.png'});
-    else if(d===0)new Notification('🔴 ¡Carne vence hoy!',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence hoy`,icon:'icon-192.png'});
+  // 🥩 Carnes - día que vence y día anterior
+  items.forEach(item => {
+    const d = daysUntil(item.fecha);
+    const nombre = item.tipo + (item.desc ? ' · ' + item.desc : '');
+    if(d === 1) new Notification('⚠️ Carne vence mañana', {body: nombre + ' vence mañana. ¡Úsala hoy!', icon:'icon-192.png'});
+    else if(d === 0) new Notification('🔴 ¡Carne vence HOY!', {body: nombre + ' vence hoy. ¡Última oportunidad!', icon:'icon-192.png'});
   });
 
-  // Notificación de lentes
+  // 👁️ Lentes - cuando se cumplen los 30 días
   const fechaLentes = getLentesData();
-  if(fechaLentes){
+  if(fechaLentes) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const inicio = new Date(fechaLentes+'T00:00:00');
-    const diasUsados = Math.round((hoy - inicio) / 86400000);
-    const diasRestantes = LENTES_DIAS - diasUsados;
-    if(diasRestantes === 3) new Notification('👁️ Lentes: cambiar en 3 días',{body:'Quedan 3 días para cambiar tus lentes de contacto',icon:'icon-192.png'});
-    else if(diasRestantes === 1) new Notification('👁️ ¡Cambia tus lentes mañana!',{body:'Mañana se cumplen los 30 días de uso',icon:'icon-192.png'});
-    else if(diasRestantes <= 0) new Notification('🔴 ¡Cambia tus lentes hoy!',{body:'Ya se cumplieron los 30 días de uso',icon:'icon-192.png'});
+    const diasUsados = Math.round((hoy - new Date(fechaLentes+'T00:00:00')) / 86400000);
+    if(LENTES_DIAS - diasUsados === 0) new Notification('👁️ ¡Cambia tus lentes hoy!', {body:'Hoy se cumplen los 30 días de uso.', icon:'icon-192.png'});
   }
 
-  // Notificación de gym (menos de 4 veces en 7 días)
-  if(gymItems.length > 0){
-    const hace7 = new Date(); hace7.setDate(hace7.getDate()-7); hace7.setHours(0,0,0,0);
-    const diasGym = new Set();
-    gymItems.forEach(i=>{
-      if(i.created_at){
-        const d = new Date(i.created_at); d.setHours(0,0,0,0);
-        if(d >= hace7) diasGym.add(d.toISOString().split('T')[0]);
-      }
-    });
-    if(diasGym.size < 4){
-      new Notification('💪 ¡Anímate al gym!',{body:`Solo has ido ${diasGym.size} vez${diasGym.size!==1?'es':''} esta semana. ¡Meta: 4 veces!`,icon:'icon-192.png'});
+  // 💪 Gym - más de 2 días sin ir
+  if(gymItems.length > 0) {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const fechasGym = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+    const masReciente = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
+    if(masReciente) {
+      const diasSinIr = Math.round((hoy - new Date(masReciente+'T00:00:00')) / 86400000);
+      if(diasSinIr > 2) new Notification('💪 ¡Hace '+diasSinIr+' días que no vas al gym!', {body:'Tu último entreno fue el '+new Date(masReciente+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+'. ¡Anímate!', icon:'icon-192.png'});
     }
   }
 }
+
+setInterval(revisarVencimientos, 30 * 60 * 1000);
 function mostrarBotonNotificaciones(){
   if(!('Notification' in window))return;
   if(Notification.permission==='granted')return;
