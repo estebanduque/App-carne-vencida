@@ -1091,11 +1091,16 @@ function renderDesktop() {
   const dRopa = document.getElementById('d-ropa-list');
   if(!ropaItems.length) { dRopa.innerHTML='<div class="desktop-empty">Sin prendas registradas.</div>'; }
   else {
-    dRopa.innerHTML = ropaItems.slice(0,4).map(item =>
+    dRopa.innerHTML = ropaItems.map(item =>
       `<div class="desktop-item">
         <div class="desktop-item-icon">${({'Pantalón':'👖','Jeans':'👖','Sábana':'🛏️','Toalla':'🛁','Camisa':'👔','Camiseta':'👕','Zapatos':'👟','Otro':'👗'})[item.tipo]||'👗'}</div>
-        <div><div class="desktop-item-name">${item.nombre}</div><div class="desktop-item-sub">${item.tipo}</div></div>
-        <span class="desktop-badge ok">${item.usos} usos</span>
+        <div style="flex:1"><div class="desktop-item-name">${item.nombre}</div><div class="desktop-item-sub">${item.tipo}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <button onclick="cambiarUso(${item.id},-1)" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:16px;display:flex;align-items:center;justify-content:center;">−</button>
+          <span style="font-size:13px;font-weight:600;color:#AFA9EC;min-width:28px;text-align:center;">${item.usos}</span>
+          <button onclick="cambiarUso(${item.id},1)" style="width:26px;height:26px;border-radius:50%;background:rgba(83,74,183,0.3);border:none;cursor:pointer;color:#AFA9EC;font-size:16px;display:flex;align-items:center;justify-content:center;">+</button>
+          <button onclick="delRopa(${item.id})" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:16px;padding:4px;margin-left:2px;" onmouseover="this.style.color='#E24B4A'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">🗑</button>
+        </div>
       </div>`).join('');
   }
 
