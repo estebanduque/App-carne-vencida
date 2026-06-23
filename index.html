@@ -811,12 +811,41 @@ function revisarVencimientos(){
   const hoyStr=new Date().toISOString().split('T')[0];
   if(localStorage.getItem('ultima_revision')===hoyStr)return;
   localStorage.setItem('ultima_revision',hoyStr);
+
+  // Notificaciones de carnes
   items.forEach(item=>{
     const d=daysUntil(item.fecha);
-    if(d===2)new Notification('⚠️ Vence en 2 días',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence el ${item.fecha}`,icon:'icon-192.png'});
-    else if(d===1)new Notification('🚨 ¡Vence mañana!',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence mañana`,icon:'icon-192.png'});
-    else if(d===0)new Notification('🔴 ¡Vence hoy!',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence hoy`,icon:'icon-192.png'});
+    if(d===2)new Notification('⚠️ Carne vence en 2 días',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence el ${item.fecha}`,icon:'icon-192.png'});
+    else if(d===1)new Notification('🚨 Carne vence mañana',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence mañana`,icon:'icon-192.png'});
+    else if(d===0)new Notification('🔴 ¡Carne vence hoy!',{body:`${item.tipo}${item.desc?' · '+item.desc:''} vence hoy`,icon:'icon-192.png'});
   });
+
+  // Notificación de lentes
+  const fechaLentes = getLentesData();
+  if(fechaLentes){
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const inicio = new Date(fechaLentes+'T00:00:00');
+    const diasUsados = Math.round((hoy - inicio) / 86400000);
+    const diasRestantes = LENTES_DIAS - diasUsados;
+    if(diasRestantes === 3) new Notification('👁️ Lentes: cambiar en 3 días',{body:'Quedan 3 días para cambiar tus lentes de contacto',icon:'icon-192.png'});
+    else if(diasRestantes === 1) new Notification('👁️ ¡Cambia tus lentes mañana!',{body:'Mañana se cumplen los 30 días de uso',icon:'icon-192.png'});
+    else if(diasRestantes <= 0) new Notification('🔴 ¡Cambia tus lentes hoy!',{body:'Ya se cumplieron los 30 días de uso',icon:'icon-192.png'});
+  }
+
+  // Notificación de gym (menos de 4 veces en 7 días)
+  if(gymItems.length > 0){
+    const hace7 = new Date(); hace7.setDate(hace7.getDate()-7); hace7.setHours(0,0,0,0);
+    const diasGym = new Set();
+    gymItems.forEach(i=>{
+      if(i.created_at){
+        const d = new Date(i.created_at); d.setHours(0,0,0,0);
+        if(d >= hace7) diasGym.add(d.toISOString().split('T')[0]);
+      }
+    });
+    if(diasGym.size < 4){
+      new Notification('💪 ¡Anímate al gym!',{body:`Solo has ido ${diasGym.size} vez${diasGym.size!==1?'es':''} esta semana. ¡Meta: 4 veces!`,icon:'icon-192.png'});
+    }
+  }
 }
 function mostrarBotonNotificaciones(){
   if(!('Notification' in window))return;
@@ -881,7 +910,7 @@ function saveRopa(){
 renderRopa();
 
 // LENTES JS
-const LENTES_DIAS = 15;
+const LENTES_DIAS = 30;
 let lentesData = null;
 
 async function loadLentes() {
