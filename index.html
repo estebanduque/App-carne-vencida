@@ -268,13 +268,15 @@
     </button>
     <div class="menu-body" id="body-gym">
       <div class="menu-inner">
-        <div class="stats">
-          <div class="stat"><div class="stat-num orange" id="stat-ej">0</div><div class="stat-label">Ejercicios hoy</div></div>
-          <div class="stat"><div class="stat-num orange" id="stat-gr">0</div><div class="stat-label">Grupos trabajados</div></div>
+        <div id="gym-sin-ir-mobile" style="border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;background:rgba(255,255,255,0.05);">
+          <div id="gym-dias-num-mobile" style="font-size:38px;font-weight:700;line-height:1;color:rgba(255,255,255,0.5);">—</div>
+          <div id="gym-dias-lbl-mobile" style="font-size:12px;margin-top:4px;color:rgba(255,255,255,0.4);">días sin ir al gym</div>
+          <div id="gym-ultimo-mobile" style="font-size:11px;margin-top:3px;color:rgba(255,255,255,0.3);"></div>
         </div>
-        <p class="inner-title">Rutina de hoy</p>
+        <p class="inner-title">Últimas sesiones</p>
         <div id="gym-alert-mobile" class="gym-alert warn" style="display:none;margin:0 0 8px;"></div>
         <div id="gym-groups-list"></div>
+        <button id="gym-ver-mas-btn" onclick="toggleVerMasGym()" style="display:none;width:100%;margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;font-size:13px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;">Ver todas las sesiones</button>
         <div class="gym-add-row">
           <button class="gym-add-full" onclick="openGymModal()">+ Registrar ejercicio</button>
         </div>
@@ -654,10 +656,42 @@ function formatFechaGym(dateStr) {
   return d.toLocaleDateString('es-MX', {weekday:'short', day:'numeric', month:'short'});
 }
 
+let mostrarTodasSesiones = false;
+
+function toggleVerMasGym() {
+  mostrarTodasSesiones = !mostrarTodasSesiones;
+  const btn = document.getElementById('gym-ver-mas-btn');
+  if(btn) btn.textContent = mostrarTodasSesiones ? 'Ver menos' : 'Ver todas las sesiones';
+  renderGym();
+}
+
 function renderGym(){
-  const gruposUnicos = new Set(gymItems.map(i=>i.grupo));
-  document.getElementById('stat-ej').textContent=gymItems.length;
-  document.getElementById('stat-gr').textContent=gruposUnicos.size;
+  // Contador días sin ir - móvil
+  const hoyM = new Date(); hoyM.setHours(0,0,0,0);
+  const diasNumM = document.getElementById('gym-dias-num-mobile');
+  const diasLblM = document.getElementById('gym-dias-lbl-mobile');
+  const ultimoM = document.getElementById('gym-ultimo-mobile');
+  const sinIrM = document.getElementById('gym-sin-ir-mobile');
+
+  if(diasNumM) {
+    if(gymItems.length > 0) {
+      const fechasG = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+      const masR = fechasG.sort((a,b)=>b.localeCompare(a))[0];
+      const diasSinIr = Math.round((hoyM - new Date(masR+'T00:00:00')) / 86400000);
+      let color, bg;
+      if(diasSinIr <= 1){color='#5DCAA5';bg='rgba(29,158,117,0.15)';}
+      else if(diasSinIr <= 4){color='#FAC775';bg='rgba(239,159,39,0.15)';}
+      else{color='#F09595';bg='rgba(226,75,74,0.15)';}
+      diasNumM.textContent = diasSinIr;
+      diasNumM.style.color = color;
+      diasLblM.style.color = color;
+      if(sinIrM) sinIrM.style.background = bg;
+      if(ultimoM) ultimoM.textContent = 'último entreno: ' + new Date(masR+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+    } else {
+      diasNumM.textContent = '—';
+    }
+  }
+
   const list=document.getElementById('gym-groups-list');
   if(!gymItems.length){list.innerHTML='<div class="empty-msg">Sin ejercicios registrados.</div>';return;}
 
@@ -668,7 +702,15 @@ function renderGym(){
     if(!dias[fecha]) dias[fecha]=[];
     dias[fecha].push(i);
   });
-  const diasOrdenados = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
+  const diasOrdenadosTodos = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
+  const diasOrdenados = mostrarTodasSesiones ? diasOrdenadosTodos : diasOrdenadosTodos.slice(0,3);
+
+  // Botón ver más
+  const verMasBtn = document.getElementById('gym-ver-mas-btn');
+  if(verMasBtn) {
+    verMasBtn.style.display = diasOrdenadosTodos.length > 3 ? 'block' : 'none';
+    verMasBtn.textContent = mostrarTodasSesiones ? 'Ver menos' : 'Ver todas las sesiones';
+  }
 
   list.innerHTML=diasOrdenados.map(([fecha,exs])=>{
     const isOpen=openGroups.has(fecha);
