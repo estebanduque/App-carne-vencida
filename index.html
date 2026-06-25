@@ -862,24 +862,36 @@ function saveGym(){
 // Notificaciones
 async function registrarPushSubscription() {
   try {
-    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Este navegador no soporta notificaciones push');
+      return;
+    }
     const reg = await navigator.serviceWorker.ready;
     const existing = await reg.pushManager.getSubscription();
-    if(existing) return; // Ya registrado
+    if(existing) {
+      // Ya existe suscripción, guardarla en Supabase de todas formas
+      const {error} = await sb.from('push_subscriptions').upsert([{
+        subscription: existing.toJSON(),
+        user_agent: navigator.userAgent.substring(0, 200)
+      }]);
+      if(!error) { alert('✅ Dispositivo registrado para notificaciones push'); }
+      return;
+    }
     
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
     
-    // Guardar en Supabase
-    await sb.from('push_subscriptions').insert([{
+    const {error} = await sb.from('push_subscriptions').insert([{
       subscription: sub.toJSON(),
       user_agent: navigator.userAgent.substring(0, 200)
     }]);
-    console.log('Push subscription registrada');
+    
+    if(error) { alert('Error guardando: ' + error.message); }
+    else { alert('✅ Notificaciones push activadas en este dispositivo'); }
   } catch(e) {
-    console.error('Error registrando push:', e);
+    alert('Error: ' + e.message);
   }
 }
 
