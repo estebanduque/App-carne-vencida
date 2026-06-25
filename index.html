@@ -942,11 +942,28 @@ function revisarVencimientos(){
 setInterval(revisarVencimientos, 30 * 60 * 1000);
 function mostrarBotonNotificaciones(){
   if(!('Notification' in window))return;
-  if(Notification.permission==='granted')return;
+  // Si el permiso ya está concedido pero no hay suscripción registrada
+  if(Notification.permission==='granted'){
+    // Mostrar botón para registrar dispositivo si no hay suscripción
+    const existing = localStorage.getItem('push_registered');
+    if(!existing){
+      const btn=document.createElement('div');
+      btn.className='notif-banner';
+      btn.style.cursor='pointer';
+      btn.innerHTML='<span style="font-size:22px;">🔔</span><div class="notif-banner-text"><div class="notif-banner-title">Activar notificaciones push</div><div class="notif-banner-sub">Toca para recibir alertas en este dispositivo</div></div>';
+      btn.onclick=async()=>{
+        await registrarPushSubscription();
+        localStorage.setItem('push_registered','1');
+        btn.remove();
+      };
+      document.querySelector('.main-header').after(btn);
+    }
+    return;
+  }
   const btn=document.createElement('div');
   btn.className='notif-banner';
   btn.innerHTML='<span style="font-size:22px;">🔔</span><div class="notif-banner-text"><div class="notif-banner-title">Activar notificaciones</div><div class="notif-banner-sub">Recibe alertas de vencimiento</div></div>';
-  btn.onclick=()=>{pedirPermisoNotificaciones();btn.remove();};
+  btn.onclick=async()=>{await pedirPermisoNotificaciones();localStorage.setItem('push_registered','1');btn.remove();};
   document.querySelector('.main-header').after(btn);
 }
 
