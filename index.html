@@ -556,7 +556,7 @@
 // ===== CONFIGURACIÓN SUPABASE =====
 const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
 // VAPID public key - reemplaza con tu clave pública generada
-const VAPID_PUBLIC_KEY = 'BMqaRIu7qiKHkQHZObkvzA38oZ7myXGDK6lk1LMccAmiBkmChJMWE0Di2Kzzrqx0FPEGgiG3mWZhEfoF9AVX-UM';
+const VAPID_PUBLIC_KEY = 'TU_VAPID_PUBLIC_KEY';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -860,38 +860,35 @@ function saveGym(){
 }
 
 // Notificaciones
-async function registrarPushSubscription() {
+async function registrarPushSubscription(mostrarAlerta = false) {
   try {
-    if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Este navegador no soporta notificaciones push');
-      return;
-    }
-    const reg = await navigator.serviceWorker.ready;
-    const existing = await reg.pushManager.getSubscription();
-    if(existing) {
-      // Ya existe suscripción, guardarla en Supabase de todas formas
-      const {error} = await sb.from('push_subscriptions').upsert([{
-        subscription: existing.toJSON(),
-        user_agent: navigator.userAgent.substring(0, 200)
-      }]);
-      if(!error) { alert('✅ Dispositivo registrado para notificaciones push'); }
-      return;
-    }
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
+    // Si ya está registrado localmente, no hacer nada
+    if(localStorage.getItem('push_sub_registrada') === '1' && !mostrarAlerta) return;
+    
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    
+    if(!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
     
     const {error} = await sb.from('push_subscriptions').insert([{
       subscription: sub.toJSON(),
       user_agent: navigator.userAgent.substring(0, 200)
     }]);
     
-    if(error) { alert('Error guardando: ' + error.message); }
-    else { alert('✅ Notificaciones push activadas en este dispositivo'); }
+    if(!error) {
+      localStorage.setItem('push_sub_registrada', '1');
+      if(mostrarAlerta) alert('✅ ¡Notificaciones push activadas!');
+    }
+    
   } catch(e) {
-    alert('Error: ' + e.message);
+    console.error('Error registrando push:', e.message);
   }
 }
 
@@ -957,15 +954,14 @@ function mostrarBotonNotificaciones(){
   // Si el permiso ya está concedido pero no hay suscripción registrada
   if(Notification.permission==='granted'){
     // Mostrar botón para registrar dispositivo si no hay suscripción
-    const existing = localStorage.getItem('push_registered');
+    const existing = localStorage.getItem('push_sub_registrada');
     if(!existing){
       const btn=document.createElement('div');
       btn.className='notif-banner';
       btn.style.cursor='pointer';
       btn.innerHTML='<span style="font-size:22px;">🔔</span><div class="notif-banner-text"><div class="notif-banner-title">Activar notificaciones push</div><div class="notif-banner-sub">Toca para recibir alertas en este dispositivo</div></div>';
       btn.onclick=async()=>{
-        await registrarPushSubscription();
-        localStorage.setItem('push_registered','1');
+        await registrarPushSubscription(true);
         btn.remove();
       };
       document.querySelector('.main-header').after(btn);
