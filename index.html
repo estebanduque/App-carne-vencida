@@ -64,6 +64,8 @@
     .badge.ok { background: rgba(29,158,117,0.25); color: #5DCAA5; }
     .delete-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 18px; padding: 4px; flex-shrink: 0; }
     .delete-btn:active { color: #E24B4A; }
+    .repeat-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 16px; padding: 4px; flex-shrink: 0; }
+    .repeat-btn:active { color: #E05A14; }
 
     /* Botones agregar */
     .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px 4px; }
@@ -763,6 +765,7 @@ function renderGym(){
           </div>
           ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
           ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
+          <button class="repeat-btn" onclick="event.stopPropagation();repetirGym(${ex.id})" title="Registrar de nuevo hoy">🔁</button>
           <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
         </div>`).join('')}
       </div>
@@ -772,6 +775,20 @@ function renderGym(){
 
 function toggleGrupo(g){if(openGroups.has(g))openGroups.delete(g);else openGroups.add(g);renderGym();}
 function delGym(id){if(confirm('¿Eliminar?')){deleteGymItem(id);}}
+async function repetirGym(id){
+  const ex = gymItems.find(i=>i.id===id);
+  if(!ex) return;
+  if(!confirm('¿Registrar "'+ex.maquina+'" de nuevo hoy?')) return;
+  const {data,error} = await sb.from('gym').insert([{grupo:ex.grupo,maquina:ex.maquina,series:ex.series,reps:ex.reps,peso:ex.peso,tiempo:ex.tiempo}]).select();
+  if(!error && data){
+    gymItems.push(data[0]);
+    if(data[0].created_at) openGroups.add(data[0].created_at.split('T')[0]);
+    mostrarTodasSesiones = false;
+    renderGym(); renderDesktop(); renderGymAlerta();
+  } else {
+    alert('No se pudo registrar. Intenta de nuevo.');
+  }
+}
 
 function toggleMenu(menu){
   const body=document.getElementById('body-'+menu);
