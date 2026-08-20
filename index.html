@@ -98,6 +98,17 @@
     .ex-name { font-size: 14px; font-weight: 500; color: #fff; }
     .ex-detail { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
     .ex-peso { font-size: 12px; font-weight: 600; color: #FAC775; background: rgba(239,159,39,0.2); padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+    /* Meses (vista "ver todas") */
+    .mes-group { margin: 0 16px 8px; }
+    .mes-header { padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; background: rgba(224,90,20,0.12); border: 1px solid rgba(224,90,20,0.28); border-radius: 12px; }
+    .mes-info { flex: 1; }
+    .mes-name { font-size: 14px; font-weight: 700; color: #fff; text-transform: capitalize; }
+    .mes-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+    .mes-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .mes-body.open { max-height: 8000px; }
+    .mes-body .group-card { margin: 8px 0 0 12px; }
+
     .gym-add-row { padding: 10px 16px 4px; }
     .gym-add-full { display: flex; align-items: center; justify-content: center; gap: 8px; background: #E05A14; border: none; border-radius: 14px; padding: 14px; cursor: pointer; font-size: 14px; color: #fff; font-weight: 600; font-family: inherit; width: 100%; }
     .gym-add-full:active { background: #B8440D; }
@@ -676,13 +687,22 @@ function formatFechaGym(dateStr) {
 }
 
 let mostrarTodasSesiones = false;
+let openMeses = new Set();
 
 function toggleVerMasGym() {
   mostrarTodasSesiones = !mostrarTodasSesiones;
+  if(mostrarTodasSesiones){
+    // Al abrir "ver todas", dejar abierto el mes más reciente
+    const fechas = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean).sort((a,b)=>b.localeCompare(a));
+    openMeses.clear();
+    if(fechas.length) openMeses.add(fechas[0].slice(0,7));
+  }
   const btn = document.getElementById('gym-ver-mas-btn');
   if(btn) btn.textContent = mostrarTodasSesiones ? 'Ver menos' : 'Ver todas las sesiones';
   renderGym();
 }
+
+function toggleMes(m){if(openMeses.has(m))openMeses.delete(m);else openMeses.add(m);renderGym();}
 
 function renderGym(){
   // Contador días sin ir - móvil
@@ -732,8 +752,6 @@ function renderGym(){
     dias[fecha].push(i);
   });
   const diasOrdenadosTodos = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
-  const diasOrdenados = mostrarTodasSesiones ? diasOrdenadosTodos : diasOrdenadosTodos.slice(0,3);
-
   // Botón ver más
   const verMasBtn = document.getElementById('gym-ver-mas-btn');
   if(verMasBtn) {
@@ -741,42 +759,79 @@ function renderGym(){
     verMasBtn.textContent = mostrarTodasSesiones ? 'Ver menos' : 'Ver todas las sesiones';
   }
 
-  list.innerHTML=diasOrdenados.map(([fecha,exs])=>{
-    const isOpen=openGroups.has(fecha);
-    const totalSeries=exs.filter(e=>e.grupo!=='Cardio').reduce((a,e)=>a+parseInt(e.series||0),0);
-    const tiempoCardio=exs.filter(e=>e.grupo==='Cardio').reduce((a,e)=>a+parseInt(e.tiempo||0),0);
-    const subtext=[
-      exs.length+' ejercicio'+(exs.length>1?'s':''),
-      totalSeries>0?totalSeries+' series':'',
-      tiempoCardio>0?tiempoCardio+' min cardio':''
-    ].filter(Boolean).join(' · ');
-    return`<div class="group-card">
-      <div class="group-header" onclick="toggleGrupo('${fecha}')">
-        <div class="group-icon-gym">📅</div>
-        <div class="group-info">
-          <div class="group-name">${new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
-          <div class="group-sub">${subtext}</div>
+  if(mostrarTodasSesiones){
+    // Agrupar los días por mes
+    const meses={};
+    diasOrdenadosTodos.forEach(([fecha,exs])=>{
+      const mesKey = fecha.length>=7 ? fecha.slice(0,7) : 'Sin fecha';
+      if(!meses[mesKey]) meses[mesKey]=[];
+      meses[mesKey].push([fecha,exs]);
+    });
+    const mesesOrdenados = Object.entries(meses).sort((a,b)=>b[0].localeCompare(a[0]));
+    list.innerHTML = mesesOrdenados.map(([mesKey,diasMes])=>{
+      const isOpenMes = openMeses.has(mesKey);
+      const nSes = diasMes.length;
+      let nombreMes;
+      if(mesKey==='Sin fecha'){ nombreMes='Sin fecha'; }
+      else {
+        const m = new Date(mesKey+'-01T12:00:00').toLocaleDateString('es-MX',{month:'long'});
+        nombreMes = m.charAt(0).toUpperCase()+m.slice(1)+' '+mesKey.slice(0,4);
+      }
+      return `<div class="mes-group">
+        <div class="mes-header" onclick="toggleMes('${mesKey}')">
+          <div class="mes-info">
+            <div class="mes-name">${nombreMes}</div>
+            <div class="mes-sub">${nSes} sesión${nSes>1?'es':''}</div>
+          </div>
+          <span class="chevron ${isOpenMes?'open':''}">▾</span>
         </div>
-        <span class="chevron ${isOpen?'open':''}">▾</span>
+        <div class="mes-body ${isOpenMes?'open':''}">
+          ${diasMes.map(([fecha,exs])=>renderCardDia(fecha,exs)).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    const diasOrdenados = diasOrdenadosTodos.slice(0,3);
+    list.innerHTML = diasOrdenados.map(([fecha,exs])=>renderCardDia(fecha,exs)).join('');
+  }
+}
+
+function renderCardDia(fecha, exs){
+  const isOpen=openGroups.has(fecha);
+  const totalSeries=exs.filter(e=>e.grupo!=='Cardio').reduce((a,e)=>a+parseInt(e.series||0),0);
+  const tiempoCardio=exs.filter(e=>e.grupo==='Cardio').reduce((a,e)=>a+parseInt(e.tiempo||0),0);
+  const subtext=[
+    exs.length+' ejercicio'+(exs.length>1?'s':''),
+    totalSeries>0?totalSeries+' series':'',
+    tiempoCardio>0?tiempoCardio+' min cardio':''
+  ].filter(Boolean).join(' · ');
+  const fechaLabel = fecha==='Sin fecha' ? 'Sin fecha' : new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  return`<div class="group-card">
+    <div class="group-header" onclick="toggleGrupo('${fecha}')">
+      <div class="group-icon-gym">📅</div>
+      <div class="group-info">
+        <div class="group-name">${fechaLabel}</div>
+        <div class="group-sub">${subtext}</div>
       </div>
-      <div class="exercises ${isOpen?'open':''}">
-        ${exs.map((ex,i)=>`<div class="exercise-row">
-          <div class="ex-num">${GYM_ICONS[ex.grupo]||'⚡'}</div>
-          <div class="ex-info">
-            <div class="ex-name">${ex.maquina}</div>
-            <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+' series × '+ex.reps+' reps'}</div>
-          </div>
-          ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
-          ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
-          <div style="display:flex;gap:2px;flex-shrink:0;">
-            <button class="edit-btn" onclick="event.stopPropagation();editarGym(${ex.id})" title="Editar">✏️</button>
-            <button class="repeat-btn" onclick="event.stopPropagation();repetirGym(${ex.id})" title="Registrar de nuevo hoy">🔁</button>
-            <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
-          </div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
+      <span class="chevron ${isOpen?'open':''}">▾</span>
+    </div>
+    <div class="exercises ${isOpen?'open':''}">
+      ${exs.map((ex,i)=>`<div class="exercise-row">
+        <div class="ex-num">${GYM_ICONS[ex.grupo]||'⚡'}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.maquina}</div>
+          <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+' series × '+ex.reps+' reps'}</div>
+        </div>
+        ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
+        ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
+        <div style="display:flex;gap:2px;flex-shrink:0;">
+          <button class="edit-btn" onclick="event.stopPropagation();editarGym(${ex.id})" title="Editar">✏️</button>
+          <button class="repeat-btn" onclick="event.stopPropagation();repetirGym(${ex.id})" title="Registrar de nuevo hoy">🔁</button>
+          <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
 }
 
 function toggleGrupo(g){if(openGroups.has(g))openGroups.delete(g);else openGroups.add(g);renderGym();}
