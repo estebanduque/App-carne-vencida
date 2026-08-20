@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0F1B2D">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mi App">
+  <title>Mi App</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0F1B2D; min-height: 100vh; color: #fff; display: flex; justify-content: center; }
+    .app { max-width: 480px; width: 100%; padding: 0 0 40px; }
+
+    .main-header { padding: 28px 20px 8px; }
+    .main-header h1 { font-size: 26px; font-weight: 700; color: #fff; }
+    .main-header p { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+    /* Menús desplegables */
+    .menu-section { margin: 16px 16px 0; }
+    .menu-toggle { width: 100%; background: #1A2D45; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left; font-family: inherit; transition: background 0.2s; }
+    .menu-toggle:active { background: #1E3552; }
+    .menu-toggle.open { border-radius: 18px 18px 0 0; border-bottom-color: transparent; }
+    .menu-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+    .menu-icon.carnes { background: rgba(29,158,117,0.2); }
+    .menu-icon.gym { background: rgba(224,90,20,0.2); }
+    .menu-title { flex: 1; }
+    .menu-title h2 { font-size: 17px; font-weight: 600; color: #fff; }
+    .menu-title p { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .menu-chevron { font-size: 20px; color: rgba(255,255,255,0.4); transition: transform 0.25s; }
+    .menu-chevron.open { transform: rotate(180deg); }
+
+    .menu-body { background: #1A2D45; border: 1px solid rgba(255,255,255,0.1); border-top: none; border-radius: 0 0 18px 18px; max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .menu-body.open { max-height: 2000px; }
+    .menu-inner { padding: 0 0 16px; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 16px 0; }
+    .stat { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 700; }
+    .stat-num.green { color: #1D9E75; }
+    .stat-num.red { color: #E24B4A; }
+    .stat-num.orange { color: #E05A14; }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+    .inner-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); padding: 14px 16px 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Tarjetas de carnes */
+    .items { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+    .item-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+    .item-card.danger { border-color: rgba(226,75,74,0.5); background: rgba(226,75,74,0.1); }
+    .item-card.warning { border-color: rgba(239,159,39,0.5); background: rgba(239,159,39,0.08); }
+    .item-card.ok { border-color: rgba(29,158,117,0.4); background: rgba(29,158,117,0.08); }
+    .icon-circle { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; background: rgba(255,255,255,0.08); }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 15px; font-weight: 600; color: #fff; }
+    .item-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .badge { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .badge.danger { background: rgba(226,75,74,0.25); color: #F09595; }
+    .badge.warning { background: rgba(239,159,39,0.25); color: #FAC775; }
+    .badge.ok { background: rgba(29,158,117,0.25); color: #5DCAA5; }
+    .delete-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 18px; padding: 4px; flex-shrink: 0; }
+    .delete-btn:active { color: #E24B4A; }
+
+    /* Botones agregar */
+    .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px 4px; }
+    .add-btn { display: flex; align-items: center; justify-content: center; gap: 7px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 13px 10px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); font-family: inherit; }
+    .add-btn:active { background: rgba(255,255,255,0.12); }
+    .add-btn.primary { background: #1D9E75; border-color: #1D9E75; color: #fff; font-weight: 600; }
+    .add-btn.primary:active { background: #0F6E56; }
+    .add-btn.gym-primary { background: #E05A14; border-color: #E05A14; color: #fff; font-weight: 600; }
+    .add-btn.gym-primary:active { background: #B8440D; }
+
+    .empty-msg { text-align: center; padding: 28px 16px; color: rgba(255,255,255,0.35); font-size: 14px; }
+
+    /* Gym cards */
+    .group-card { margin: 0 16px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
+    .group-header { padding: 13px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+    .group-icon-gym { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; background: rgba(224,90,20,0.2); }
+    .group-info { flex: 1; }
+    .group-name { font-size: 15px; font-weight: 600; color: #fff; }
+    .group-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+    .chevron { font-size: 16px; color: rgba(255,255,255,0.4); transition: transform 0.2s; display: inline-block; }
+    .chevron.open { transform: rotate(180deg); }
+    .exercises { border-top: 1px solid rgba(255,255,255,0.06); max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .exercises.open { max-height: 1000px; }
+    .exercise-row { padding: 11px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .exercise-row:last-child { border-bottom: none; }
+    .ex-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); flex-shrink: 0; }
+    .ex-info { flex: 1; }
+    .ex-name { font-size: 14px; font-weight: 500; color: #fff; }
+    .ex-detail { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .ex-peso { font-size: 12px; font-weight: 600; color: #FAC775; background: rgba(239,159,39,0.2); padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .gym-add-row { padding: 10px 16px 4px; }
+    .gym-add-full { display: flex; align-items: center; justify-content: center; gap: 8px; background: #E05A14; border: none; border-radius: 14px; padding: 14px; cursor: pointer; font-size: 14px; color: #fff; font-weight: 600; font-family: inherit; width: 100%; }
+    .gym-add-full:active { background: #B8440D; }
+
+    /* Modals */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #1A2D45; border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+    .modal-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 18px; }
+    .modal h2 { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 16px; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { font-size: 12px; color: rgba(255,255,255,0.5); display: block; margin-bottom: 5px; font-weight: 500; }
+    .form-row input, .form-row select { width: 100%; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .form-row input::placeholder { color: rgba(255,255,255,0.3); }
+    .form-row select option { background: #1A2D45; color: #fff; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .btn-cancel { background: rgba(255,255,255,0.08); border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: rgba(255,255,255,0.6); font-family: inherit; }
+    .btn-save-green { background: #1D9E75; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
+    .btn-save-orange { background: #E05A14; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
+
+    .photo-zone { border: 2px dashed rgba(255,255,255,0.2); border-radius: 14px; padding: 22px; text-align: center; cursor: pointer; margin-bottom: 14px; background: rgba(255,255,255,0.04); }
+    .photo-zone img { max-width: 100%; border-radius: 10px; max-height: 160px; object-fit: cover; display: none; }
+    .photo-hint { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+    .scanning-msg { display: none; background: rgba(29,158,117,0.15); border-radius: 10px; padding: 12px; font-size: 13px; color: #5DCAA5; text-align: center; margin-bottom: 12px; }
+    .scanning-msg.active { display: block; }
+    .prefilled-msg { display: none; background: rgba(29,158,117,0.15); border-radius: 10px; padding: 10px 13px; font-size: 13px; color: #5DCAA5; margin-bottom: 12px; font-weight: 500; }
+    .prefilled-msg.show { display: block; }
+    .ai-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(83,74,183,0.25); color: #AFA9EC; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+    #photo-input { display: none; }
+
+  @media (min-width: 768px) {
+    body { background: #0A1628; }
+    .app { max-width: 1200px; width: 100%; margin: 0 auto; padding: 0 0 40px; }
+    .main-header { padding: 28px 24px 16px; }
+    .main-header h1 { font-size: 26px; }
+    .notif-banner { margin: 0 24px 12px; }
+
+    .desktop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 24px; }
+    .desktop-card { background: #1A2D45; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; overflow: hidden; }
+    .desktop-card-header { padding: 16px 20px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .desktop-card-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .desktop-card-title { font-size: 16px; font-weight: 600; color: #fff; }
+    .desktop-card-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .desktop-card-body { padding: 14px 20px; }
+    .desktop-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .desktop-stat { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; text-align: center; }
+    .desktop-stat-num { font-size: 20px; font-weight: 700; }
+    .desktop-stat-lbl { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .desktop-item { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; }
+    .desktop-item:last-child { border-bottom: none; }
+    .desktop-item-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.06); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .desktop-item-name { font-size: 13px; font-weight: 500; color: #fff; }
+    .desktop-item-sub { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .desktop-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; margin-left: auto; white-space: nowrap; }
+    .desktop-badge.danger { background: rgba(226,75,74,0.2); color: #F09595; }
+    .desktop-badge.warning { background: rgba(239,159,39,0.2); color: #FAC775; }
+    .desktop-badge.ok { background: rgba(29,158,117,0.2); color: #5DCAA5; }
+    .desktop-add-btn { width: 100%; margin-top: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px; font-size: 13px; color: rgba(255,255,255,0.5); font-family: inherit; cursor: pointer; }
+    .desktop-add-btn:hover { background: rgba(255,255,255,0.1); }
+    .desktop-empty { text-align: center; padding: 20px; color: rgba(255,255,255,0.3); font-size: 13px; }
+    .desktop-lentes-wrap { display: flex; flex-direction: column; align-items: center; padding: 4px 0 10px; }
+    .desktop-lentes-circle { position: relative; width: 110px; height: 110px; }
+    .desktop-lentes-circle svg { transform: rotate(-90deg); }
+    .desktop-lentes-circle-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .desktop-lentes-num { font-size: 32px; font-weight: 700; color: #fff; }
+    .desktop-lentes-lbl { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .desktop-lentes-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .desktop-lentes-info { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px; text-align: center; }
+    .desktop-lentes-val { font-size: 13px; font-weight: 600; color: #fff; }
+    .desktop-lentes-sublbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .desktop-lentes-date-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 10px; }
+    .desktop-lentes-date-row label { font-size: 11px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 4px; }
+    .desktop-lentes-date-row input[type=date] { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .desktop-lentes-save-btn { background: #1a7ab5; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; color: #fff; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; }
+
+    .mobile-only { display: none !important; }
+    .desktop-only { display: block; }
+  }
+  @media (max-width: 767px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block; }
+  }
+
+  .lentes-container { padding: 16px; }
+  .lentes-circle-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0 16px; }
+  .lentes-circle { position: relative; width: 160px; height: 160px; }
+  .lentes-circle svg { transform: rotate(-90deg); }
+  .lentes-circle-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .lentes-days-num { font-size: 48px; font-weight: 700; line-height: 1; }
+  .lentes-days-label { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .lentes-status { font-size: 13px; font-weight: 600; text-align: center; margin-top: 4px; padding: 5px 16px; border-radius: 20px; }
+  .lentes-status.ok { background: rgba(29,158,117,0.2); color: #5DCAA5; }
+  .lentes-status.warning { background: rgba(239,159,39,0.2); color: #FAC775; }
+  .lentes-status.danger { background: rgba(226,75,74,0.2); color: #F09595; }
+  .lentes-info { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; }
+  .lentes-info-item { text-align: center; }
+  .lentes-info-val { font-size: 15px; font-weight: 600; color: #fff; }
+  .lentes-info-lbl { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .lentes-btn { width: 100%; background: #1a7ab5; border: none; border-radius: 14px; padding: 14px; font-size: 14px; color: #fff; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .lentes-btn:active { background: #115e8a; }
+  .menu-icon.lentes { background: rgba(26,122,181,0.2); }
+
+  .ropa-card { margin: 0 16px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; display: flex; align-items: center; gap: 12px; }
+  .ropa-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .ropa-info { flex: 1; }
+  .ropa-name { font-size: 15px; font-weight: 600; color: #fff; }
+  .ropa-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .ropa-counter { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .ropa-count { font-size: 20px; font-weight: 700; color: #AFA9EC; min-width: 28px; text-align: center; }
+  .ropa-count-label { font-size: 10px; color: rgba(255,255,255,0.4); text-align: center; margin-top: 1px; }
+  .ropa-btn { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+  .ropa-btn-plus { background: rgba(83,74,183,0.3); color: #AFA9EC; }
+  .ropa-btn-plus:active { background: rgba(83,74,183,0.5); }
+  .ropa-btn-minus { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+  .ropa-btn-minus:active { background: rgba(255,255,255,0.12); }
+  .ropa-add-row { padding: 10px 16px 4px; }
+  .ropa-add-full { display: flex; align-items: center; justify-content: center; gap: 8px; background: #534AB7; border: none; border-radius: 14px; padding: 14px; cursor: pointer; font-size: 14px; color: #fff; font-weight: 600; font-family: inherit; width: 100%; }
+  .ropa-add-full:active { background: #3C3489; }
+  .menu-icon.ropa { background: rgba(83,74,183,0.2); }
+
+    .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .notif-banner-text { flex: 1; }
+    .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
+    .notif-banner-sub { font-size: 12px; color: rgba(250,199,117,0.7); margin-top: 1px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="app">
+  <div class="main-header">
+    <h1>👋 Mi App</h1>
+    <p id="main-date"></p>
+  </div>
+
+  <div class="mobile-only">
+  <!-- ===== MENÚ CARNES ===== -->
+  <div class="menu-section">
+    <button class="menu-toggle" id="toggle-carnes" onclick="toggleMenu('carnes')">
+      <div class="menu-icon carnes">🥩</div>
+      <div class="menu-title">
+        <h2>Mis Carnes</h2>
+        <p>Control de vencimiento</p>
+      </div>
+      <span class="menu-chevron" id="chevron-carnes">▾</span>
+    </button>
+    <div class="menu-body" id="body-carnes">
+      <div class="menu-inner">
+        <div class="stats">
+          <div class="stat"><div class="stat-num green" id="stat-total">0</div><div class="stat-label">Total registradas</div></div>
+          <div class="stat"><div class="stat-num red" id="stat-alert">0</div><div class="stat-label">Vencen pronto</div></div>
+        </div>
+        <p class="inner-title">Inventario</p>
+        <div class="items" id="items-list"></div>
+        <div class="add-row">
+          <button class="add-btn primary" onclick="openPhotoModal()">📷 Foto de etiqueta</button>
+          <button class="add-btn" onclick="openManualModal()">✏️ Manual</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MENÚ GYM ===== -->
+  <div class="menu-section" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-gym" onclick="toggleMenu('gym')">
+      <div class="menu-icon gym">💪</div>
+      <div class="menu-title">
+        <h2>Mi Gym</h2>
+        <p>Rutinas y ejercicios</p>
+      </div>
+      <span class="menu-chevron" id="chevron-gym">▾</span>
+    </button>
+    <div class="menu-body" id="body-gym">
+      <div class="menu-inner">
+        <div id="gym-sin-ir-mobile" style="border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,0.05);display:flex;overflow:hidden;">
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="gym-dias-num-mobile" style="font-size:30px;font-weight:700;line-height:1;color:rgba(255,255,255,0.5);">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">días sin ir</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);margin:14px 0;"></div>
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="gym-7dias-mobile" style="font-size:30px;font-weight:700;line-height:1;color:#E5883F;">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">veces / 7 días</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);margin:14px 0;"></div>
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="gym-30dias-mobile" style="font-size:30px;font-weight:700;line-height:1;color:#E5883F;">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">veces / 30 días</div>
+          </div>
+        </div>
+        <div id="gym-ultimo-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
+        <p class="inner-title">Últimas sesiones</p>
+        <div id="gym-alert-mobile" class="gym-alert warn" style="display:none;margin:0 0 8px;"></div>
+        <div id="gym-groups-list"></div>
+        <button id="gym-ver-mas-btn" onclick="toggleVerMasGym()" style="display:none;width:100%;margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;font-size:13px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;">Ver todas las sesiones</button>
+        <div class="gym-add-row">
+          <button class="gym-add-full" onclick="openGymModal()">+ Registrar ejercicio</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MENÚ ROPA ===== -->
+  <div class="menu-section" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-ropa" onclick="toggleMenu('ropa')">
+      <div class="menu-icon ropa">👖</div>
+      <div class="menu-title">
+        <h2>Mi Ropa</h2>
+        <p>Contador de usos</p>
+      </div>
+      <span class="menu-chevron" id="chevron-ropa">▾</span>
+    </button>
+    <div class="menu-body" id="body-ropa">
+      <div class="menu-inner">
+        <div class="stats">
+          <div class="stat"><div class="stat-num" style="color:#AFA9EC;" id="stat-prendas">0</div><div class="stat-label">Prendas registradas</div></div>
+          <div class="stat"><div class="stat-num" style="color:#AFA9EC;" id="stat-usos-total">0</div><div class="stat-label">Usos totales</div></div>
+        </div>
+        <p class="inner-title">Mis prendas</p>
+        <div id="ropa-list"></div>
+        <div class="ropa-add-row">
+          <button class="ropa-add-full" onclick="openRopaModal()">+ Agregar prenda</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MENÚ LENTES ===== -->
+  <div class="menu-section" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-lentes" onclick="toggleMenu('lentes')">
+      <div class="menu-icon lentes">👁️</div>
+      <div class="menu-title">
+        <h2>Lentes de Contacto</h2>
+        <p id="lentes-menu-sub">Toca para ver el estado</p>
+      </div>
+      <span class="menu-chevron" id="chevron-lentes">▾</span>
+    </button>
+    <div class="menu-body" id="body-lentes">
+      <div class="menu-inner">
+        <div class="lentes-container">
+          <div class="lentes-circle-wrap">
+            <div class="lentes-circle">
+              <svg width="160" height="160" viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
+                <circle id="lentes-arc" cx="80" cy="80" r="70" fill="none" stroke="#1a7ab5" stroke-width="12" stroke-linecap="round"
+                  stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+              </svg>
+              <div class="lentes-circle-text">
+                <span class="lentes-days-num" id="lentes-num">—</span>
+                <span class="lentes-days-label">días usados</span>
+              </div>
+            </div>
+            <div class="lentes-status ok" id="lentes-status">Cargando…</div>
+          </div>
+          <div class="lentes-info">
+            <div class="lentes-info-item">
+              <div class="lentes-info-val" id="lentes-inicio">—</div>
+              <div class="lentes-info-lbl">Inicio</div>
+            </div>
+            <div class="lentes-info-item">
+              <div class="lentes-info-val" id="lentes-cambio">—</div>
+              <div class="lentes-info-lbl">Cambiar el</div>
+            </div>
+            <div class="lentes-info-item">
+              <div class="lentes-info-val" id="lentes-restantes">—</div>
+              <div class="lentes-info-lbl">Días restantes</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;">
+            <div>
+              <label style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;">Fecha de inicio</label>
+              <input type="date" id="lentes-fecha-input" style="width:100%;padding:11px 13px;font-size:15px;border:1px solid rgba(255,255,255,0.15);border-radius:10px;background:rgba(255,255,255,0.07);color:#fff;font-family:inherit;">
+            </div>
+            <button class="lentes-btn" id="lentes-btn" onclick="resetLentes()" style="width:auto;padding:11px 16px;white-space:nowrap;">✅ Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="desktop-only" id="desktop-grid">
+  <div class="desktop-grid" id="desktop-grid-inner">
+    <!-- Carnes -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(29,158,117,0.2);">🥩</div>
+        <div><div class="desktop-card-title">Mis Carnes</div><div class="desktop-card-sub">Control de vencimiento</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#5DCAA5;" id="d-stat-total">0</div><div class="desktop-stat-lbl">Registradas</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#F09595;" id="d-stat-alert">0</div><div class="desktop-stat-lbl">Vencen pronto</div></div>
+        </div>
+        <div id="d-items-list"></div>
+        <button class="desktop-add-btn" onclick="openPhotoModal()">+ Agregar carne</button>
+      </div>
+    </div>
+    <!-- Gym -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(224,90,20,0.2);">💪</div>
+        <div><div class="desktop-card-title">Mi Gym</div><div class="desktop-card-sub">Rutinas y ejercicios</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div id="d-gym-sin-ir" style="border-radius:10px;padding:14px;text-align:center;margin-bottom:12px;">
+          <div id="d-gym-dias-num" style="font-size:40px;font-weight:700;line-height:1;">—</div>
+          <div id="d-gym-dias-lbl" style="font-size:12px;margin-top:4px;opacity:0.8;">días sin ir al gym</div>
+          <div id="d-gym-ultimo" style="font-size:11px;margin-top:4px;opacity:0.6;"></div>
+        </div>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Días entrenados</p>
+        <div id="d-gym-fechas" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+      <div style="padding:0 20px 14px;border-top:1px solid rgba(255,255,255,0.05);">
+        <button class="desktop-add-btn" onclick="openGymModal()" style="margin-top:10px;">+ Registrar ejercicio</button>
+      </div>
+    </div>
+
+    <!-- Modal ejercicios por día -->
+    <div id="gym-day-modal" onclick="if(event.target===this)closeGymDayModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#1A2D45;border-radius:16px;padding:20px;width:400px;max-height:80vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div id="gym-day-modal-title" style="font-size:16px;font-weight:600;color:#fff;"></div>
+          <button onclick="closeGymDayModal()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:22px;line-height:1;padding:2px 6px;" aria-label="Cerrar">✕</button>
+        </div>
+        <div id="gym-day-modal-body"></div>
+      </div>
+    </div>
+    <!-- Ropa -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(83,74,183,0.2);">👖</div>
+        <div><div class="desktop-card-title">Mi Ropa</div><div class="desktop-card-sub">Contador de usos</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#AFA9EC;" id="d-stat-prendas">0</div><div class="desktop-stat-lbl">Prendas</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#AFA9EC;" id="d-stat-usos">0</div><div class="desktop-stat-lbl">Usos totales</div></div>
+        </div>
+        <div id="d-ropa-list"></div>
+        <button class="desktop-add-btn" onclick="openRopaModal()">+ Agregar prenda</button>
+      </div>
+    </div>
+    <!-- Lentes -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(26,122,181,0.2);">👁️</div>
+        <div><div class="desktop-card-title">Lentes de Contacto</div><div class="desktop-card-sub" id="d-lentes-sub">Sin registro</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-lentes-wrap">
+          <div class="desktop-lentes-circle">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
+              <circle id="d-lentes-arc" cx="55" cy="55" r="46" fill="none" stroke="#1a7ab5" stroke-width="10" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/>
+            </svg>
+            <div class="desktop-lentes-circle-text">
+              <span class="desktop-lentes-num" id="d-lentes-num">—</span>
+              <span class="desktop-lentes-lbl">días usados</span>
+            </div>
+          </div>
+        </div>
+        <div class="desktop-lentes-row">
+          <div class="desktop-lentes-info"><div class="desktop-lentes-val" id="d-lentes-inicio">—</div><div class="desktop-lentes-sublbl">Inicio</div></div>
+          <div class="desktop-lentes-info"><div class="desktop-lentes-val" id="d-lentes-cambio">—</div><div class="desktop-lentes-sublbl">Cambiar el</div></div>
+          <div class="desktop-lentes-info"><div class="desktop-lentes-val" id="d-lentes-restantes">—</div><div class="desktop-lentes-sublbl">Restantes</div></div>
+        </div>
+        <div class="desktop-lentes-date-row">
+          <div>
+            <label>Fecha de inicio</label>
+            <input type="date" id="d-lentes-fecha">
+          </div>
+          <button class="desktop-lentes-save-btn" onclick="resetLentesDesktop()">✅ Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Modal foto -->
+<div class="modal-overlay" id="modal-photo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📷 Escanear etiqueta</h2>
+    <div class="ai-badge">✨ Lectura automática con IA</div>
+    <input type="file" id="photo-input" accept="image/*" capture="environment">
+    <div class="photo-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()">
+      <div id="photo-icon" style="font-size:36px;">📷</div>
+      <img id="photo-preview" alt="Vista previa">
+      <p class="photo-hint" id="photo-hint">Toca para tomar foto o elegir de galería</p>
+    </div>
+    <div class="scanning-msg" id="scanning-msg">⏳ Analizando etiqueta con IA…</div>
+    <div class="prefilled-msg" id="prefilled-msg">✅ IA detectó los datos — revisa y confirma</div>
+    <div class="form-row"><label>Tipo de carne</label>
+      <select id="p-tipo"><option>Res / ternera</option><option>Pollo</option><option>Cerdo</option><option>Pescado</option><option>Mariscos</option><option>Embutidos</option><option>Otro</option></select>
+    </div>
+    <div class="form-row"><label>Descripción</label><input type="text" id="p-desc" placeholder="Ej: milanesas, muslos…"></div>
+    <div class="form-row"><label>Fecha de vencimiento (DLC)</label><input type="date" id="p-fecha"></div>
+    <div class="form-row"><label>Ubicación</label><select id="p-ubicacion"><option>Refrigerador</option><option>Congelador</option></select></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" onclick="savePhoto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal manual carnes -->
+<div class="modal-overlay" id="modal-manual">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>✏️ Agregar manualmente</h2>
+    <div class="form-row"><label>Tipo de carne</label>
+      <select id="m-tipo"><option>Res / ternera</option><option>Pollo</option><option>Cerdo</option><option>Pescado</option><option>Mariscos</option><option>Embutidos</option><option>Otro</option></select>
+    </div>
+    <div class="form-row"><label>Descripción (opcional)</label><input type="text" id="m-desc" placeholder="Ej: milanesas, muslos…"></div>
+    <div class="form-row"><label>Fecha de vencimiento</label><input type="date" id="m-fecha"></div>
+    <div class="form-row"><label>Ubicación</label><select id="m-ubicacion"><option>Refrigerador</option><option>Congelador</option></select></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" onclick="saveManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal gym -->
+<div class="modal-overlay" id="modal-gym">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>💪 Nuevo ejercicio</h2>
+    <div class="form-row"><label>Grupo muscular</label>
+      <select id="g-grupo" onchange="toggleCamposGym(this.value)"><option>Pecho</option><option>Espalda</option><option>Piernas</option><option>Hombros</option><option>Bíceps</option><option>Tríceps</option><option>Abdomen</option><option>Glúteos</option><option>Cardio</option><option>Otro</option></select>
+    </div>
+    <div id="g-campos-fuerza">
+      <div class="form-row"><label>Máquina / Ejercicio</label><input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea alta…"></div>
+      <div class="three-col">
+        <div class="form-row" style="margin:0"><label>Series</label><input type="number" id="g-series" placeholder="3" min="1"></div>
+        <div class="form-row" style="margin:0"><label>Reps</label><input type="number" id="g-reps" placeholder="12" min="1"></div>
+        <div class="form-row" style="margin:0"><label>Peso kg</label><input type="number" id="g-peso" placeholder="20" min="0" step="0.5"></div>
+      </div>
+    </div>
+    <div id="g-campos-cardio" style="display:none;">
+      <div class="form-row"><label>Actividad</label><input type="text" id="g-actividad" placeholder="Ej: Correr, Bicicleta, Elíptica…"></div>
+      <div class="form-row"><label>Tiempo (minutos)</label><input type="number" id="g-tiempo" placeholder="30" min="1"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-orange" onclick="saveGym()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ropa -->
+<div class="modal-overlay" id="modal-ropa">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>👖 Nueva prenda</h2>
+    <div class="form-row"><label>Tipo de prenda</label>
+      <select id="r-tipo">
+        <option>Pantalón</option><option>Jeans</option><option>Sábana</option><option>Toalla</option>
+        <option>Camisa</option><option>Camiseta</option><option>Zapatos</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Nombre / descripción</label><input type="text" id="r-nombre" placeholder="Ej: Jeans azules, Toalla del baño…"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" style="background:#534AB7;" onclick="saveRopa()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIGURACIÓN SUPABASE =====
+const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
+// VAPID public key - reemplaza con tu clave pública generada
+const VAPID_PUBLIC_KEY = 'TU_VAPID_PUBLIC_KEY';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const EMOJIS = {'Res / ternera':'🥩','Pollo':'🍗','Cerdo':'🥓','Pescado':'🐟','Mariscos':'🦐','Embutidos':'🌭','Otro':'🍖'};
+const GYM_ICONS = {'Pecho':'🫁','Espalda':'🔙','Piernas':'🦵','Hombros':'🏋️','Bíceps':'💪','Tríceps':'💪','Abdomen':'🎯','Glúteos':'🍑','Cardio':'🏃','Otro':'⚡'};
+
+let items = [];
+let gymItems = [];
+let ropaItems = [];
+let openGroups = new Set();
+let openMenus = new Set();
+
+// ===== CARNES =====
+async function loadItems() {
+  const {data,error} = await sb.from('carnes').select('*').order('fecha');
+  if(!error) { items = data || []; render(); renderDesktop(); }
+}
+async function saveItem(item) {
+  const {data,error} = await sb.from('carnes').insert([{tipo:item.tipo,desc:item.desc,fecha:item.fecha,ubicacion:item.ubicacion}]).select();
+  if(!error && data) { items.push(data[0]); render(); renderDesktop(); }
+}
+async function deleteItem(id) {
+  await sb.from('carnes').delete().eq('id',id);
+  items = items.filter(i=>i.id!==id); render(); renderDesktop();
+}
+
+// ===== GYM =====
+async function loadGym() {
+  const {data,error} = await sb.from('gym').select('*').order('created_at');
+  if(!error) { gymItems = data || []; openGroups.clear(); renderGym(); renderDesktop(); renderGymAlerta(); }
+}
+async function saveGymItem(item) {
+  console.log('Enviando a gym:', JSON.stringify(item));
+  const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso,tiempo:item.tiempo}]).select();
+  console.log('Respuesta gym:', JSON.stringify({data,error}));
+  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); renderGymAlerta(); }
+}
+async function deleteGymItem(id) {
+  await sb.from('gym').delete().eq('id',id);
+  gymItems = gymItems.filter(i=>i.id!==id); renderGym(); renderDesktop();
+}
+
+// ===== ROPA =====
+async function loadRopa() {
+  const {data,error} = await sb.from('ropa').select('*').order('created_at');
+  if(!error) { ropaItems = data || []; renderRopa(); }
+}
+async function saveRopaItem(item) {
+  const {data,error} = await sb.from('ropa').insert([{tipo:item.tipo,nombre:item.nombre,usos:0}]).select();
+  if(!error && data) { ropaItems.push(data[0]); renderRopa(); renderDesktop(); }
+}
+async function updateUsos(id, usos) {
+  await sb.from('ropa').update({usos}).eq('id',id);
+  const item = ropaItems.find(i=>i.id===id);
+  if(item) { item.usos = usos; renderRopa(); renderDesktop(); }
+}
+async function deleteRopaItem(id) {
+  await sb.from('ropa').delete().eq('id',id);
+  ropaItems = ropaItems.filter(i=>i.id!==id); renderRopa(); renderDesktop();
+}
+
+function daysUntil(s) {
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((new Date(s+'T00:00:00') - t) / 86400000);
+}
+function statusOf(s) { const d=daysUntil(s); if(d<=3)return'danger'; if(d<=7)return'warning'; return'ok'; }
+function badgeText(s) {
+  const d=daysUntil(s);
+  if(d<0)return`Venció hace ${Math.abs(d)}d`;
+  if(d===0)return'¡Hoy!'; if(d===1)return'Mañana'; return`${d} días`;
+}
+
+function render() {
+  const alerts = items.filter(i=>statusOf(i.fecha)!=='ok').length;
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('stat-alert').textContent = alerts;
+  const list = document.getElementById('items-list');
+  if(!items.length){list.innerHTML='<div class="empty-msg">Sin carnes registradas.</div>';return;}
+  const sorted=[...items].sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha));
+  list.innerHTML=sorted.map(it=>{
+    const st=statusOf(it.fecha);
+    return`<div class="item-card ${st}">
+      <div class="icon-circle">${EMOJIS[it.tipo]||'🍖'}</div>
+      <div class="item-info">
+        <div class="item-name">${it.tipo}</div>
+        <div class="item-sub">${it.desc?it.desc+' · ':''}${it.ubicacion}</div>
+      </div>
+      <span class="badge ${st}">${badgeText(it.fecha)}</span>
+      <button class="delete-btn" onclick="delItem(${it.id})" aria-label="Eliminar">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function delItem(id){if(confirm('¿Eliminar?')){deleteItem(id);}}
+
+function formatFechaGym(dateStr) {
+  if(!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('es-MX', {weekday:'short', day:'numeric', month:'short'});
+}
+
+let mostrarTodasSesiones = false;
+
+function toggleVerMasGym() {
+  mostrarTodasSesiones = !mostrarTodasSesiones;
+  const btn = document.getElementById('gym-ver-mas-btn');
+  if(btn) btn.textContent = mostrarTodasSesiones ? 'Ver menos' : 'Ver todas las sesiones';
+  renderGym();
+}
+
+function renderGym(){
+  // Contador días sin ir - móvil
+  const hoyM = new Date(); hoyM.setHours(0,0,0,0);
+  const diasNumM = document.getElementById('gym-dias-num-mobile');
+  const veces7M = document.getElementById('gym-7dias-mobile');
+  const veces30M = document.getElementById('gym-30dias-mobile');
+  const ultimoM = document.getElementById('gym-ultimo-mobile');
+
+  if(diasNumM) {
+    if(gymItems.length > 0) {
+      const fechasG = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+      const masR = fechasG.sort((a,b)=>b.localeCompare(a))[0];
+      const diasSinIr = Math.round((hoyM - new Date(masR+'T00:00:00')) / 86400000);
+      let color;
+      if(diasSinIr <= 1){color='#5DCAA5';}
+      else if(diasSinIr <= 4){color='#FAC775';}
+      else{color='#F09595';}
+      diasNumM.textContent = diasSinIr;
+      diasNumM.style.color = color;
+
+      // Veces que fue (días únicos) en los últimos 7 y 30 días
+      const fechasUnicas = [...new Set(fechasG)];
+      const diasAtras = f => Math.round((hoyM - new Date(f+'T00:00:00')) / 86400000);
+      const veces7 = fechasUnicas.filter(f => diasAtras(f) >= 0 && diasAtras(f) < 7).length;
+      const veces30 = fechasUnicas.filter(f => diasAtras(f) >= 0 && diasAtras(f) < 30).length;
+      if(veces7M) veces7M.textContent = veces7;
+      if(veces30M) veces30M.textContent = veces30;
+
+      if(ultimoM) ultimoM.textContent = 'último entreno: ' + new Date(masR+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+    } else {
+      diasNumM.textContent = '—';
+      if(veces7M) veces7M.textContent = '—';
+      if(veces30M) veces30M.textContent = '—';
+      if(ultimoM) ultimoM.textContent = '';
+    }
+  }
+
+  const list=document.getElementById('gym-groups-list');
+  if(!gymItems.length){list.innerHTML='<div class="empty-msg">Sin ejercicios registrados.</div>';return;}
+
+  // Agrupar por día
+  const dias={};
+  gymItems.forEach(i=>{
+    const fecha = i.created_at ? i.created_at.split('T')[0] : 'Sin fecha';
+    if(!dias[fecha]) dias[fecha]=[];
+    dias[fecha].push(i);
+  });
+  const diasOrdenadosTodos = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
+  const diasOrdenados = mostrarTodasSesiones ? diasOrdenadosTodos : diasOrdenadosTodos.slice(0,3);
+
+  // Botón ver más
+  const verMasBtn = document.getElementById('gym-ver-mas-btn');
+  if(verMasBtn) {
+    verMasBtn.style.display = diasOrdenadosTodos.length > 3 ? 'block' : 'none';
+    verMasBtn.textContent = mostrarTodasSesiones ? 'Ver menos' : 'Ver todas las sesiones';
+  }
+
+  list.innerHTML=diasOrdenados.map(([fecha,exs])=>{
+    const isOpen=openGroups.has(fecha);
+    const totalSeries=exs.filter(e=>e.grupo!=='Cardio').reduce((a,e)=>a+parseInt(e.series||0),0);
+    const tiempoCardio=exs.filter(e=>e.grupo==='Cardio').reduce((a,e)=>a+parseInt(e.tiempo||0),0);
+    const subtext=[
+      exs.length+' ejercicio'+(exs.length>1?'s':''),
+      totalSeries>0?totalSeries+' series':'',
+      tiempoCardio>0?tiempoCardio+' min cardio':''
+    ].filter(Boolean).join(' · ');
+    return`<div class="group-card">
+      <div class="group-header" onclick="toggleGrupo('${fecha}')">
+        <div class="group-icon-gym">📅</div>
+        <div class="group-info">
+          <div class="group-name">${new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+          <div class="group-sub">${subtext}</div>
+        </div>
+        <span class="chevron ${isOpen?'open':''}">▾</span>
+      </div>
+      <div class="exercises ${isOpen?'open':''}">
+        ${exs.map((ex,i)=>`<div class="exercise-row">
+          <div class="ex-num">${GYM_ICONS[ex.grupo]||'⚡'}</div>
+          <div class="ex-info">
+            <div class="ex-name">${ex.maquina}</div>
+            <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+' series × '+ex.reps+' reps'}</div>
+          </div>
+          ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
+          ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
+          <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGrupo(g){if(openGroups.has(g))openGroups.delete(g);else openGroups.add(g);renderGym();}
+function delGym(id){if(confirm('¿Eliminar?')){deleteGymItem(id);}}
+
+function toggleMenu(menu){
+  const body=document.getElementById('body-'+menu);
+  const toggle=document.getElementById('toggle-'+menu);
+  const chevron=document.getElementById('chevron-'+menu);
+  const isOpen=openMenus.has(menu);
+  if(isOpen){openMenus.delete(menu);body.classList.remove('open');toggle.classList.remove('open');chevron.classList.remove('open');}
+  else{openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');}
+}
+
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));}
+function openPhotoModal(){
+  document.getElementById('modal-photo').classList.add('open');
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('photo-icon').style.display='';
+  document.getElementById('photo-hint').style.display='';
+  document.getElementById('scanning-msg').classList.remove('active');
+  document.getElementById('prefilled-msg').classList.remove('show');
+  document.getElementById('p-desc').value='';document.getElementById('p-fecha').value='';
+  document.getElementById('photo-input').value='';
+}
+function openManualModal(){document.getElementById('modal-manual').classList.add('open');document.getElementById('m-desc').value='';document.getElementById('m-fecha').value='';}
+function openGymModal(){
+  document.getElementById('modal-gym').classList.add('open');
+  document.getElementById('g-maquina').value='';document.getElementById('g-series').value='';
+  document.getElementById('g-reps').value='';document.getElementById('g-peso').value='';
+  document.getElementById('g-actividad').value='';document.getElementById('g-tiempo').value='';
+  document.getElementById('g-grupo').value='Pecho';toggleCamposGym('Pecho');
+}
+
+document.getElementById('photo-input').addEventListener('change', async function(){
+  const file=this.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const preview=document.getElementById('photo-preview');
+    preview.src=e.target.result;preview.style.display='block';
+    document.getElementById('photo-icon').style.display='none';
+    document.getElementById('photo-hint').style.display='none';
+  };reader.readAsDataURL(file);
+  document.getElementById('scanning-msg').textContent='⏳ Analizando etiqueta con IA…';
+  document.getElementById('scanning-msg').classList.add('active');
+  document.getElementById('prefilled-msg').classList.remove('show');
+  try{
+    const b64=await new Promise((res,rej)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const MAX=1024;let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        res(canvas.toDataURL('image/jpeg',0.8).split(',')[1]);
+      };img.onerror=rej;img.src=URL.createObjectURL(file);
+    });
+    const resp=await fetch('https://long-breeze-5893.duqes-j.workers.dev',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({imageData:b64,mediaType:'image/jpeg'})
+    });
+    const rawText=await resp.text();
+    console.log('Respuesta IA:',rawText);
+    let parsed;try{parsed=JSON.parse(rawText);}catch{parsed={};}
+    document.getElementById('scanning-msg').classList.remove('active');
+    const tipo=parsed.tipo||null;const desc=parsed.desc||null;const fecha=parsed.fecha||null;
+    if(tipo){const sel=document.getElementById('p-tipo');for(let o of sel.options){if(o.value===tipo){sel.value=tipo;break;}}}
+    if(desc)document.getElementById('p-desc').value=desc;
+    if(fecha)document.getElementById('p-fecha').value=fecha;
+    document.getElementById('prefilled-msg').textContent=fecha?'✅ IA detectó los datos — revisa y confirma':'⚠️ IA leyó la imagen pero no encontró la fecha — ingrésala manualmente';
+    document.getElementById('prefilled-msg').classList.add('show');
+  }catch(e){
+    document.getElementById('scanning-msg').textContent='⚠️ No se pudo leer la etiqueta. Llena los datos manualmente.';
+  }
+});
+
+function savePhoto(){
+  const fecha=document.getElementById('p-fecha').value;
+  if(!fecha){alert('Falta la fecha de vencimiento');return;}
+  saveItem({tipo:document.getElementById('p-tipo').value,desc:document.getElementById('p-desc').value.trim(),fecha,ubicacion:document.getElementById('p-ubicacion').value});
+  closeModals();
+}
+function saveManual(){
+  const fecha=document.getElementById('m-fecha').value;
+  if(!fecha){alert('Falta la fecha de vencimiento');return;}
+  saveItem({tipo:document.getElementById('m-tipo').value,desc:document.getElementById('m-desc').value.trim(),fecha,ubicacion:document.getElementById('m-ubicacion').value});
+  closeModals();
+}
+function toggleCamposGym(grupo) {
+  const esCardio = grupo === 'Cardio';
+  document.getElementById('g-campos-fuerza').style.display = esCardio ? 'none' : 'block';
+  document.getElementById('g-campos-cardio').style.display = esCardio ? 'block' : 'none';
+}
+
+function saveGym(){
+  const grupo = document.getElementById('g-grupo').value;
+  if(grupo === 'Cardio') {
+    const actividad = document.getElementById('g-actividad').value.trim();
+    const tiempo = document.getElementById('g-tiempo').value;
+    if(!actividad||!tiempo){alert('Faltan datos');return;}
+    saveGymItem({grupo, maquina:actividad, series:null, reps:null, peso:null, tiempo:parseInt(tiempo)});
+  } else {
+    const maquina=document.getElementById('g-maquina').value.trim();
+    const series=document.getElementById('g-series').value;
+    const reps=document.getElementById('g-reps').value;
+    if(!maquina||!series||!reps){alert('Faltan datos');return;}
+    const pesoVal = document.getElementById('g-peso').value;
+    saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null});
+  }
+  closeModals();
+}
+
+// Notificaciones
+async function registrarPushSubscription(mostrarAlerta = false) {
+  try {
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    
+    // Si ya está registrado localmente, no hacer nada
+    if(localStorage.getItem('push_sub_registrada') === '1' && !mostrarAlerta) return;
+    
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    
+    if(!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    
+    const {error} = await sb.from('push_subscriptions').insert([{
+      subscription: sub.toJSON(),
+      user_agent: navigator.userAgent.substring(0, 200)
+    }]);
+    
+    if(!error) {
+      localStorage.setItem('push_sub_registrada', '1');
+      if(mostrarAlerta) alert('✅ ¡Notificaciones push activadas!');
+    }
+    
+  } catch(e) {
+    console.error('Error registrando push:', e.message);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function pedirPermisoNotificaciones(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='default'){
+    const p=await Notification.requestPermission();
+    if(p==='granted'){ revisarVencimientos(); await registrarPushSubscription(); }
+  } else if(Notification.permission==='granted'){
+    revisarVencimientos();
+    await registrarPushSubscription();
+  }
+}
+function revisarVencimientos(){
+  if(Notification.permission !== 'granted') return;
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const horaActual = new Date().getHours();
+  const cacheKey = 'ultima_revision_' + hoyStr;
+  if(localStorage.getItem(cacheKey)) return;
+  if(horaActual < 8) return;
+  localStorage.setItem(cacheKey, '1');
+
+  // 🥩 Carnes - día que vence y día anterior
+  items.forEach(item => {
+    const d = daysUntil(item.fecha);
+    const nombre = item.tipo + (item.desc ? ' · ' + item.desc : '');
+    if(d === 1) new Notification('⚠️ Carne vence mañana', {body: nombre + ' vence mañana. ¡Úsala hoy!', icon:'icon-192.png'});
+    else if(d === 0) new Notification('🔴 ¡Carne vence HOY!', {body: nombre + ' vence hoy. ¡Última oportunidad!', icon:'icon-192.png'});
+  });
+
+  // 👁️ Lentes - cuando se cumplen los 30 días
+  const fechaLentes = getLentesData();
+  if(fechaLentes) {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const diasUsados = Math.round((hoy - new Date(fechaLentes+'T00:00:00')) / 86400000);
+    if(LENTES_DIAS - diasUsados === 0) new Notification('👁️ ¡Cambia tus lentes hoy!', {body:'Hoy se cumplen los 30 días de uso.', icon:'icon-192.png'});
+  }
+
+  // 💪 Gym - más de 2 días sin ir
+  if(gymItems.length > 0) {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const fechasGym = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+    const masReciente = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
+    if(masReciente) {
+      const diasSinIr = Math.round((hoy - new Date(masReciente+'T00:00:00')) / 86400000);
+      if(diasSinIr > 2) new Notification('💪 ¡Hace '+diasSinIr+' días que no vas al gym!', {body:'Tu último entreno fue el '+new Date(masReciente+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+'. ¡Anímate!', icon:'icon-192.png'});
+    }
+  }
+}
+
+setInterval(revisarVencimientos, 30 * 60 * 1000);
+function mostrarBotonNotificaciones(){
+  if(!('Notification' in window))return;
+  // Si el permiso ya está concedido pero no hay suscripción registrada
+  if(Notification.permission==='granted'){
+    // Mostrar botón para registrar dispositivo si no hay suscripción
+    const existing = localStorage.getItem('push_sub_registrada');
+    if(!existing){
+      const btn=document.createElement('div');
+      btn.className='notif-banner';
+      btn.style.cursor='pointer';
+      btn.innerHTML='<span style="font-size:22px;">🔔</span><div class="notif-banner-text"><div class="notif-banner-title">Activar notificaciones push</div><div class="notif-banner-sub">Toca para recibir alertas en este dispositivo</div></div>';
+      btn.onclick=async()=>{
+        await registrarPushSubscription(true);
+        btn.remove();
+      };
+      document.querySelector('.main-header').after(btn);
+    }
+    return;
+  }
+  const btn=document.createElement('div');
+  btn.className='notif-banner';
+  btn.innerHTML='<span style="font-size:22px;">🔔</span><div class="notif-banner-text"><div class="notif-banner-title">Activar notificaciones</div><div class="notif-banner-sub">Recibe alertas de vencimiento</div></div>';
+  btn.onclick=async()=>{await pedirPermisoNotificaciones();localStorage.setItem('push_registered','1');btn.remove();};
+  document.querySelector('.main-header').after(btn);
+}
+
+document.getElementById('main-date').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+// Cargar datos desde Supabase
+loadItems();
+loadGym();
+loadRopa();
+loadLentes();
+setTimeout(async ()=>{
+  mostrarBotonNotificaciones();
+  if(Notification.permission==='granted'){
+    revisarVencimientos();
+    await registrarPushSubscription(); // Registrar dispositivo automáticamente
+  }
+},1000);
+
+// ROPA JS
+const ROPA_EMOJIS = {'Pantalón':'👖','Jeans':'👖','Sábana':'🛏️','Toalla':'🛁','Camisa':'👔','Camiseta':'👕','Zapatos':'👟','Otro':'👗'};
+
+
+function renderRopa() {
+  const list = document.getElementById('ropa-list');
+  document.getElementById('stat-prendas').textContent = ropaItems.length;
+  document.getElementById('stat-usos-total').textContent = ropaItems.reduce((a,i)=>a+i.usos,0);
+  if(!ropaItems.length){list.innerHTML='<div class="empty-msg">Sin prendas registradas.</div>';return;}
+  list.innerHTML = ropaItems.map(item => `
+    <div class="ropa-card">
+      <div class="ropa-icon">${ROPA_EMOJIS[item.tipo]||'👗'}</div>
+      <div class="ropa-info">
+        <div class="ropa-name">${item.nombre}</div>
+        <div class="ropa-sub">${item.tipo}</div>
+      </div>
+      <div class="ropa-counter">
+        <button class="ropa-btn ropa-btn-minus" onclick="cambiarUso(${item.id},-1)">−</button>
+        <div>
+          <div class="ropa-count">${item.usos}</div>
+          <div class="ropa-count-label">usos</div>
+        </div>
+        <button class="ropa-btn ropa-btn-plus" onclick="cambiarUso(${item.id},1)">+</button>
+        <button class="delete-btn" onclick="delRopa(${item.id})" style="margin-left:4px;">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function cambiarUso(id, delta) {
+  const item = ropaItems.find(i=>i.id===id);
+  if(!item) return;
+  const newUsos = Math.max(0, item.usos + delta);
+  updateUsos(id, newUsos);
+}
+function delRopa(id){if(confirm('¿Eliminar?')){deleteRopaItem(id);}}
+function openRopaModal(){document.getElementById('modal-ropa').classList.add('open');document.getElementById('r-nombre').value='';}
+function saveRopa(){
+  const nombre=document.getElementById('r-nombre').value.trim();
+  if(!nombre){alert('Falta el nombre');return;}
+  saveRopaItem({tipo:document.getElementById('r-tipo').value,nombre});
+  closeModals();
+}
+renderRopa();
+
+// LENTES JS
+const LENTES_DIAS = 30;
+let lentesData = null;
+
+async function loadLentes() {
+  const {data,error} = await sb.from('lentes').select('*').order('created_at', {ascending:false}).limit(1);
+  if(!error && data && data.length > 0) {
+    lentesData = data[0];
+  } else {
+    lentesData = null;
+  }
+  renderLentes();
+}
+
+function getLentesData() {
+  return lentesData ? lentesData.fecha_inicio : null;
+}
+
+function renderLentes() {
+  const fechaInicio = getLentesData();
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+  if(!fechaInicio) {
+    document.getElementById('lentes-num').textContent = '—';
+    document.getElementById('lentes-status').textContent = 'Toca el botón para empezar';
+    document.getElementById('lentes-status').className = 'lentes-status ok';
+    document.getElementById('lentes-inicio').textContent = '—';
+    document.getElementById('lentes-cambio').textContent = '—';
+    document.getElementById('lentes-restantes').textContent = '—';
+    document.getElementById('lentes-arc').style.strokeDashoffset = '439.8';
+    document.getElementById('lentes-btn').textContent = '👁️ Empecé lentes hoy';
+    document.getElementById('lentes-menu-sub').textContent = 'Sin registro aún';
+    return;
+  }
+
+  const inicio = new Date(fechaInicio + 'T00:00:00');
+  const diasUsados = Math.round((hoy - inicio) / 86400000);
+  const diasRestantes = Math.max(0, LENTES_DIAS - diasUsados);
+  const fechaCambio = new Date(inicio); fechaCambio.setDate(fechaCambio.getDate() + LENTES_DIAS);
+  const progreso = Math.min(diasUsados / LENTES_DIAS, 1);
+  const circumference = 439.8;
+  const offset = circumference - (progreso * circumference);
+
+  document.getElementById('lentes-num').textContent = Math.min(diasUsados, LENTES_DIAS);
+  document.getElementById('lentes-arc').style.strokeDashoffset = offset;
+  document.getElementById('lentes-inicio').textContent = inicio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('lentes-cambio').textContent = fechaCambio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('lentes-restantes').textContent = diasRestantes + 'd';
+  const input = document.getElementById('lentes-fecha-input');
+  if(input) input.value = fechaInicio || new Date().toISOString().split('T')[0];
+
+  let color, statusText, menuSub;
+  if(diasUsados >= LENTES_DIAS) {
+    color = 'danger'; statusText = '🔴 ¡Tiempo de cambiarlos!'; menuSub = '¡Cambiar ahora!';
+    document.getElementById('lentes-arc').setAttribute('stroke','#E24B4A');
+    document.getElementById('lentes-num').style.color = '#F09595';
+  } else if(diasRestantes <= 3) {
+    color = 'warning'; statusText = `⚠️ Cambiarlos en ${diasRestantes} día${diasRestantes===1?'':'s'}`; menuSub = `Faltan ${diasRestantes} días`;
+    document.getElementById('lentes-arc').setAttribute('stroke','#EF9F27');
+    document.getElementById('lentes-num').style.color = '#FAC775';
+  } else {
+    color = 'ok'; statusText = `✅ ${diasRestantes} días restantes`; menuSub = `${diasRestantes} días restantes`;
+    document.getElementById('lentes-arc').setAttribute('stroke','#1a7ab5');
+    document.getElementById('lentes-num').style.color = '#fff';
+  }
+  document.getElementById('lentes-status').textContent = statusText;
+  document.getElementById('lentes-status').className = 'lentes-status ' + color;
+  document.getElementById('lentes-menu-sub').textContent = menuSub;
+}
+
+async function resetLentes() {
+  const input = document.getElementById('lentes-fecha-input');
+  const fecha = input ? input.value : new Date().toISOString().split('T')[0];
+  if(!fecha) { alert('Elige la fecha de inicio'); return; }
+  // Borrar registro anterior e insertar nuevo
+  await sb.from('lentes').delete().neq('id', 0);
+  const {data, error} = await sb.from('lentes').insert([{fecha_inicio: fecha}]).select();
+  if(!error) { await loadLentes(); }
+}
+
+renderLentes();
+
+// ===== DESKTOP RENDER =====
+function renderDesktop() {
+  if(window.innerWidth < 768) return;
+
+  // Carnes
+  const alerts = items.filter(i=>statusOf(i.fecha)!=='ok').length;
+  document.getElementById('d-stat-total').textContent = items.length;
+  document.getElementById('d-stat-alert').textContent = alerts;
+  const dList = document.getElementById('d-items-list');
+  if(!items.length) { dList.innerHTML='<div class="desktop-empty">Sin carnes registradas.</div>'; }
+  else {
+    const sorted=[...items].sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha));
+    dList.innerHTML = sorted.slice(0,4).map(it => {
+      const st=statusOf(it.fecha);
+      return `<div class="desktop-item">
+        <div class="desktop-item-icon">${EMOJIS[it.tipo]||'🍖'}</div>
+        <div><div class="desktop-item-name">${it.tipo}</div><div class="desktop-item-sub">${it.desc?it.desc+' · ':''}${it.ubicacion}</div></div>
+        <span class="desktop-badge ${st}">${badgeText(it.fecha)}</span>
+      </div>`;
+    }).join('');
+  }
+
+    // Gym - nuevo diseño desktop
+  const sinIrEl = document.getElementById('d-gym-sin-ir');
+  const diasNumEl = document.getElementById('d-gym-dias-num');
+  const diasLblEl = document.getElementById('d-gym-dias-lbl');
+  const ultimoEl = document.getElementById('d-gym-ultimo');
+  const fechasEl = document.getElementById('d-gym-fechas');
+
+  if(sinIrEl && diasNumEl && fechasEl) {
+    // Calcular días sin ir
+    const hoyD = new Date(); hoyD.setHours(0,0,0,0);
+    let diasSinIr = null;
+    let ultimaFecha = null;
+
+    if(gymItems.length > 0) {
+      const fechasGym = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+      const masRecienteStr = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
+      if(masRecienteStr) {
+        ultimaFecha = masRecienteStr;
+        const ultima = new Date(masRecienteStr+'T12:00:00');
+        diasSinIr = Math.round((hoyD - ultima) / 86400000);
+      }
+    }
+
+    // Color según días sin ir
+    let color, bg;
+    if(diasSinIr === null) { color='rgba(255,255,255,0.5)'; bg='rgba(255,255,255,0.05)'; }
+    else if(diasSinIr <= 1) { color='#5DCAA5'; bg='rgba(29,158,117,0.15)'; }
+    else if(diasSinIr <= 4) { color='#FAC775'; bg='rgba(239,159,39,0.15)'; }
+    else { color='#F09595'; bg='rgba(226,75,74,0.15)'; }
+
+    sinIrEl.style.background = bg;
+    diasNumEl.style.color = color;
+    diasNumEl.textContent = diasSinIr !== null ? diasSinIr : '—';
+    diasLblEl.style.color = color;
+    if(ultimaFecha) {
+      ultimoEl.textContent = 'último entreno: ' + new Date(ultimaFecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+    }
+
+    // Lista de fechas
+    if(!gymItems.length) {
+      fechasEl.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">Sin ejercicios registrados.</div>';
+    } else {
+      const diasMap = {};
+      gymItems.forEach(i=>{
+        const f = i.created_at?i.created_at.split('T')[0]:'';
+        if(f) { if(!diasMap[f]) diasMap[f]=[]; diasMap[f].push(i); }
+      });
+      const diasOrden = Object.entries(diasMap).sort((a,b)=>b[0].localeCompare(a[0]));
+      fechasEl.innerHTML = diasOrden.map(([fecha, exs])=>`
+        <div onclick="openGymDayModal('${fecha}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;background:rgba(255,255,255,0.03);" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+          <div style="width:8px;height:8px;border-radius:50%;background:#E05A14;flex-shrink:0;"></div>
+          <div style="flex:1;font-size:13px;font-weight:500;color:#fff;">${new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);">${exs.length} ejercicio${exs.length>1?'s':''}</div>
+          <div style="font-size:14px;color:rgba(255,255,255,0.3);">›</div>
+        </div>`).join('');
+    }
+  }
+
+// Ropa
+  document.getElementById('d-stat-prendas').textContent = ropaItems.length;
+  document.getElementById('d-stat-usos').textContent = ropaItems.reduce((a,i)=>a+i.usos,0);
+  const dRopa = document.getElementById('d-ropa-list');
+  if(!ropaItems.length) { dRopa.innerHTML='<div class="desktop-empty">Sin prendas registradas.</div>'; }
+  else {
+    dRopa.innerHTML = ropaItems.map(item =>
+      `<div class="desktop-item">
+        <div class="desktop-item-icon">${({'Pantalón':'👖','Jeans':'👖','Sábana':'🛏️','Toalla':'🛁','Camisa':'👔','Camiseta':'👕','Zapatos':'👟','Otro':'👗'})[item.tipo]||'👗'}</div>
+        <div style="flex:1"><div class="desktop-item-name">${item.nombre}</div><div class="desktop-item-sub">${item.tipo}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <button onclick="cambiarUso(${item.id},-1)" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:16px;display:flex;align-items:center;justify-content:center;">−</button>
+          <span style="font-size:13px;font-weight:600;color:#AFA9EC;min-width:28px;text-align:center;">${item.usos}</span>
+          <button onclick="cambiarUso(${item.id},1)" style="width:26px;height:26px;border-radius:50%;background:rgba(83,74,183,0.3);border:none;cursor:pointer;color:#AFA9EC;font-size:16px;display:flex;align-items:center;justify-content:center;">+</button>
+          <button onclick="delRopa(${item.id})" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:16px;padding:4px;margin-left:2px;" onmouseover="this.style.color='#E24B4A'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">🗑</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Lentes
+  renderLentesDesktop();
+}
+
+function renderLentesDesktop() {
+  const fechaInicio = getLentesData();
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const input = document.getElementById('d-lentes-fecha');
+
+  if(!fechaInicio) {
+    document.getElementById('d-lentes-num').textContent = '—';
+    document.getElementById('d-lentes-arc').style.strokeDashoffset = '289';
+    document.getElementById('d-lentes-inicio').textContent = '—';
+    document.getElementById('d-lentes-cambio').textContent = '—';
+    document.getElementById('d-lentes-restantes').textContent = '—';
+    document.getElementById('d-lentes-sub').textContent = 'Sin registro';
+    if(input) input.value = new Date().toISOString().split('T')[0];
+    return;
+  }
+
+  const inicio = new Date(fechaInicio + 'T00:00:00');
+  const diasUsados = Math.round((hoy - inicio) / 86400000);
+  const diasRestantes = Math.max(0, LENTES_DIAS - diasUsados);
+  const fechaCambio = new Date(inicio); fechaCambio.setDate(fechaCambio.getDate() + LENTES_DIAS);
+  const progreso = Math.min(diasUsados / LENTES_DIAS, 1);
+  const offset = 289 - (progreso * 289);
+
+  document.getElementById('d-lentes-num').textContent = Math.min(diasUsados, LENTES_DIAS);
+  document.getElementById('d-lentes-arc').style.strokeDashoffset = offset;
+  document.getElementById('d-lentes-inicio').textContent = inicio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('d-lentes-cambio').textContent = fechaCambio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  document.getElementById('d-lentes-restantes').textContent = diasRestantes + 'd';
+  document.getElementById('d-lentes-sub').textContent = diasRestantes > 0 ? diasRestantes + ' días restantes' : '¡Cambiar ahora!';
+  if(input) input.value = fechaInicio;
+
+  const arc = document.getElementById('d-lentes-arc');
+  const num = document.getElementById('d-lentes-num');
+  if(diasUsados >= LENTES_DIAS) { arc.setAttribute('stroke','#E24B4A'); num.style.color='#F09595'; }
+  else if(diasRestantes <= 3) { arc.setAttribute('stroke','#EF9F27'); num.style.color='#FAC775'; }
+  else { arc.setAttribute('stroke','#1a7ab5'); num.style.color='#fff'; }
+}
+
+async function resetLentesDesktop() {
+  const input = document.getElementById('d-lentes-fecha');
+  const fecha = input ? input.value : new Date().toISOString().split('T')[0];
+  if(!fecha) { alert('Elige la fecha de inicio'); return; }
+  await sb.from('lentes').delete().neq('id', 0);
+  await sb.from('lentes').insert([{fecha_inicio: fecha}]);
+  await loadLentes();
+}
+
+// Hookear render desktop a las funciones de carga
+const _origRender = render;
+render = function() { _origRender(); renderDesktop(); };
+const _origRenderGym = renderGym;
+renderGym = function() { _origRenderGym(); renderDesktop(); };
+const _origRenderRopa = renderRopa;
+renderRopa = function() { _origRenderRopa(); renderDesktop(); };
+const _origRenderLentes = renderLentes;
+renderLentes = function() { _origRenderLentes(); renderLentesDesktop(); };
+
+function toggleDesktopDay(dayId) {
+  const el = document.getElementById(dayId);
+  const chevron = document.getElementById(dayId + '-chevron');
+  if(!el) return;
+  const isOpen = el.dataset.open === '1';
+  el.dataset.open = isOpen ? '0' : '1';
+  el.style.maxHeight = isOpen ? '0px' : '2000px';
+  if(chevron) chevron.classList.toggle('open', !isOpen);
+}
+
+function openGymDayModal(fecha) {
+  const diasMap = {};
+  gymItems.forEach(i=>{
+    const f = i.created_at?i.created_at.split('T')[0]:'';
+    if(f){ if(!diasMap[f]) diasMap[f]=[]; diasMap[f].push(i); }
+  });
+  const exs = diasMap[fecha] || [];
+  const titulo = new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('gym-day-modal-title').textContent = titulo;
+  document.getElementById('gym-day-modal-body').innerHTML = exs.map(ex=>`
+    <div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">${GYM_ICONS[ex.grupo]||'⚡'}</div>
+      <div>
+        <div style="font-size:14px;font-weight:500;color:#fff;">${ex.maquina}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')}</div>
+      </div>
+    </div>`).join('');
+  const modal = document.getElementById('gym-day-modal');
+  modal.style.display = 'flex';
+}
+
+function closeGymDayModal() {
+  document.getElementById('gym-day-modal').style.display = 'none';
+}
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
