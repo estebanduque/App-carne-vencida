@@ -66,6 +66,8 @@
     .delete-btn:active { color: #E24B4A; }
     .repeat-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 16px; padding: 4px; flex-shrink: 0; }
     .repeat-btn:active { color: #E05A14; }
+    .edit-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 15px; padding: 4px; flex-shrink: 0; }
+    .edit-btn:active { color: #7BC8F0; }
 
     /* Botones agregar */
     .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px 4px; }
@@ -579,6 +581,7 @@ const GYM_ICONS = {'Pecho':'🫁','Espalda':'🔙','Piernas':'🦵','Hombros':'�
 
 let items = [];
 let gymItems = [];
+let gymEditId = null;
 let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
@@ -765,8 +768,11 @@ function renderGym(){
           </div>
           ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
           ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
-          <button class="repeat-btn" onclick="event.stopPropagation();repetirGym(${ex.id})" title="Registrar de nuevo hoy">🔁</button>
-          <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
+          <div style="display:flex;gap:2px;flex-shrink:0;">
+            <button class="edit-btn" onclick="event.stopPropagation();editarGym(${ex.id})" title="Editar">✏️</button>
+            <button class="repeat-btn" onclick="event.stopPropagation();repetirGym(${ex.id})" title="Registrar de nuevo hoy">🔁</button>
+            <button class="delete-btn" onclick="event.stopPropagation();delGym(${ex.id})">🗑</button>
+          </div>
         </div>`).join('')}
       </div>
     </div>`;
@@ -799,7 +805,7 @@ function toggleMenu(menu){
   else{openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');}
 }
 
-function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));}
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;}
 function openPhotoModal(){
   document.getElementById('modal-photo').classList.add('open');
   document.getElementById('photo-preview').style.display='none';
@@ -812,11 +818,31 @@ function openPhotoModal(){
 }
 function openManualModal(){document.getElementById('modal-manual').classList.add('open');document.getElementById('m-desc').value='';document.getElementById('m-fecha').value='';}
 function openGymModal(){
+  gymEditId = null;
+  document.querySelector('#modal-gym h2').textContent = '💪 Nuevo ejercicio';
   document.getElementById('modal-gym').classList.add('open');
   document.getElementById('g-maquina').value='';document.getElementById('g-series').value='';
   document.getElementById('g-reps').value='';document.getElementById('g-peso').value='';
   document.getElementById('g-actividad').value='';document.getElementById('g-tiempo').value='';
   document.getElementById('g-grupo').value='Pecho';toggleCamposGym('Pecho');
+}
+function editarGym(id){
+  const ex = gymItems.find(i=>i.id===id);
+  if(!ex) return;
+  gymEditId = id;
+  document.querySelector('#modal-gym h2').textContent = '✏️ Editar ejercicio';
+  document.getElementById('modal-gym').classList.add('open');
+  document.getElementById('g-grupo').value = ex.grupo;
+  toggleCamposGym(ex.grupo);
+  if(ex.grupo === 'Cardio'){
+    document.getElementById('g-actividad').value = ex.maquina || '';
+    document.getElementById('g-tiempo').value = ex.tiempo != null ? ex.tiempo : '';
+  } else {
+    document.getElementById('g-maquina').value = ex.maquina || '';
+    document.getElementById('g-series').value = ex.series != null ? ex.series : '';
+    document.getElementById('g-reps').value = ex.reps != null ? ex.reps : '';
+    document.getElementById('g-peso').value = ex.peso != null ? ex.peso : '';
+  }
 }
 
 document.getElementById('photo-input').addEventListener('change', async function(){
@@ -882,20 +908,38 @@ function toggleCamposGym(grupo) {
 
 function saveGym(){
   const grupo = document.getElementById('g-grupo').value;
+  let item;
   if(grupo === 'Cardio') {
     const actividad = document.getElementById('g-actividad').value.trim();
     const tiempo = document.getElementById('g-tiempo').value;
     if(!actividad||!tiempo){alert('Faltan datos');return;}
-    saveGymItem({grupo, maquina:actividad, series:null, reps:null, peso:null, tiempo:parseInt(tiempo)});
+    item = {grupo, maquina:actividad, series:null, reps:null, peso:null, tiempo:parseInt(tiempo)};
   } else {
     const maquina=document.getElementById('g-maquina').value.trim();
     const series=document.getElementById('g-series').value;
     const reps=document.getElementById('g-reps').value;
     if(!maquina||!series||!reps){alert('Faltan datos');return;}
     const pesoVal = document.getElementById('g-peso').value;
-    saveGymItem({grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null});
+    item = {grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null};
+  }
+  if(gymEditId){
+    updateGymItem(gymEditId, item);
+  } else {
+    saveGymItem(item);
   }
   closeModals();
+}
+
+async function updateGymItem(id, item){
+  const {data,error} = await sb.from('gym').update({grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso,tiempo:item.tiempo}).eq('id',id).select();
+  if(!error && data && data[0]){
+    const idx = gymItems.findIndex(i=>i.id===id);
+    if(idx!==-1) gymItems[idx] = data[0];
+    renderGym(); renderDesktop(); renderGymAlerta();
+  } else {
+    alert('No se pudo actualizar. Intenta de nuevo.');
+  }
+  gymEditId = null;
 }
 
 // Notificaciones
