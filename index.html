@@ -230,6 +230,24 @@
   .ropa-add-full:active { background: #3C3489; }
   .menu-icon.ropa { background: rgba(83,74,183,0.2); }
 
+  .menu-icon.estudio { background: rgba(214,71,143,0.2); }
+  .crono-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 14px; margin: 0 16px 12px; text-align: center; }
+  .crono-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; line-height: 1; }
+  .crono-materia { width: 100%; margin: 12px 0; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+  .crono-btns { display: flex; gap: 8px; }
+  .crono-btn { border: none; border-radius: 12px; padding: 13px 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .crono-start { flex: 1; background: #D6478F; color: #fff; }
+  .crono-start:active { background: #B23875; }
+  .crono-stop { flex: 1; background: rgba(255,255,255,0.08); color: #fff; }
+  .crono-stop:active { background: rgba(255,255,255,0.14); }
+  .crono-reset { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); padding: 13px 15px; }
+  .estudio-add-row { padding: 10px 16px 4px; }
+  .estudio-add-full { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(214,71,143,0.18); border: 1px solid rgba(214,71,143,0.35); border-radius: 14px; padding: 14px; cursor: pointer; font-size: 14px; color: #F07AB0; font-weight: 600; font-family: inherit; width: 100%; }
+  .estudio-add-full:active { background: rgba(214,71,143,0.28); }
+  .mes-header.est { background: rgba(214,71,143,0.12); border-color: rgba(214,71,143,0.28); }
+  .btn-save-pink { background: #D6478F; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
+  .btn-save-pink:active { background: #B23875; }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -388,6 +406,54 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== MENÚ ESTUDIO ===== -->
+  <div class="menu-section" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-estudio" onclick="toggleMenu('estudio')">
+      <div class="menu-icon estudio">📚</div>
+      <div class="menu-title">
+        <h2>Mi Estudio</h2>
+        <p>Horas de estudio</p>
+      </div>
+      <span class="menu-chevron" id="chevron-estudio">▾</span>
+    </button>
+    <div class="menu-body" id="body-estudio">
+      <div class="menu-inner">
+        <div style="border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,0.05);display:flex;overflow:hidden;">
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="est-racha-mobile" style="font-size:30px;font-weight:700;line-height:1;color:rgba(255,255,255,0.5);">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">días de racha</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);margin:14px 0;"></div>
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="est-semana-mobile" style="font-size:30px;font-weight:700;line-height:1;color:#F07AB0;">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">h · esta semana</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);margin:14px 0;"></div>
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="est-mes-mobile" style="font-size:30px;font-weight:700;line-height:1;color:#F07AB0;">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">h · este mes</div>
+          </div>
+        </div>
+        <div id="est-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
+        <div class="crono-box">
+          <div class="crono-display" id="crono-display">00:00:00</div>
+          <input class="crono-materia" id="crono-materia" placeholder="¿Qué estás estudiando?">
+          <div class="crono-btns">
+            <button id="crono-start-btn" class="crono-btn crono-start" onclick="estudioStartPause()">▶ Iniciar</button>
+            <button class="crono-btn crono-stop" onclick="estudioStop()">■ Terminar</button>
+            <button class="crono-btn crono-reset" onclick="estudioReset()" title="Reiniciar">↺</button>
+          </div>
+        </div>
+        <p class="inner-title">Últimas sesiones</p>
+        <div id="est-groups-list"></div>
+        <button id="est-ver-mas-btn" onclick="toggleVerMasEstudio()" style="display:none;width:100%;margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;font-size:13px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;">Ver todas las sesiones</button>
+        <div class="estudio-add-row">
+          <button class="estudio-add-full" onclick="openEstudioModal()">+ Registrar manual</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="desktop-only" id="desktop-grid">
   <div class="desktop-grid" id="desktop-grid-inner">
@@ -484,6 +550,33 @@
         </div>
       </div>
     </div>
+    <!-- Estudio -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(214,71,143,0.2);">📚</div>
+        <div><div class="desktop-card-title">Mi Estudio</div><div class="desktop-card-sub">Horas de estudio</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="desktop-stat"><div class="desktop-stat-num" id="d-est-racha" style="color:#F07AB0;">0</div><div class="desktop-stat-lbl">Racha (días)</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" id="d-est-semana" style="color:#F07AB0;">0</div><div class="desktop-stat-lbl">h · semana</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" id="d-est-mes" style="color:#F07AB0;">0</div><div class="desktop-stat-lbl">h · mes</div></div>
+        </div>
+        <div id="d-est-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.35);"></div>
+        <div style="background:rgba(214,71,143,0.08);border:1px solid rgba(214,71,143,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
+          <div id="d-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;">00:00:00</div>
+          <input id="d-crono-materia" placeholder="¿Qué estás estudiando?" style="width:100%;margin:8px 0;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;">
+          <div style="display:flex;gap:6px;">
+            <button id="d-crono-start-btn" onclick="estudioStartPause()" style="flex:1;background:#D6478F;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
+            <button onclick="estudioStop()" style="flex:1;background:rgba(255,255,255,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-family:inherit;cursor:pointer;">■ Guardar</button>
+            <button onclick="estudioReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
+          </div>
+        </div>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Sesiones recientes</p>
+        <div id="d-est-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
+        <button class="desktop-add-btn" onclick="openEstudioModal()">+ Registrar manual</button>
+      </div>
+    </div>
   </div>
 </div>
 </div>
@@ -556,6 +649,24 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-orange" onclick="saveGym()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal estudio -->
+<div class="modal-overlay" id="modal-estudio">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📚 Registrar estudio</h2>
+    <div class="form-row"><label>Materia / Tema</label><input type="text" id="e-materia" placeholder="Ej: Matemáticas, Inglés, Historia…"></div>
+    <div class="three-col">
+      <div class="form-row" style="margin:0"><label>Horas</label><input type="number" id="e-horas" placeholder="1" min="0"></div>
+      <div class="form-row" style="margin:0"><label>Minutos</label><input type="number" id="e-minutos" placeholder="30" min="0" max="59"></div>
+      <div class="form-row" style="margin:0"><label>Fecha</label><input type="date" id="e-fecha"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-pink" onclick="saveEstudioManual()">Guardar</button>
     </div>
   </div>
 </div>
@@ -860,7 +971,7 @@ function toggleMenu(menu){
   else{openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');}
 }
 
-function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;}
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;}
 function openPhotoModal(){
   document.getElementById('modal-photo').classList.add('open');
   document.getElementById('photo-preview').style.display='none';
@@ -1119,6 +1230,8 @@ loadItems();
 loadGym();
 loadRopa();
 loadLentes();
+loadEstudio();
+restaurarEstudioTimer();
 setTimeout(async ()=>{
   mostrarBotonNotificaciones();
   if(Notification.permission==='granted'){
@@ -1447,6 +1560,337 @@ function openGymDayModal(fecha) {
 function closeGymDayModal() {
   document.getElementById('gym-day-modal').style.display = 'none';
 }
+
+// ===================== MI ESTUDIO =====================
+let estudioItems = [];
+let estudioEditId = null;
+let mostrarTodasEstudio = false;
+let openMesesEstudio = new Set();
+let openGruposEstudio = new Set();
+
+// ---- Helpers de tiempo/fechas ----
+function estDiasAtras(f, hoy){ return Math.round((hoy - new Date(f+'T00:00:00')) / 86400000); }
+function fmtHoras(min){
+  min = Math.round(min || 0);
+  const h = Math.floor(min/60), m = min%60;
+  if(h===0) return m+'m';
+  if(m===0) return h+'h';
+  return h+'h '+m+'m';
+}
+function minutosEnRango(dias){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return estudioItems.reduce((a,i)=>{
+    const f = i.created_at ? i.created_at.split('T')[0] : ''; if(!f) return a;
+    const d = estDiasAtras(f, hoy);
+    return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+function minutosHoy(){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return estudioItems.reduce((a,i)=>{
+    const f = i.created_at ? i.created_at.split('T')[0] : '';
+    return (f && estDiasAtras(f, hoy)===0) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+function minutosTotal(){ return estudioItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0); }
+function calcRachaEstudio(){
+  const fechas = [...new Set(estudioItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean))];
+  if(!fechas.length) return 0;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const set = new Set(fechas.map(f=>estDiasAtras(f, hoy)));
+  let start;
+  if(set.has(0)) start = 0; else if(set.has(1)) start = 1; else return 0;
+  let n = 0, k = start;
+  while(set.has(k)){ n++; k++; }
+  return n;
+}
+
+// ---- Cronómetro (persistido en localStorage) ----
+const ESTUDIO_TIMER_KEY = 'estudio_timer';
+let estudioTimer = { running:false, base:0, startTs:null, materia:'' };
+let estudioInterval = null;
+
+function guardarTimerLS(){ try{ localStorage.setItem(ESTUDIO_TIMER_KEY, JSON.stringify(estudioTimer)); }catch(e){} }
+function segundosCrono(){
+  let s = estudioTimer.base || 0;
+  if(estudioTimer.running && estudioTimer.startTs){ s += Math.floor((Date.now() - estudioTimer.startTs)/1000); }
+  return s;
+}
+function formatCrono(seg){
+  const h = Math.floor(seg/3600), m = Math.floor((seg%3600)/60), s = seg%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function pintarCrono(){
+  const txt = formatCrono(segundosCrono());
+  ['crono-display','d-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
+  const running = estudioTimer.running;
+  ['crono-start-btn','d-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+}
+function iniciarInterval(){ if(!estudioInterval){ estudioInterval = setInterval(pintarCrono, 1000); } }
+function pararInterval(){ if(estudioInterval){ clearInterval(estudioInterval); estudioInterval = null; } }
+function leerMateriaCrono(){
+  const a = document.getElementById('crono-materia'), b = document.getElementById('d-crono-materia');
+  return (a && a.value.trim()) || (b && b.value.trim()) || estudioTimer.materia || '';
+}
+function estudioStartPause(){
+  estudioTimer.materia = leerMateriaCrono();
+  if(estudioTimer.running){
+    estudioTimer.base = segundosCrono();
+    estudioTimer.running = false; estudioTimer.startTs = null; pararInterval();
+  } else {
+    estudioTimer.running = true; estudioTimer.startTs = Date.now(); iniciarInterval();
+  }
+  guardarTimerLS(); pintarCrono();
+}
+async function estudioStop(){
+  const min = Math.round(segundosCrono()/60);
+  if(min < 1){ alert('El cronómetro aún no marca ni un minuto.'); return; }
+  const materia = leerMateriaCrono() || 'Sesión de estudio';
+  if(!confirm('¿Guardar '+fmtHoras(min)+' de "'+materia+'"?')) return;
+  pararInterval();
+  estudioTimer = { running:false, base:0, startTs:null, materia:'' }; guardarTimerLS();
+  ['crono-materia','d-crono-materia'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  pintarCrono();
+  await saveEstudioItem({ materia, minutos:min, created_at:null });
+}
+function estudioReset(){
+  if(segundosCrono() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
+  pararInterval();
+  estudioTimer = { running:false, base:0, startTs:null, materia:'' }; guardarTimerLS();
+  pintarCrono();
+}
+function restaurarEstudioTimer(){
+  try{
+    const raw = localStorage.getItem(ESTUDIO_TIMER_KEY);
+    if(raw){ estudioTimer = JSON.parse(raw) || estudioTimer; if(estudioTimer.running){ iniciarInterval(); } }
+  }catch(e){}
+  const inp = document.getElementById('crono-materia'), inp2 = document.getElementById('d-crono-materia');
+  if(estudioTimer.materia){ if(inp && !inp.value) inp.value = estudioTimer.materia; if(inp2 && !inp2.value) inp2.value = estudioTimer.materia; }
+  pintarCrono();
+}
+
+// ---- CRUD Supabase ----
+async function loadEstudio(){
+  const {data,error} = await sb.from('estudio').select('*').order('created_at');
+  if(!error){ estudioItems = data || []; renderEstudio(); }
+  else { console.log('Error cargando estudio:', JSON.stringify(error)); }
+}
+async function saveEstudioItem(item){
+  const row = { materia:item.materia, minutos:item.minutos };
+  if(item.created_at) row.created_at = item.created_at;
+  const {data,error} = await sb.from('estudio').insert([row]).select();
+  if(!error && data){
+    estudioItems.push(data[0]);
+    if(data[0].created_at) openGruposEstudio.add(data[0].created_at.split('T')[0]);
+    mostrarTodasEstudio = false;
+    renderEstudio();
+  } else {
+    console.log('Error guardando estudio:', JSON.stringify(error));
+    alert('No se pudo guardar la sesión. Intenta de nuevo.');
+  }
+}
+async function updateEstudioItem(id, item){
+  const upd = { materia:item.materia, minutos:item.minutos };
+  if(item.created_at) upd.created_at = item.created_at;
+  const {data,error} = await sb.from('estudio').update(upd).eq('id',id).select();
+  if(!error && data && data[0]){
+    const i = estudioItems.findIndex(x=>x.id===id);
+    if(i!==-1) estudioItems[i] = data[0];
+    renderEstudio();
+  } else {
+    alert('No se pudo actualizar. Intenta de nuevo.');
+  }
+  estudioEditId = null;
+}
+async function deleteEstudioItem(id){
+  await sb.from('estudio').delete().eq('id',id);
+  estudioItems = estudioItems.filter(i=>i.id!==id); renderEstudio();
+}
+function delEstudio(id){ if(confirm('¿Eliminar esta sesión?')) deleteEstudioItem(id); }
+async function repetirEstudio(id){
+  const s = estudioItems.find(i=>i.id===id); if(!s) return;
+  if(!confirm('¿Registrar otra sesión de "'+s.materia+'" ('+fmtHoras(s.minutos)+') hoy?')) return;
+  await saveEstudioItem({ materia:s.materia, minutos:s.minutos, created_at:null });
+}
+
+// ---- Modal manual ----
+function openEstudioModal(){
+  estudioEditId = null;
+  document.querySelector('#modal-estudio h2').textContent = '📚 Registrar estudio';
+  document.getElementById('modal-estudio').classList.add('open');
+  document.getElementById('e-materia').value = '';
+  document.getElementById('e-horas').value = '';
+  document.getElementById('e-minutos').value = '';
+  document.getElementById('e-fecha').value = new Date().toISOString().split('T')[0];
+}
+function editarEstudio(id){
+  const s = estudioItems.find(i=>i.id===id); if(!s) return;
+  estudioEditId = id;
+  document.querySelector('#modal-estudio h2').textContent = '✏️ Editar sesión';
+  document.getElementById('modal-estudio').classList.add('open');
+  document.getElementById('e-materia').value = s.materia || '';
+  const min = parseInt(s.minutos)||0;
+  document.getElementById('e-horas').value = Math.floor(min/60) || '';
+  document.getElementById('e-minutos').value = (min%60) || '';
+  document.getElementById('e-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+}
+function saveEstudioManual(){
+  const materia = document.getElementById('e-materia').value.trim();
+  const h = parseInt(document.getElementById('e-horas').value)||0;
+  const m = parseInt(document.getElementById('e-minutos').value)||0;
+  const fecha = document.getElementById('e-fecha').value;
+  const minutos = h*60 + m;
+  if(!materia){ alert('Escribe la materia o tema.'); return; }
+  if(minutos < 1){ alert('Indica cuánto tiempo estudiaste.'); return; }
+  const hoyStr = new Date().toISOString().split('T')[0];
+  if(estudioEditId){
+    const created_at = fecha ? fecha+'T12:00:00' : null;
+    updateEstudioItem(estudioEditId, { materia, minutos, created_at });
+  } else {
+    const created_at = (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
+    saveEstudioItem({ materia, minutos, created_at });
+  }
+  closeModals();
+}
+
+// ---- Toggles ----
+function toggleVerMasEstudio(){
+  mostrarTodasEstudio = !mostrarTodasEstudio;
+  if(mostrarTodasEstudio){
+    const fechas = [...new Set(estudioItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+    openMesesEstudio.clear();
+    if(fechas.length) openMesesEstudio.add(fechas[0].slice(0,7));
+  }
+  renderEstudio();
+}
+function toggleMesEstudio(m){ if(openMesesEstudio.has(m)) openMesesEstudio.delete(m); else openMesesEstudio.add(m); renderEstudio(); }
+function toggleGrupoEstudio(f){ if(openGruposEstudio.has(f)) openGruposEstudio.delete(f); else openGruposEstudio.add(f); renderEstudio(); }
+
+// ---- Render móvil ----
+function renderEstudio(){
+  const racha = calcRachaEstudio();
+  const minSem = minutosEnRango(7), minMes = minutosEnRango(30), minHoy = minutosHoy(), minTot = minutosTotal();
+
+  const rEl = document.getElementById('est-racha-mobile');
+  const sEl = document.getElementById('est-semana-mobile');
+  const mEl = document.getElementById('est-mes-mobile');
+  const resEl = document.getElementById('est-resumen-mobile');
+  if(rEl){
+    if(estudioItems.length){
+      rEl.textContent = racha;
+      let c; if(racha===0) c='rgba(255,255,255,0.5)'; else if(racha<3) c='#FAC775'; else c='#5DCAA5';
+      rEl.style.color = c;
+      if(sEl) sEl.textContent = (minSem/60).toFixed(1);
+      if(mEl) mEl.textContent = (minMes/60).toFixed(1);
+      if(resEl) resEl.textContent = 'hoy: '+fmtHoras(minHoy)+'  ·  total: '+fmtHoras(minTot);
+    } else {
+      rEl.textContent = '—';
+      if(sEl) sEl.textContent = '—';
+      if(mEl) mEl.textContent = '—';
+      if(resEl) resEl.textContent = '';
+    }
+  }
+
+  const list = document.getElementById('est-groups-list');
+  if(list){
+    if(!estudioItems.length){
+      list.innerHTML = '<div class="empty-msg">Sin sesiones registradas.</div>';
+    } else {
+      const dias = {};
+      estudioItems.forEach(i=>{ const f = i.created_at ? i.created_at.split('T')[0] : 'Sin fecha'; (dias[f] = dias[f]||[]).push(i); });
+      const diasTodos = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
+      const btn = document.getElementById('est-ver-mas-btn');
+      if(btn){ btn.style.display = diasTodos.length>3 ? 'block' : 'none'; btn.textContent = mostrarTodasEstudio ? 'Ver menos' : 'Ver todas las sesiones'; }
+
+      if(mostrarTodasEstudio){
+        const meses = {};
+        diasTodos.forEach(([f,ss])=>{ const k = f.length>=7 ? f.slice(0,7) : 'Sin fecha'; (meses[k] = meses[k]||[]).push([f,ss]); });
+        const mo = Object.entries(meses).sort((a,b)=>b[0].localeCompare(a[0]));
+        list.innerHTML = mo.map(([k,dm])=>{
+          const isOpen = openMesesEstudio.has(k);
+          const n = dm.length;
+          let nombre;
+          if(k==='Sin fecha'){ nombre = 'Sin fecha'; }
+          else { const mm = new Date(k+'-01T12:00:00').toLocaleDateString('es-MX',{month:'long'}); nombre = mm.charAt(0).toUpperCase()+mm.slice(1)+' '+k.slice(0,4); }
+          return `<div class="mes-group">
+            <div class="mes-header est" onclick="toggleMesEstudio('${k}')">
+              <div class="mes-info"><div class="mes-name">${nombre}</div><div class="mes-sub">${n} día${n>1?'s':''} con estudio</div></div>
+              <span class="chevron ${isOpen?'open':''}">▾</span>
+            </div>
+            <div class="mes-body ${isOpen?'open':''}">${dm.map(([f,ss])=>renderCardDiaEstudio(f,ss)).join('')}</div>
+          </div>`;
+        }).join('');
+      } else {
+        list.innerHTML = diasTodos.slice(0,3).map(([f,ss])=>renderCardDiaEstudio(f,ss)).join('');
+      }
+    }
+  }
+  renderEstudioDesktop();
+}
+
+function renderCardDiaEstudio(fecha, sesiones){
+  const isOpen = openGruposEstudio.has(fecha);
+  const totMin = sesiones.reduce((a,s)=>a+(parseInt(s.minutos)||0), 0);
+  const sub = sesiones.length+' sesión'+(sesiones.length>1?'es':'')+' · '+fmtHoras(totMin);
+  const label = fecha==='Sin fecha' ? 'Sin fecha' : new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  return `<div class="group-card">
+    <div class="group-header" onclick="toggleGrupoEstudio('${fecha}')">
+      <div class="group-icon-gym" style="background:rgba(214,71,143,0.2);">📚</div>
+      <div class="group-info"><div class="group-name">${label}</div><div class="group-sub">${sub}</div></div>
+      <span class="chevron ${isOpen?'open':''}">▾</span>
+    </div>
+    <div class="exercises ${isOpen?'open':''}">
+      ${sesiones.map(s=>`<div class="exercise-row">
+        <div class="ex-num">📖</div>
+        <div class="ex-info">
+          <div class="ex-name">${s.materia || 'Sesión de estudio'}</div>
+          <div class="ex-detail">${fmtHoras(s.minutos)}</div>
+        </div>
+        <div style="display:flex;gap:2px;flex-shrink:0;">
+          <button class="edit-btn" onclick="event.stopPropagation();editarEstudio(${s.id})" title="Editar">✏️</button>
+          <button class="repeat-btn" onclick="event.stopPropagation();repetirEstudio(${s.id})" title="Registrar otra vez hoy">🔁</button>
+          <button class="delete-btn" onclick="event.stopPropagation();delEstudio(${s.id})">🗑</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ---- Render escritorio ----
+function renderEstudioDesktop(){
+  if(window.innerWidth < 768) return;
+  const rEl = document.getElementById('d-est-racha'); if(!rEl) return;
+  const racha = calcRachaEstudio();
+  rEl.textContent = racha;
+  let c; if(racha===0) c='rgba(255,255,255,0.5)'; else if(racha<3) c='#FAC775'; else c='#5DCAA5';
+  rEl.style.color = c;
+  document.getElementById('d-est-semana').textContent = (minutosEnRango(7)/60).toFixed(1);
+  document.getElementById('d-est-mes').textContent = (minutosEnRango(30)/60).toFixed(1);
+  const resEl = document.getElementById('d-est-resumen');
+  if(resEl) resEl.textContent = estudioItems.length ? ('hoy: '+fmtHoras(minutosHoy())+'  ·  total: '+fmtHoras(minutosTotal())) : '';
+
+  const list = document.getElementById('d-est-list'); if(!list) return;
+  if(!estudioItems.length){
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:rgba(255,255,255,0.3);font-size:13px;">Sin sesiones registradas.</div>';
+    return;
+  }
+  const dias = {};
+  estudioItems.forEach(i=>{ const f = i.created_at ? i.created_at.split('T')[0] : ''; if(f)(dias[f] = dias[f]||[]).push(i); });
+  const orden = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
+  list.innerHTML = orden.map(([f,ss])=>{
+    const tot = ss.reduce((a,s)=>a+(parseInt(s.minutos)||0), 0);
+    const materias = [...new Set(ss.map(s=>s.materia).filter(Boolean))].join(', ');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);">
+      <div style="width:8px;height:8px;border-radius:50%;background:#D6478F;flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#fff;">${new Date(f+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${materias || '—'}</div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#F07AB0;flex-shrink:0;">${fmtHoras(tot)}</div>
+    </div>`;
+  }).join('');
+}
+
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
