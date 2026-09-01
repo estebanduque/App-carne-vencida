@@ -231,9 +231,9 @@
   .menu-icon.ropa { background: rgba(83,74,183,0.2); }
 
   .menu-icon.estudio { background: rgba(214,71,143,0.2); }
-  .crono-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 14px; margin: 0 16px 12px; text-align: center; }
-  .crono-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; line-height: 1; }
-  .crono-materia { width: 100%; margin: 12px 0; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+  .crono-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 14px; margin: 0 16px 14px; text-align: center; }
+  .crono-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; line-height: 1; margin-bottom: 12px; }
+  .crono-sub { width: 100%; margin: 10px 0; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
   .crono-btns { display: flex; gap: 8px; }
   .crono-btn { border: none; border-radius: 12px; padding: 13px 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .crono-start { flex: 1; background: #D6478F; color: #fff; }
@@ -241,10 +241,30 @@
   .crono-stop { flex: 1; background: rgba(255,255,255,0.08); color: #fff; }
   .crono-stop:active { background: rgba(255,255,255,0.14); }
   .crono-reset { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); padding: 13px 15px; }
+  .tema-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tema-chip { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 9px 6px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.15s; }
+  .tema-area { margin: 0 16px 10px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+  .tema-head { padding: 13px 14px; display: flex; align-items: center; gap: 11px; cursor: pointer; user-select: none; }
+  .tema-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .tema-name { flex: 1; font-size: 15px; font-weight: 600; color: #fff; }
+  .tema-total { font-size: 14px; font-weight: 700; }
+  .tema-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: rgba(0,0,0,0.12); }
+  .tema-body.open { max-height: 3000px; }
+  .sub-row { padding: 11px 14px 11px 18px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); cursor: pointer; }
+  .sub-name { flex: 1; font-size: 14px; color: #fff; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub-hrs { font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .sub-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 4px; flex-shrink: 0; }
+  .sub-empty { padding: 14px 16px; font-size: 13px; color: rgba(255,255,255,0.3); text-align: center; }
+  .ses-list { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; background: rgba(0,0,0,0.18); }
+  .ses-list.open { max-height: 800px; }
+  .ses-row { padding: 8px 14px 8px 26px; display: flex; align-items: center; gap: 8px; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .ses-fecha { flex: 1; color: rgba(255,255,255,0.5); }
+  .ses-dur { color: rgba(255,255,255,0.8); font-weight: 500; margin-right: 4px; }
+  .tema-add { width: calc(100% - 20px); margin: 8px 10px 10px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.18); border-radius: 10px; padding: 9px; font-size: 12px; color: rgba(255,255,255,0.5); font-family: inherit; cursor: pointer; }
+  .tema-add:active { background: rgba(255,255,255,0.09); }
   .estudio-add-row { padding: 10px 16px 4px; }
   .estudio-add-full { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(214,71,143,0.18); border: 1px solid rgba(214,71,143,0.35); border-radius: 14px; padding: 14px; cursor: pointer; font-size: 14px; color: #F07AB0; font-weight: 600; font-family: inherit; width: 100%; }
   .estudio-add-full:active { background: rgba(214,71,143,0.28); }
-  .mes-header.est { background: rgba(214,71,143,0.12); border-color: rgba(214,71,143,0.28); }
   .btn-save-pink { background: #D6478F; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
   .btn-save-pink:active { background: #B23875; }
 
@@ -413,7 +433,7 @@
       <div class="menu-icon estudio">📚</div>
       <div class="menu-title">
         <h2>Mi Estudio</h2>
-        <p>Horas de estudio</p>
+        <p>Horas por tema</p>
       </div>
       <span class="menu-chevron" id="chevron-estudio">▾</span>
     </button>
@@ -438,16 +458,17 @@
         <div id="est-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
         <div class="crono-box">
           <div class="crono-display" id="crono-display">00:00:00</div>
-          <input class="crono-materia" id="crono-materia" placeholder="¿Qué estás estudiando?">
+          <div class="tema-chips" id="crono-chips"></div>
+          <input class="crono-sub" id="crono-subtema" placeholder="Subtema (ej: Contrats, Responsabilité…)" list="subtemas-list">
+          <datalist id="subtemas-list"></datalist>
           <div class="crono-btns">
             <button id="crono-start-btn" class="crono-btn crono-start" onclick="estudioStartPause()">▶ Iniciar</button>
             <button class="crono-btn crono-stop" onclick="estudioStop()">■ Terminar</button>
             <button class="crono-btn crono-reset" onclick="estudioReset()" title="Reiniciar">↺</button>
           </div>
         </div>
-        <p class="inner-title">Últimas sesiones</p>
-        <div id="est-groups-list"></div>
-        <button id="est-ver-mas-btn" onclick="toggleVerMasEstudio()" style="display:none;width:100%;margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;font-size:13px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;">Ver todas las sesiones</button>
+        <p class="inner-title">Por tema</p>
+        <div id="est-temas-list"></div>
         <div class="estudio-add-row">
           <button class="estudio-add-full" onclick="openEstudioModal()">+ Registrar manual</button>
         </div>
@@ -554,7 +575,7 @@
     <div class="desktop-card">
       <div class="desktop-card-header">
         <div class="desktop-card-icon" style="background:rgba(214,71,143,0.2);">📚</div>
-        <div><div class="desktop-card-title">Mi Estudio</div><div class="desktop-card-sub">Horas de estudio</div></div>
+        <div><div class="desktop-card-title">Mi Estudio</div><div class="desktop-card-sub">Horas por tema</div></div>
       </div>
       <div class="desktop-card-body">
         <div class="desktop-stats" style="grid-template-columns:1fr 1fr 1fr;">
@@ -564,16 +585,17 @@
         </div>
         <div id="d-est-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.35);"></div>
         <div style="background:rgba(214,71,143,0.08);border:1px solid rgba(214,71,143,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
-          <div id="d-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;">00:00:00</div>
-          <input id="d-crono-materia" placeholder="¿Qué estás estudiando?" style="width:100%;margin:8px 0;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;">
+          <div id="d-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;margin-bottom:8px;">00:00:00</div>
+          <div class="tema-chips" id="d-crono-chips" style="margin-bottom:8px;"></div>
+          <input id="d-crono-subtema" placeholder="Subtema…" list="subtemas-list" style="width:100%;margin-bottom:8px;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;">
           <div style="display:flex;gap:6px;">
             <button id="d-crono-start-btn" onclick="estudioStartPause()" style="flex:1;background:#D6478F;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
             <button onclick="estudioStop()" style="flex:1;background:rgba(255,255,255,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-family:inherit;cursor:pointer;">■ Guardar</button>
             <button onclick="estudioReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
-        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Sesiones recientes</p>
-        <div id="d-est-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por tema</p>
+        <div id="d-est-temas-list" style="max-height:320px;overflow-y:auto;"></div>
         <button class="desktop-add-btn" onclick="openEstudioModal()">+ Registrar manual</button>
       </div>
     </div>
@@ -658,7 +680,13 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>📚 Registrar estudio</h2>
-    <div class="form-row"><label>Materia / Tema</label><input type="text" id="e-materia" placeholder="Ej: Matemáticas, Inglés, Historia…"></div>
+    <div class="form-row"><label>Tema</label>
+      <div class="tema-chips" id="modal-chips"></div>
+    </div>
+    <div class="form-row"><label>Subtema</label>
+      <input type="text" id="e-subtema" placeholder="Ej: Contrats, Responsabilité…" list="subtemas-list-modal">
+      <datalist id="subtemas-list-modal"></datalist>
+    </div>
     <div class="three-col">
       <div class="form-row" style="margin:0"><label>Horas</label><input type="number" id="e-horas" placeholder="1" min="0"></div>
       <div class="form-row" style="margin:0"><label>Minutos</label><input type="number" id="e-minutos" placeholder="30" min="0" max="59"></div>
@@ -1230,8 +1258,6 @@ loadItems();
 loadGym();
 loadRopa();
 loadLentes();
-loadEstudio();
-restaurarEstudioTimer();
 setTimeout(async ()=>{
   mostrarBotonNotificaciones();
   if(Notification.permission==='granted'){
@@ -1561,12 +1587,20 @@ function closeGymDayModal() {
   document.getElementById('gym-day-modal').style.display = 'none';
 }
 
-// ===================== MI ESTUDIO =====================
+// ===================== MI ESTUDIO (por temas) =====================
+const TEMAS = [
+  { nombre:'Droit civil',      color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)' },
+  { nombre:'Droit commercial', color:'#F0A92E', bg:'rgba(240,169,46,0.15)',  bd:'rgba(240,169,46,0.35)' },
+  { nombre:'Procédures',       color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
+  { nombre:'Déontologie',      color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)' },
+];
+function temaInfo(nombre){ return TEMAS.find(t=>t.nombre===nombre) || { nombre:nombre||'—', color:'#F07AB0', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' }; }
+
 let estudioItems = [];
 let estudioEditId = null;
-let mostrarTodasEstudio = false;
-let openMesesEstudio = new Set();
-let openGruposEstudio = new Set();
+let modalTema = '';
+let openTemas = new Set();
+let openSubtemas = new Set();
 
 // ---- Helpers de tiempo/fechas ----
 function estDiasAtras(f, hoy){ return Math.round((hoy - new Date(f+'T00:00:00')) / 86400000); }
@@ -1604,10 +1638,42 @@ function calcRachaEstudio(){
   while(set.has(k)){ n++; k++; }
   return n;
 }
+function statsTema(nombre){
+  const items = estudioItems.filter(i=>i.tema===nombre);
+  const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
+  const subs = {};
+  items.forEach(i=>{
+    const s = i.subtema || 'General';
+    if(!subs[s]) subs[s] = { min:0, count:0, sesiones:[] };
+    subs[s].min += parseInt(i.minutos)||0;
+    subs[s].count++;
+    subs[s].sesiones.push(i);
+  });
+  return { total, subs };
+}
+function subtemasDe(tema){ return [...new Set(estudioItems.filter(i=>i.tema===tema && i.subtema).map(i=>i.subtema))].sort(); }
+
+// ---- Chips de tema y datalists ----
+function chipsHTML(activo, onclickName){
+  return TEMAS.map(t=>{
+    const act = t.nombre === activo;
+    const style = act ? `background:${t.bg};border-color:${t.color};color:#fff;` : '';
+    return `<button type="button" class="tema-chip" style="${style}" onclick="${onclickName}('${t.nombre}')">${t.nombre}</button>`;
+  }).join('');
+}
+function renderCronoChips(){
+  const html = chipsHTML(estudioTimer.tema, 'seleccionarTemaCrono');
+  ['crono-chips','d-crono-chips'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
+}
+function renderModalChips(){ const el=document.getElementById('modal-chips'); if(el) el.innerHTML = chipsHTML(modalTema, 'seleccionarTemaModal'); }
+function actualizarDatalist(id, tema){
+  const dl = document.getElementById(id); if(!dl) return;
+  dl.innerHTML = subtemasDe(tema).map(s=>`<option value="${(s||'').replace(/"/g,'&quot;')}">`).join('');
+}
 
 // ---- Cronómetro (persistido en localStorage) ----
 const ESTUDIO_TIMER_KEY = 'estudio_timer';
-let estudioTimer = { running:false, base:0, startTs:null, materia:'' };
+let estudioTimer = { running:false, base:0, startTs:null, tema:'', subtema:'' };
 let estudioInterval = null;
 
 function guardarTimerLS(){ try{ localStorage.setItem(ESTUDIO_TIMER_KEY, JSON.stringify(estudioTimer)); }catch(e){} }
@@ -1628,44 +1694,57 @@ function pintarCrono(){
 }
 function iniciarInterval(){ if(!estudioInterval){ estudioInterval = setInterval(pintarCrono, 1000); } }
 function pararInterval(){ if(estudioInterval){ clearInterval(estudioInterval); estudioInterval = null; } }
-function leerMateriaCrono(){
-  const a = document.getElementById('crono-materia'), b = document.getElementById('d-crono-materia');
-  return (a && a.value.trim()) || (b && b.value.trim()) || estudioTimer.materia || '';
+function leerSubtemaCrono(){
+  const a = document.getElementById('crono-subtema'), b = document.getElementById('d-crono-subtema');
+  return (a && a.value.trim()) || (b && b.value.trim()) || estudioTimer.subtema || '';
+}
+function seleccionarTemaCrono(nombre){
+  estudioTimer.tema = nombre; guardarTimerLS();
+  renderCronoChips();
+  actualizarDatalist('subtemas-list', nombre);
 }
 function estudioStartPause(){
-  estudioTimer.materia = leerMateriaCrono();
-  if(estudioTimer.running){
+  if(!estudioTimer.running){
+    if(!estudioTimer.tema){ alert('Elige un tema antes de iniciar el cronómetro.'); return; }
+    estudioTimer.subtema = leerSubtemaCrono();
+    estudioTimer.running = true; estudioTimer.startTs = Date.now(); iniciarInterval();
+  } else {
+    estudioTimer.subtema = leerSubtemaCrono();
     estudioTimer.base = segundosCrono();
     estudioTimer.running = false; estudioTimer.startTs = null; pararInterval();
-  } else {
-    estudioTimer.running = true; estudioTimer.startTs = Date.now(); iniciarInterval();
   }
   guardarTimerLS(); pintarCrono();
 }
 async function estudioStop(){
   const min = Math.round(segundosCrono()/60);
   if(min < 1){ alert('El cronómetro aún no marca ni un minuto.'); return; }
-  const materia = leerMateriaCrono() || 'Sesión de estudio';
-  if(!confirm('¿Guardar '+fmtHoras(min)+' de "'+materia+'"?')) return;
+  if(!estudioTimer.tema){ alert('Elige un tema.'); return; }
+  const tema = estudioTimer.tema;
+  const subtema = leerSubtemaCrono() || 'General';
+  if(!confirm('¿Guardar '+fmtHoras(min)+' en '+tema+' › '+subtema+'?')) return;
   pararInterval();
-  estudioTimer = { running:false, base:0, startTs:null, materia:'' }; guardarTimerLS();
-  ['crono-materia','d-crono-materia'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  estudioTimer = { running:false, base:0, startTs:null, tema:tema, subtema:'' }; guardarTimerLS();
+  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   pintarCrono();
-  await saveEstudioItem({ materia, minutos:min, created_at:null });
+  await saveEstudioItem({ tema, subtema, minutos:min, created_at:null });
 }
 function estudioReset(){
   if(segundosCrono() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
   pararInterval();
-  estudioTimer = { running:false, base:0, startTs:null, materia:'' }; guardarTimerLS();
+  const tema = estudioTimer.tema;
+  estudioTimer = { running:false, base:0, startTs:null, tema:tema, subtema:'' }; guardarTimerLS();
+  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   pintarCrono();
 }
 function restaurarEstudioTimer(){
   try{
     const raw = localStorage.getItem(ESTUDIO_TIMER_KEY);
-    if(raw){ estudioTimer = JSON.parse(raw) || estudioTimer; if(estudioTimer.running){ iniciarInterval(); } }
+    if(raw){ const t = JSON.parse(raw); if(t) estudioTimer = { running:!!t.running, base:t.base||0, startTs:t.startTs||null, tema:t.tema||'', subtema:t.subtema||'' }; }
+    if(estudioTimer.running) iniciarInterval();
   }catch(e){}
-  const inp = document.getElementById('crono-materia'), inp2 = document.getElementById('d-crono-materia');
-  if(estudioTimer.materia){ if(inp && !inp.value) inp.value = estudioTimer.materia; if(inp2 && !inp2.value) inp2.value = estudioTimer.materia; }
+  renderCronoChips();
+  if(estudioTimer.subtema){ ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el && !el.value) el.value = estudioTimer.subtema; }); }
+  if(estudioTimer.tema) actualizarDatalist('subtemas-list', estudioTimer.tema);
   pintarCrono();
 }
 
@@ -1676,21 +1755,20 @@ async function loadEstudio(){
   else { console.log('Error cargando estudio:', JSON.stringify(error)); }
 }
 async function saveEstudioItem(item){
-  const row = { materia:item.materia, minutos:item.minutos };
+  const row = { tema:item.tema, subtema:item.subtema, minutos:item.minutos };
   if(item.created_at) row.created_at = item.created_at;
   const {data,error} = await sb.from('estudio').insert([row]).select();
   if(!error && data){
     estudioItems.push(data[0]);
-    if(data[0].created_at) openGruposEstudio.add(data[0].created_at.split('T')[0]);
-    mostrarTodasEstudio = false;
+    openTemas.add(item.tema);
     renderEstudio();
   } else {
     console.log('Error guardando estudio:', JSON.stringify(error));
-    alert('No se pudo guardar la sesión. Intenta de nuevo.');
+    alert('No se pudo guardar la sesión. Revisa que la tabla tenga las columnas tema y subtema.');
   }
 }
 async function updateEstudioItem(id, item){
-  const upd = { materia:item.materia, minutos:item.minutos };
+  const upd = { tema:item.tema, subtema:item.subtema, minutos:item.minutos };
   if(item.created_at) upd.created_at = item.created_at;
   const {data,error} = await sb.from('estudio').update(upd).eq('id',id).select();
   if(!error && data && data[0]){
@@ -1707,66 +1785,110 @@ async function deleteEstudioItem(id){
   estudioItems = estudioItems.filter(i=>i.id!==id); renderEstudio();
 }
 function delEstudio(id){ if(confirm('¿Eliminar esta sesión?')) deleteEstudioItem(id); }
-async function repetirEstudio(id){
-  const s = estudioItems.find(i=>i.id===id); if(!s) return;
-  if(!confirm('¿Registrar otra sesión de "'+s.materia+'" ('+fmtHoras(s.minutos)+') hoy?')) return;
-  await saveEstudioItem({ materia:s.materia, minutos:s.minutos, created_at:null });
-}
 
 // ---- Modal manual ----
-function openEstudioModal(){
+function openEstudioModal(temaPreset, subtemaPreset){
   estudioEditId = null;
   document.querySelector('#modal-estudio h2').textContent = '📚 Registrar estudio';
   document.getElementById('modal-estudio').classList.add('open');
-  document.getElementById('e-materia').value = '';
+  modalTema = temaPreset || estudioTimer.tema || TEMAS[0].nombre;
+  renderModalChips();
+  actualizarDatalist('subtemas-list-modal', modalTema);
+  document.getElementById('e-subtema').value = subtemaPreset || '';
   document.getElementById('e-horas').value = '';
   document.getElementById('e-minutos').value = '';
   document.getElementById('e-fecha').value = new Date().toISOString().split('T')[0];
+}
+function registrarEnSubtema(tema, subtema){ openEstudioModal(tema, subtema==='General'?'':subtema); }
+function seleccionarTemaModal(nombre){
+  modalTema = nombre; renderModalChips();
+  actualizarDatalist('subtemas-list-modal', nombre);
 }
 function editarEstudio(id){
   const s = estudioItems.find(i=>i.id===id); if(!s) return;
   estudioEditId = id;
   document.querySelector('#modal-estudio h2').textContent = '✏️ Editar sesión';
   document.getElementById('modal-estudio').classList.add('open');
-  document.getElementById('e-materia').value = s.materia || '';
+  modalTema = s.tema || TEMAS[0].nombre;
+  renderModalChips();
+  actualizarDatalist('subtemas-list-modal', modalTema);
+  document.getElementById('e-subtema').value = (s.subtema && s.subtema!=='General') ? s.subtema : '';
   const min = parseInt(s.minutos)||0;
   document.getElementById('e-horas').value = Math.floor(min/60) || '';
   document.getElementById('e-minutos').value = (min%60) || '';
   document.getElementById('e-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
 }
 function saveEstudioManual(){
-  const materia = document.getElementById('e-materia').value.trim();
+  const tema = modalTema;
+  const subtema = document.getElementById('e-subtema').value.trim() || 'General';
   const h = parseInt(document.getElementById('e-horas').value)||0;
   const m = parseInt(document.getElementById('e-minutos').value)||0;
   const fecha = document.getElementById('e-fecha').value;
   const minutos = h*60 + m;
-  if(!materia){ alert('Escribe la materia o tema.'); return; }
+  if(!tema){ alert('Elige un tema.'); return; }
   if(minutos < 1){ alert('Indica cuánto tiempo estudiaste.'); return; }
   const hoyStr = new Date().toISOString().split('T')[0];
   if(estudioEditId){
     const created_at = fecha ? fecha+'T12:00:00' : null;
-    updateEstudioItem(estudioEditId, { materia, minutos, created_at });
+    updateEstudioItem(estudioEditId, { tema, subtema, minutos, created_at });
   } else {
     const created_at = (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
-    saveEstudioItem({ materia, minutos, created_at });
+    saveEstudioItem({ tema, subtema, minutos, created_at });
   }
   closeModals();
 }
 
 // ---- Toggles ----
-function toggleVerMasEstudio(){
-  mostrarTodasEstudio = !mostrarTodasEstudio;
-  if(mostrarTodasEstudio){
-    const fechas = [...new Set(estudioItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-    openMesesEstudio.clear();
-    if(fechas.length) openMesesEstudio.add(fechas[0].slice(0,7));
-  }
-  renderEstudio();
-}
-function toggleMesEstudio(m){ if(openMesesEstudio.has(m)) openMesesEstudio.delete(m); else openMesesEstudio.add(m); renderEstudio(); }
-function toggleGrupoEstudio(f){ if(openGruposEstudio.has(f)) openGruposEstudio.delete(f); else openGruposEstudio.add(f); renderEstudio(); }
+function toggleTema(n){ if(openTemas.has(n)) openTemas.delete(n); else openTemas.add(n); renderEstudio(); }
+function toggleSubtema(t, s){ const k = t+'||'+s; if(openSubtemas.has(k)) openSubtemas.delete(k); else openSubtemas.add(k); renderEstudio(); }
 
-// ---- Render móvil ----
+// ---- Render de las 4 áreas de tema ----
+function renderTemasEn(containerId){
+  const cont = document.getElementById(containerId); if(!cont) return;
+  cont.innerHTML = TEMAS.map(t=>{
+    const st = statsTema(t.nombre);
+    const isOpen = openTemas.has(t.nombre);
+    const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
+    const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
+      const subKey = t.nombre+'||'+sname;
+      const subOpen = openSubtemas.has(subKey);
+      const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
+        const fecha = se.created_at ? new Date(se.created_at.split('T')[0]+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+        return `<div class="ses-row">
+          <span class="ses-fecha">${fecha}</span>
+          <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+          <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
+          <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
+        </div>`;
+      }).join('');
+      const sn = sname.replace(/'/g,"\\'");
+      return `<div>
+        <div class="sub-row" onclick="toggleSubtema('${t.nombre}','${sn}')">
+          <span class="sub-name">${sname}</span>
+          <span class="sub-hrs" style="color:${t.color};">${fmtHoras(sd.min)}</span>
+          <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${t.nombre}','${sn}')" title="Registrar aquí">➕</button>
+          <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
+        </div>
+        <div class="ses-list ${subOpen?'open':''}">${sesionesHTML}</div>
+      </div>`;
+    }).join('') : '<div class="sub-empty">Sin sesiones todavía</div>';
+
+    return `<div class="tema-area" style="border-color:${t.bd};">
+      <div class="tema-head" style="background:${t.bg};" onclick="toggleTema('${t.nombre}')">
+        <div class="tema-dot" style="background:${t.color};"></div>
+        <div class="tema-name">${t.nombre}</div>
+        <div class="tema-total" style="color:${t.color};">${fmtHoras(st.total)}</div>
+        <span class="chevron ${isOpen?'open':''}">▾</span>
+      </div>
+      <div class="tema-body ${isOpen?'open':''}">
+        ${subsHTML}
+        <button class="tema-add" onclick="openEstudioModal('${t.nombre}')">+ Registrar en ${t.nombre}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---- Render principal ----
 function renderEstudio(){
   const racha = calcRachaEstudio();
   const minSem = minutosEnRango(7), minMes = minutosEnRango(30), minHoy = minutosHoy(), minTot = minutosTotal();
@@ -1791,72 +1913,11 @@ function renderEstudio(){
     }
   }
 
-  const list = document.getElementById('est-groups-list');
-  if(list){
-    if(!estudioItems.length){
-      list.innerHTML = '<div class="empty-msg">Sin sesiones registradas.</div>';
-    } else {
-      const dias = {};
-      estudioItems.forEach(i=>{ const f = i.created_at ? i.created_at.split('T')[0] : 'Sin fecha'; (dias[f] = dias[f]||[]).push(i); });
-      const diasTodos = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
-      const btn = document.getElementById('est-ver-mas-btn');
-      if(btn){ btn.style.display = diasTodos.length>3 ? 'block' : 'none'; btn.textContent = mostrarTodasEstudio ? 'Ver menos' : 'Ver todas las sesiones'; }
-
-      if(mostrarTodasEstudio){
-        const meses = {};
-        diasTodos.forEach(([f,ss])=>{ const k = f.length>=7 ? f.slice(0,7) : 'Sin fecha'; (meses[k] = meses[k]||[]).push([f,ss]); });
-        const mo = Object.entries(meses).sort((a,b)=>b[0].localeCompare(a[0]));
-        list.innerHTML = mo.map(([k,dm])=>{
-          const isOpen = openMesesEstudio.has(k);
-          const n = dm.length;
-          let nombre;
-          if(k==='Sin fecha'){ nombre = 'Sin fecha'; }
-          else { const mm = new Date(k+'-01T12:00:00').toLocaleDateString('es-MX',{month:'long'}); nombre = mm.charAt(0).toUpperCase()+mm.slice(1)+' '+k.slice(0,4); }
-          return `<div class="mes-group">
-            <div class="mes-header est" onclick="toggleMesEstudio('${k}')">
-              <div class="mes-info"><div class="mes-name">${nombre}</div><div class="mes-sub">${n} día${n>1?'s':''} con estudio</div></div>
-              <span class="chevron ${isOpen?'open':''}">▾</span>
-            </div>
-            <div class="mes-body ${isOpen?'open':''}">${dm.map(([f,ss])=>renderCardDiaEstudio(f,ss)).join('')}</div>
-          </div>`;
-        }).join('');
-      } else {
-        list.innerHTML = diasTodos.slice(0,3).map(([f,ss])=>renderCardDiaEstudio(f,ss)).join('');
-      }
-    }
-  }
+  renderCronoChips();
+  renderTemasEn('est-temas-list');
   renderEstudioDesktop();
 }
 
-function renderCardDiaEstudio(fecha, sesiones){
-  const isOpen = openGruposEstudio.has(fecha);
-  const totMin = sesiones.reduce((a,s)=>a+(parseInt(s.minutos)||0), 0);
-  const sub = sesiones.length+' sesión'+(sesiones.length>1?'es':'')+' · '+fmtHoras(totMin);
-  const label = fecha==='Sin fecha' ? 'Sin fecha' : new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-  return `<div class="group-card">
-    <div class="group-header" onclick="toggleGrupoEstudio('${fecha}')">
-      <div class="group-icon-gym" style="background:rgba(214,71,143,0.2);">📚</div>
-      <div class="group-info"><div class="group-name">${label}</div><div class="group-sub">${sub}</div></div>
-      <span class="chevron ${isOpen?'open':''}">▾</span>
-    </div>
-    <div class="exercises ${isOpen?'open':''}">
-      ${sesiones.map(s=>`<div class="exercise-row">
-        <div class="ex-num">📖</div>
-        <div class="ex-info">
-          <div class="ex-name">${s.materia || 'Sesión de estudio'}</div>
-          <div class="ex-detail">${fmtHoras(s.minutos)}</div>
-        </div>
-        <div style="display:flex;gap:2px;flex-shrink:0;">
-          <button class="edit-btn" onclick="event.stopPropagation();editarEstudio(${s.id})" title="Editar">✏️</button>
-          <button class="repeat-btn" onclick="event.stopPropagation();repetirEstudio(${s.id})" title="Registrar otra vez hoy">🔁</button>
-          <button class="delete-btn" onclick="event.stopPropagation();delEstudio(${s.id})">🗑</button>
-        </div>
-      </div>`).join('')}
-    </div>
-  </div>`;
-}
-
-// ---- Render escritorio ----
 function renderEstudioDesktop(){
   if(window.innerWidth < 768) return;
   const rEl = document.getElementById('d-est-racha'); if(!rEl) return;
@@ -1868,29 +1929,12 @@ function renderEstudioDesktop(){
   document.getElementById('d-est-mes').textContent = (minutosEnRango(30)/60).toFixed(1);
   const resEl = document.getElementById('d-est-resumen');
   if(resEl) resEl.textContent = estudioItems.length ? ('hoy: '+fmtHoras(minutosHoy())+'  ·  total: '+fmtHoras(minutosTotal())) : '';
-
-  const list = document.getElementById('d-est-list'); if(!list) return;
-  if(!estudioItems.length){
-    list.innerHTML = '<div style="text-align:center;padding:18px;color:rgba(255,255,255,0.3);font-size:13px;">Sin sesiones registradas.</div>';
-    return;
-  }
-  const dias = {};
-  estudioItems.forEach(i=>{ const f = i.created_at ? i.created_at.split('T')[0] : ''; if(f)(dias[f] = dias[f]||[]).push(i); });
-  const orden = Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0]));
-  list.innerHTML = orden.map(([f,ss])=>{
-    const tot = ss.reduce((a,s)=>a+(parseInt(s.minutos)||0), 0);
-    const materias = [...new Set(ss.map(s=>s.materia).filter(Boolean))].join(', ');
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);">
-      <div style="width:8px;height:8px;border-radius:50%;background:#D6478F;flex-shrink:0;"></div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:500;color:#fff;">${new Date(f+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${materias || '—'}</div>
-      </div>
-      <div style="font-size:12px;font-weight:600;color:#F07AB0;flex-shrink:0;">${fmtHoras(tot)}</div>
-    </div>`;
-  }).join('');
+  renderTemasEn('d-est-temas-list');
 }
 
+// ---- Inicialización (aquí las variables ya existen) ----
+loadEstudio();
+restaurarEstudioTimer();
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>

@@ -1,4 +1,4 @@
-const CACHE = 'mis-carnes-v4';
+const CACHE = 'mis-carnes-v5';
 const ASSETS = ['/App-carne-vencida/', '/App-carne-vencida/index.html', '/App-carne-vencida/manifest.json'];
  
 self.addEventListener('install', e => {
