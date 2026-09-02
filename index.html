@@ -471,7 +471,7 @@
             <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">ventaja general</div>
           </div>
         </div>
-        <div id="est-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
+        <div id="est-resumen-mobile" style="font-size:14px;font-weight:600;text-align:center;margin-bottom:12px;color:#F07AB0;"></div>
         <div class="crono-box">
           <div class="crono-display" id="crono-display">00:00:00</div>
           <div class="tema-chips" id="crono-chips"></div>
@@ -668,7 +668,7 @@
           <div class="desktop-stat"><div class="desktop-stat-num" id="d-est-vsem" style="color:rgba(255,255,255,0.5);">0</div><div class="desktop-stat-lbl">ventaja semana</div></div>
           <div class="desktop-stat"><div class="desktop-stat-num" id="d-est-vgen" style="color:rgba(255,255,255,0.5);">0</div><div class="desktop-stat-lbl">ventaja general</div></div>
         </div>
-        <div id="d-est-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.35);"></div>
+        <div id="d-est-resumen" style="font-size:13px;font-weight:600;text-align:center;margin-bottom:10px;color:#F07AB0;"></div>
         <div style="background:rgba(214,71,143,0.08);border:1px solid rgba(214,71,143,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
           <div id="d-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;margin-bottom:8px;">00:00:00</div>
           <div class="tema-chips" id="d-crono-chips" style="margin-bottom:8px;"></div>
@@ -2281,6 +2281,7 @@ function minutosEnRangoTiempo(dias){
 }
 
 // ---- Tiempo perdido (no registrado en ninguna categoría) ----
+const TIEMPO_PERDIDO_HABILITADO = false;      // en false: la franja no se muestra nunca, sin importar la fecha
 const TIEMPO_PERDIDO_DESDE = '2026-09-07';    // franja oculta hasta el lunes 7 de septiembre
 const TIEMPO_PERDIDO_7D_DESDE = '2026-09-10'; // valor "últimos 7 días" oculto hasta el jueves 10
 function minutosPerdidoSemana(){
@@ -2297,8 +2298,8 @@ function minutosPerdido7Dias(){
 }
 function renderPerdidoFranja(){
   const hoyStr = new Date().toISOString().split('T')[0];
-  const mostrarFranja = hoyStr >= TIEMPO_PERDIDO_DESDE;
-  const mostrar7d = hoyStr >= TIEMPO_PERDIDO_7D_DESDE;
+  const mostrarFranja = TIEMPO_PERDIDO_HABILITADO && hoyStr >= TIEMPO_PERDIDO_DESDE;
+  const mostrar7d = TIEMPO_PERDIDO_HABILITADO && hoyStr >= TIEMPO_PERDIDO_7D_DESDE;
   ['tie-perdido-franja','d-tie-perdido-stats'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = mostrarFranja ? '' : 'none';
   });
