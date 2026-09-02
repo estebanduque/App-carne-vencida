@@ -2114,11 +2114,14 @@ function renderEstudioDesktop(){
 
 // ===================== MI TIEMPO (por categorías) =====================
 const CATEGORIAS_TIEMPO = [
-  { nombre:'Hogar',            color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)' },
-  { nombre:'Ocio',             color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)' },
-  { nombre:'Deporte',          color:'#E05A14', bg:'rgba(224,90,20,0.15)',   bd:'rgba(224,90,20,0.35)' },
-  { nombre:'Dormir',           color:'#5C6BC0', bg:'rgba(92,107,192,0.15)',  bd:'rgba(92,107,192,0.35)' },
-  { nombre:'Cuidado personal', color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
+  { nombre:'Hogar',             color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)' },
+  { nombre:'Ocio',              color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)' },
+  { nombre:'Deporte',           color:'#E05A14', bg:'rgba(224,90,20,0.15)',   bd:'rgba(224,90,20,0.35)' },
+  { nombre:'Dormir',            color:'#5C6BC0', bg:'rgba(92,107,192,0.15)',  bd:'rgba(92,107,192,0.35)' },
+  { nombre:'Cuidado personal',  color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
+  { nombre:'Transporte',        color:'#2FA8C4', bg:'rgba(47,168,196,0.15)',  bd:'rgba(47,168,196,0.35)' },
+  { nombre:'Trabajo',           color:'#C9A227', bg:'rgba(201,162,39,0.15)',  bd:'rgba(201,162,39,0.35)' },
+  { nombre:'Proyecto personal', color:'#E0447A', bg:'rgba(224,68,122,0.15)',  bd:'rgba(224,68,122,0.35)' },
 ];
 const SUBCAT_SUGERIDAS = {
   'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
@@ -2404,6 +2407,8 @@ function renderTiempo(){
     if(resEl) resEl.textContent = tiempoItems.length ? ('total: '+fmtHoras(minTot)) : '';
   }
   renderCronoChipsTiempo();
+  if(tiempoTimer.categoria) actualizarDatalistTiempo('subcats-list', tiempoTimer.categoria);
+  if(modalCategoria) actualizarDatalistTiempo('subcats-list-modal', modalCategoria);
   renderCategoriasEn('tie-categorias-list');
   renderTiempoDesktop();
 }
