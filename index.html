@@ -1683,12 +1683,12 @@ function semanasIniciadas(){   // nº de lunes 00:01 transcurridos desde el inic
   while(d <= hoy){ count++; d.setDate(d.getDate()+7); }
   return count;
 }
-function metaSemanalH(){ return metaSemanalGlobalH(); }
-function metaGeneralH(){ return semanasIniciadas() * metaSemanalGlobalH(); }
-function ventajaSemanalH(){ return (minutosSemanaCalendario()/60) - metaSemanalH(); }
-function ventajaGeneralH(){ return (minutosTotal()/60) - metaGeneralH(); }
+function metaSemanalH(){ return Math.min(8*diasHabilesSemana(), 40); }   // franja: 8h por día hábil terminado, tope 40
+function metaGeneralH(){ return 8*diasHabilesDesdeInicio(); }              // franja: 8h por día hábil, sin tope
+function ventajaSemanalH(){ return metaSemanalH() - (minutosSemanaCalendario()/60); } // meta − estudiado
+function ventajaGeneralH(){ return metaGeneralH() - (minutosTotal()/60); }
 function fmtVentaja(h){ const r = Math.round(h*10)/10; return (r>=0?'+':'−') + Math.abs(r).toFixed(1); }
-function colorVentaja(h){ return h>=0 ? '#5DCAA5' : '#E5766B'; }
+function colorVentaja(h){ return h<=0 ? '#5DCAA5' : '#FAC775'; } // ≤0 cumplido (verde) · >0 pendiente (ámbar)
 function fmtHorasCompacta(h){ const min = Math.round(h*60); const hh = Math.floor(min/60), mm = min%60; return mm===0 ? hh+'h' : hh+'h'+String(mm).padStart(2,'0'); }
 
 // ---- Meta y ventaja POR TEMA ----
@@ -1703,8 +1703,8 @@ function horasSemTema(nombre){
   }, 0) / 60;
 }
 function horasTotTema(nombre){ return estudioItems.filter(i=>i.tema===nombre).reduce((a,i)=>a+(parseInt(i.minutos)||0), 0) / 60; }
-function ventajaSemTema(nombre){ return horasSemTema(nombre) - metaSemTemaH(nombre); }
-function ventajaGenTema(nombre){ return horasTotTema(nombre) - metaGenTemaH(nombre); }
+function ventajaSemTema(nombre){ return metaSemTemaH(nombre) - horasSemTema(nombre); }
+function ventajaGenTema(nombre){ return metaGenTemaH(nombre) - horasTotTema(nombre); }
 function calcRachaEstudio(){
   const fechas = [...new Set(estudioItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean))];
   if(!fechas.length) return 0;
