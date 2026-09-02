@@ -250,6 +250,11 @@
   .tema-total { font-size: 14px; font-weight: 700; }
   .tema-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: rgba(0,0,0,0.12); }
   .tema-body.open { max-height: 3000px; }
+  .tema-stats { display: flex; gap: 10px; padding: 12px 14px 4px; }
+  .tema-stat { flex: 1; text-align: center; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 6px; }
+  .tema-stat-num { font-size: 22px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tema-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+  .tema-meta-lbl { text-align: center; font-size: 10px; color: rgba(255,255,255,0.3); padding: 3px 0 6px; }
   .sub-row { padding: 11px 14px 11px 18px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); cursor: pointer; }
   .sub-name { flex: 1; font-size: 14px; color: #fff; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sub-hrs { font-size: 13px; font-weight: 600; flex-shrink: 0; }
@@ -1589,10 +1594,10 @@ function closeGymDayModal() {
 
 // ===================== MI ESTUDIO (por temas) =====================
 const TEMAS = [
-  { nombre:'Droit civil',      color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)' },
-  { nombre:'Droit commercial', color:'#F0A92E', bg:'rgba(240,169,46,0.15)',  bd:'rgba(240,169,46,0.35)' },
-  { nombre:'Procédures',       color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
-  { nombre:'Déontologie',      color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)' },
+  { nombre:'Droit civil',      color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)', metaSem:9    },
+  { nombre:'Droit commercial', color:'#F0A92E', bg:'rgba(240,169,46,0.15)',  bd:'rgba(240,169,46,0.35)', metaSem:12.5 },
+  { nombre:'Procédures',       color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)', metaSem:8    },
+  { nombre:'Déontologie',      color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)', metaSem:10.5 },
 ];
 function temaInfo(nombre){ return TEMAS.find(t=>t.nombre===nombre) || { nombre:nombre||'—', color:'#F07AB0', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' }; }
 
@@ -1665,12 +1670,41 @@ function diasHabilesDesdeInicio(){      // días hábiles terminados (< hoy) des
   while(d<hoy){ if(esDiaHabil(d)) count++; d.setDate(d.getDate()+1); }
   return count;
 }
-function metaSemanalH(){ return Math.min(8*diasHabilesSemana(), 40); }
-function metaGeneralH(){ return 8*diasHabilesDesdeInicio(); }
+function metaSemanalGlobalH(){ return TEMAS.reduce((a,t)=>a+(t.metaSem||0), 0); } // suma de metas de los temas
+function semanasIniciadas(){   // nº de lunes 00:01 transcurridos desde el inicio (incluye la semana actual)
+  const inicio = new Date(ESTUDIO_INICIO+'T00:00:00');
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  let d = new Date(inicio);
+  const dow = d.getDay();                                   // 0=dom … 6=sáb
+  const diffToMonday = (dow===1) ? 0 : (dow===0 ? 1 : (8-dow));
+  d.setDate(d.getDate()+diffToMonday);                      // primer lunes >= inicio
+  if(d > hoy) return 0;
+  let count = 0;
+  while(d <= hoy){ count++; d.setDate(d.getDate()+7); }
+  return count;
+}
+function metaSemanalH(){ return metaSemanalGlobalH(); }
+function metaGeneralH(){ return semanasIniciadas() * metaSemanalGlobalH(); }
 function ventajaSemanalH(){ return (minutosSemanaCalendario()/60) - metaSemanalH(); }
 function ventajaGeneralH(){ return (minutosTotal()/60) - metaGeneralH(); }
 function fmtVentaja(h){ const r = Math.round(h*10)/10; return (r>=0?'+':'−') + Math.abs(r).toFixed(1); }
 function colorVentaja(h){ return h>=0 ? '#5DCAA5' : '#E5766B'; }
+function fmtHorasCompacta(h){ const min = Math.round(h*60); const hh = Math.floor(min/60), mm = min%60; return mm===0 ? hh+'h' : hh+'h'+String(mm).padStart(2,'0'); }
+
+// ---- Meta y ventaja POR TEMA ----
+function metaSemTemaH(nombre){ return temaInfo(nombre).metaSem || 0; }
+function metaGenTemaH(nombre){ return semanasIniciadas() * (temaInfo(nombre).metaSem || 0); }
+function horasSemTema(nombre){
+  const lunes = lunesDeEstaSemana();
+  return estudioItems.reduce((a,i)=>{
+    if(i.tema!==nombre || !i.created_at) return a;
+    const f = new Date(i.created_at.split('T')[0]+'T00:00:00');
+    return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0) / 60;
+}
+function horasTotTema(nombre){ return estudioItems.filter(i=>i.tema===nombre).reduce((a,i)=>a+(parseInt(i.minutos)||0), 0) / 60; }
+function ventajaSemTema(nombre){ return horasSemTema(nombre) - metaSemTemaH(nombre); }
+function ventajaGenTema(nombre){ return horasTotTema(nombre) - metaGenTemaH(nombre); }
 function calcRachaEstudio(){
   const fechas = [...new Set(estudioItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean))];
   if(!fechas.length) return 0;
@@ -1891,6 +1925,7 @@ function renderTemasEn(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
   cont.innerHTML = TEMAS.map(t=>{
     const st = statsTema(t.nombre);
+    const vSem = ventajaSemTema(t.nombre), vGen = ventajaGenTema(t.nombre);
     const isOpen = openTemas.has(t.nombre);
     const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
     const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
@@ -1925,6 +1960,11 @@ function renderTemasEn(containerId){
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
       <div class="tema-body ${isOpen?'open':''}">
+        <div class="tema-stats">
+          <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vSem)};">${fmtVentaja(vSem)}</div><div class="tema-stat-lbl">ventaja semana</div></div>
+          <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vGen)};">${fmtVentaja(vGen)}</div><div class="tema-stat-lbl">ventaja general</div></div>
+        </div>
+        <div class="tema-meta-lbl">meta ${fmtHorasCompacta(t.metaSem||0)} / semana</div>
         ${subsHTML}
         <button class="tema-add" onclick="openEstudioModal('${t.nombre}')">+ Registrar en ${t.nombre}</button>
       </div>
