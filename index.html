@@ -125,6 +125,7 @@
     .form-row input::placeholder { color: rgba(255,255,255,0.3); }
     .form-row select option { background: #1A2D45; color: #fff; }
     .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .two-col-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
     .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
     .btn-cancel { background: rgba(255,255,255,0.08); border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: rgba(255,255,255,0.6); font-family: inherit; }
     .btn-save-green { background: #1D9E75; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
@@ -517,6 +518,9 @@
             <button class="crono-btn crono-reset" onclick="tiempoReset()" title="Reiniciar">↺</button>
           </div>
         </div>
+        <p class="inner-title">Últimos 7 días</p>
+        <div id="tie-grid-semana" style="margin:0 16px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 8px 8px;"></div>
+        <div id="tie-grid-legend" style="display:flex;flex-wrap:wrap;gap:5px 10px;margin:0 16px 14px;padding:0 4px;"></div>
         <p class="inner-title">Por categoría</p>
         <div id="tie-categorias-list"></div>
         <div class="estudio-add-row">
@@ -671,6 +675,9 @@
             <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Últimos 7 días</p>
+        <div id="d-tie-grid-semana" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 8px 6px;margin-bottom:6px;"></div>
+        <div id="d-tie-grid-legend" style="display:flex;flex-wrap:wrap;gap:4px 8px;margin-bottom:12px;"></div>
         <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por categoría</p>
         <div id="d-tie-categorias-list" style="max-height:320px;overflow-y:auto;"></div>
         <button class="desktop-add-btn" onclick="openTiempoModal()">+ Registrar manual</button>
@@ -764,10 +771,13 @@
       <input type="text" id="e-subtema" placeholder="Ej: Contrats, Responsabilité…" list="subtemas-list-modal">
       <datalist id="subtemas-list-modal"></datalist>
     </div>
-    <div class="three-col">
+    <div class="two-col-row">
       <div class="form-row" style="margin:0"><label>Horas</label><input type="number" id="e-horas" placeholder="1" min="0"></div>
       <div class="form-row" style="margin:0"><label>Minutos</label><input type="number" id="e-minutos" placeholder="30" min="0" max="59"></div>
+    </div>
+    <div class="two-col-row">
       <div class="form-row" style="margin:0"><label>Fecha</label><input type="date" id="e-fecha"></div>
+      <div class="form-row" style="margin:0"><label>Hora de inicio (opcional)</label><input type="time" id="e-hora"></div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
@@ -788,10 +798,13 @@
       <input type="text" id="t-subcat" placeholder="Ej: Cocinar, Ver series…" list="subcats-list-modal">
       <datalist id="subcats-list-modal"></datalist>
     </div>
-    <div class="three-col">
+    <div class="two-col-row">
       <div class="form-row" style="margin:0"><label>Horas</label><input type="number" id="t-horas" placeholder="1" min="0"></div>
       <div class="form-row" style="margin:0"><label>Minutos</label><input type="number" id="t-minutos" placeholder="30" min="0" max="59"></div>
+    </div>
+    <div class="two-col-row">
       <div class="form-row" style="margin:0"><label>Fecha</label><input type="date" id="t-fecha"></div>
+      <div class="form-row" style="margin:0"><label>Hora de inicio (opcional)</label><input type="time" id="t-hora"></div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
@@ -1712,6 +1725,22 @@ function fmtHoras(min){
   if(m===0) return h+'h';
   return h+'h '+m+'m';
 }
+// created_at siempre representa el FIN del bloque de tiempo; con la duración se deduce el inicio.
+function horaInicioDeSesion(created_at, minutos){
+  if(!created_at) return '';
+  const fin = new Date(created_at);
+  const inicio = new Date(fin.getTime() - (parseInt(minutos)||0)*60000);
+  return String(inicio.getHours()).padStart(2,'0')+':'+String(inicio.getMinutes()).padStart(2,'0');
+}
+function calcularCreatedAt(fecha, horaInicio, minutos, esEdicion){
+  if(fecha && horaInicio){
+    const inicio = new Date(fecha+'T'+horaInicio+':00');
+    return new Date(inicio.getTime() + minutos*60000).toISOString();
+  }
+  if(esEdicion) return fecha ? fecha+'T12:00:00' : null;
+  const hoyStr = new Date().toISOString().split('T')[0];
+  return (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
+}
 function minutosEnRango(dias){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   return estudioItems.reduce((a,i)=>{
@@ -1972,6 +2001,7 @@ function openEstudioModal(temaPreset, subtemaPreset){
   document.getElementById('e-horas').value = '';
   document.getElementById('e-minutos').value = '';
   document.getElementById('e-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('e-hora').value = '';
 }
 function registrarEnSubtema(tema, subtema){ openEstudioModal(tema, subtema==='General'?'':subtema); }
 function seleccionarTemaModal(nombre){
@@ -1991,6 +2021,7 @@ function editarEstudio(id){
   document.getElementById('e-horas').value = Math.floor(min/60) || '';
   document.getElementById('e-minutos').value = (min%60) || '';
   document.getElementById('e-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+  document.getElementById('e-hora').value = horaInicioDeSesion(s.created_at, min);
 }
 function saveEstudioManual(){
   const tema = modalTema;
@@ -1998,15 +2029,14 @@ function saveEstudioManual(){
   const h = parseInt(document.getElementById('e-horas').value)||0;
   const m = parseInt(document.getElementById('e-minutos').value)||0;
   const fecha = document.getElementById('e-fecha').value;
+  const horaInicio = document.getElementById('e-hora').value;
   const minutos = h*60 + m;
   if(!tema){ alert('Elige un tema.'); return; }
   if(minutos < 1){ alert('Indica cuánto tiempo estudiaste.'); return; }
-  const hoyStr = new Date().toISOString().split('T')[0];
+  const created_at = calcularCreatedAt(fecha, horaInicio, minutos, !!estudioEditId);
   if(estudioEditId){
-    const created_at = fecha ? fecha+'T12:00:00' : null;
     updateEstudioItem(estudioEditId, { tema, subtema, minutos, created_at });
   } else {
-    const created_at = (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
     saveEstudioItem({ tema, subtema, minutos, created_at });
   }
   closeModals();
@@ -2096,6 +2126,7 @@ function renderEstudio(){
   renderCronoChips();
   renderTemasEn('est-temas-list');
   renderEstudioDesktop();
+  renderTiempo();
 }
 
 function renderEstudioDesktop(){
@@ -2121,8 +2152,9 @@ const CATEGORIAS_TIEMPO = [
   { nombre:'Cuidado personal',  color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
   { nombre:'Transporte',        color:'#2FA8C4', bg:'rgba(47,168,196,0.15)',  bd:'rgba(47,168,196,0.35)' },
   { nombre:'Trabajo',           color:'#C9A227', bg:'rgba(201,162,39,0.15)',  bd:'rgba(201,162,39,0.35)' },
-  { nombre:'Proyecto personal', color:'#E0447A', bg:'rgba(224,68,122,0.15)',  bd:'rgba(224,68,122,0.35)' },
+  { nombre:'Proyecto personal', color:'#4CAF50', bg:'rgba(76,175,80,0.15)',   bd:'rgba(76,175,80,0.35)' },
 ];
+const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#D6478F', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' };
 const SUBCAT_SUGERIDAS = {
   'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
   'Cuidado personal': ['Ducha','Higiene personal'],
@@ -2305,6 +2337,7 @@ function openTiempoModal(catPreset, subcatPreset){
   document.getElementById('t-horas').value = '';
   document.getElementById('t-minutos').value = '';
   document.getElementById('t-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('t-hora').value = '';
 }
 function registrarEnSubcat(categoria, subcategoria){ openTiempoModal(categoria, subcategoria==='General'?'':subcategoria); }
 function seleccionarCategoriaModal(nombre){
@@ -2324,6 +2357,7 @@ function editarTiempo(id){
   document.getElementById('t-horas').value = Math.floor(min/60) || '';
   document.getElementById('t-minutos').value = (min%60) || '';
   document.getElementById('t-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+  document.getElementById('t-hora').value = horaInicioDeSesion(s.created_at, min);
 }
 function saveTiempoManual(){
   const categoria = modalCategoria;
@@ -2331,15 +2365,14 @@ function saveTiempoManual(){
   const h = parseInt(document.getElementById('t-horas').value)||0;
   const m = parseInt(document.getElementById('t-minutos').value)||0;
   const fecha = document.getElementById('t-fecha').value;
+  const horaInicio = document.getElementById('t-hora').value;
   const minutos = h*60 + m;
   if(!categoria){ alert('Elige una categoría.'); return; }
   if(minutos < 1){ alert('Indica cuánto tiempo dedicaste.'); return; }
-  const hoyStr = new Date().toISOString().split('T')[0];
+  const created_at = calcularCreatedAt(fecha, horaInicio, minutos, !!tiempoEditId);
   if(tiempoEditId){
-    const created_at = fecha ? fecha+'T12:00:00' : null;
     updateTiempoItem(tiempoEditId, { categoria, subcategoria, minutos, created_at });
   } else {
-    const created_at = (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
     saveTiempoItem({ categoria, subcategoria, minutos, created_at });
   }
   closeModals();
@@ -2348,6 +2381,62 @@ function saveTiempoManual(){
 // ---- Toggles ----
 function toggleCategoria(n){ if(openCategorias.has(n)) openCategorias.delete(n); else openCategorias.add(n); renderTiempo(); }
 function toggleSubcat(c, s){ const k = c+'||'+s; if(openSubcats.has(k)) openSubcats.delete(k); else openSubcats.add(k); renderTiempo(); }
+
+// ---- Estudio como categoría dentro de Mi Tiempo ----
+function statsEstudioComoCategoria(){
+  const total = estudioItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
+  const subs = {};
+  estudioItems.forEach(i=>{
+    const s = i.tema || 'General';
+    if(!subs[s]) subs[s] = { min:0, count:0, sesiones:[] };
+    subs[s].min += parseInt(i.minutos)||0;
+    subs[s].count++;
+    subs[s].sesiones.push(i);
+  });
+  return { total, subs };
+}
+function renderEstudioBlockHTML(){
+  const c = ESTUDIO_EN_TIEMPO;
+  const st = statsEstudioComoCategoria();
+  const isOpen = openCategorias.has('Estudio');
+  const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
+  const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
+    const subKey = 'Estudio||'+sname;
+    const subOpen = openSubcats.has(subKey);
+    const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
+      const fecha = se.created_at ? new Date(se.created_at.split('T')[0]+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+      return `<div class="ses-row">
+        <span class="ses-fecha">${fecha}</span>
+        <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+        <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
+        <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
+      </div>`;
+    }).join('');
+    const sn = sname.replace(/'/g,"\\'");
+    return `<div>
+      <div class="sub-row" onclick="toggleSubcat('Estudio','${sn}')">
+        <span class="sub-name">${sname}</span>
+        <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
+        <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${sn}','')" title="Registrar aquí">➕</button>
+        <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
+      </div>
+      <div class="ses-list ${subOpen?'open':''}">${sesionesHTML}</div>
+    </div>`;
+  }).join('') : '<div class="sub-empty">Sin sesiones todavía</div>';
+
+  return `<div class="tema-area" style="border-color:${c.bd};">
+    <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('Estudio')">
+      <div class="tema-dot" style="background:${c.color};"></div>
+      <div class="tema-name">Estudio</div>
+      <div class="tema-total" style="color:${c.color};">${fmtHoras(st.total)}</div>
+      <span class="chevron ${isOpen?'open':''}">▾</span>
+    </div>
+    <div class="tema-body ${isOpen?'open':''}">
+      ${subsHTML}
+      <button class="tema-add" onclick="openEstudioModal()">+ Registrar en Mi Estudio</button>
+    </div>
+  </div>`;
+}
 
 // ---- Render de las categorías ----
 function renderCategoriasEn(containerId){
@@ -2392,7 +2481,87 @@ function renderCategoriasEn(containerId){
         <button class="tema-add" onclick="openTiempoModal('${c.nombre}')">+ Registrar en ${c.nombre}</button>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + renderEstudioBlockHTML();
+}
+
+// ---- Grilla semanal (últimos 7 días) ----
+function diasSemanaGrid(){
+  const lunes = lunesDeEstaSemana();
+  const days = [];
+  for(let i=0;i<7;i++){ const d = new Date(lunes); d.setDate(lunes.getDate()+i); days.push(d); }
+  return days;
+}
+function bloquesSemana(){
+  const days = diasSemanaGrid();
+  const start0 = days[0];
+  const end7 = new Date(days[6]); end7.setDate(end7.getDate()+1);
+  const bloques = [];
+  function addItem(i, color, editFn){
+    const min = parseInt(i.minutos)||0;
+    if(!i.created_at || !min) return;
+    const end = new Date(i.created_at);
+    let curStart = new Date(end.getTime() - min*60000);
+    let curEnd = end;
+    if(curEnd<=start0 || curStart>=end7) return;
+    if(curStart<start0) curStart = new Date(start0);
+    if(curEnd>end7) curEnd = new Date(end7);
+    let segStart = curStart;
+    while(segStart < curEnd){
+      const dayStart = new Date(segStart); dayStart.setHours(0,0,0,0);
+      const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
+      const segEnd = curEnd < dayEnd ? curEnd : dayEnd;
+      const dayIdx = Math.round((dayStart - start0)/86400000);
+      if(dayIdx>=0 && dayIdx<7){
+        const h0 = segStart.getHours() + segStart.getMinutes()/60;
+        const h1 = (segEnd - dayStart)/3600000;
+        bloques.push({ dayIdx, h0, h1, color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''), id:i.id, fn:editFn });
+      }
+      segStart = segEnd;
+    }
+  }
+  tiempoItems.forEach(i=> addItem(i, categoriaInfo(i.categoria).color, 'editarTiempo'));
+  estudioItems.forEach(i=> addItem(i, ESTUDIO_EN_TIEMPO.color, 'editarEstudio'));
+  return bloques;
+}
+function renderGridSemana(containerId){
+  const cont = document.getElementById(containerId); if(!cont) return;
+  const days = diasSemanaGrid();
+  const letras = ['L','M','X','J','V','S','D'];
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const W=350, padLeft=24, padTop=20, H=380, colW=(W-padLeft)/7, hourH=H/24;
+  let svg = `<svg viewBox="0 0 ${W} ${H+padTop}" style="width:100%;height:auto;display:block;">`;
+  for(let h=0; h<=24; h+=3){
+    const y = padTop + h*hourH;
+    svg += `<line x1="${padLeft}" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+    if(h<24) svg += `<text x="0" y="${y+9}" font-size="8" fill="rgba(255,255,255,0.35)">${String(h).padStart(2,'0')}</text>`;
+  }
+  for(let d=0; d<=7; d++){
+    const x = padLeft + d*colW;
+    svg += `<line x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop+H}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+  }
+  days.forEach((d,idx)=>{
+    const x = padLeft + idx*colW + colW/2;
+    const isToday = d.toISOString().split('T')[0]===hoyStr;
+    svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#fff':'rgba(255,255,255,0.5)'}" text-anchor="middle">${letras[idx]} ${d.getDate()}</text>`;
+  });
+  bloquesSemana().forEach(b=>{
+    const x = padLeft + b.dayIdx*colW + 1;
+    const y = padTop + b.h0*hourH;
+    const h = Math.max((b.h1-b.h0)*hourH, 2);
+    const w = colW - 2;
+    const title = (b.label + (b.sub?' · '+b.sub:'')).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${b.color}" opacity="0.85" onclick="${b.fn}(${b.id})" style="cursor:pointer;"><title>${title}</title></rect>`;
+  });
+  svg += '</svg>';
+  cont.innerHTML = svg;
+}
+function renderLegendSemana(containerId){
+  const cont = document.getElementById(containerId); if(!cont) return;
+  const lista = [...CATEGORIAS_TIEMPO, ESTUDIO_EN_TIEMPO];
+  cont.innerHTML = lista.map(c=>`<div style="display:flex;align-items:center;gap:5px;">
+    <span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex-shrink:0;"></span>
+    <span style="font-size:10px;color:rgba(255,255,255,0.5);">${c.nombre}</span>
+  </div>`).join('');
 }
 
 // ---- Render principal ----
@@ -2410,6 +2579,8 @@ function renderTiempo(){
   if(tiempoTimer.categoria) actualizarDatalistTiempo('subcats-list', tiempoTimer.categoria);
   if(modalCategoria) actualizarDatalistTiempo('subcats-list-modal', modalCategoria);
   renderCategoriasEn('tie-categorias-list');
+  renderGridSemana('tie-grid-semana');
+  renderLegendSemana('tie-grid-legend');
   renderTiempoDesktop();
 }
 
@@ -2422,6 +2593,8 @@ function renderTiempoDesktop(){
   const resEl = document.getElementById('d-tie-resumen');
   if(resEl) resEl.textContent = tiempoItems.length ? ('total: '+fmtHoras(minutosTotalTiempo())) : '';
   renderCategoriasEn('d-tie-categorias-list');
+  renderGridSemana('d-tie-grid-semana');
+  renderLegendSemana('d-tie-grid-legend');
 }
 
 // ---- Inicialización (aquí las variables ya existen) ----
