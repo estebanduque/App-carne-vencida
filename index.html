@@ -231,6 +231,7 @@
   .menu-icon.ropa { background: rgba(83,74,183,0.2); }
 
   .menu-icon.estudio { background: rgba(214,71,143,0.2); }
+  .menu-icon.tiempo { background: rgba(92,107,192,0.2); }
   .crono-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 14px; margin: 0 16px 14px; text-align: center; }
   .crono-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; line-height: 1; margin-bottom: 12px; }
   .crono-sub { width: 100%; margin: 10px 0; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
@@ -480,6 +481,50 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== MENÚ MI TIEMPO ===== -->
+  <div class="menu-section" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-tiempo" onclick="toggleMenu('tiempo')">
+      <div class="menu-icon tiempo">⏱️</div>
+      <div class="menu-title">
+        <h2>Mi Tiempo</h2>
+        <p>Cómo uso mi tiempo</p>
+      </div>
+      <span class="menu-chevron" id="chevron-tiempo">▾</span>
+    </button>
+    <div class="menu-body" id="body-tiempo">
+      <div class="menu-inner">
+        <div style="border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,0.05);display:flex;overflow:hidden;">
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="tie-hoy-mobile" style="font-size:24px;font-weight:700;line-height:1;color:#5C6BC0;">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">hoy</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.1);margin:14px 0;"></div>
+          <div style="flex:1;text-align:center;padding:16px 6px;">
+            <div id="tie-semana-mobile" style="font-size:24px;font-weight:700;line-height:1;color:#5C6BC0;">—</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">esta semana</div>
+          </div>
+        </div>
+        <div id="tie-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
+        <div class="crono-box" style="background:rgba(92,107,192,0.08);border-color:rgba(92,107,192,0.22);">
+          <div class="crono-display" id="tiempo-crono-display">00:00:00</div>
+          <div class="tema-chips" id="tiempo-crono-chips"></div>
+          <input class="crono-sub" id="tiempo-crono-subcat" placeholder="Actividad (ej: Cocinar, Ver series…)" list="subcats-list">
+          <datalist id="subcats-list"></datalist>
+          <div class="crono-btns">
+            <button id="tiempo-crono-start-btn" class="crono-btn" style="flex:1;background:#5C6BC0;color:#fff;" onclick="tiempoStartPause()">▶ Iniciar</button>
+            <button class="crono-btn crono-stop" onclick="tiempoStop()">■ Terminar</button>
+            <button class="crono-btn crono-reset" onclick="tiempoReset()" title="Reiniciar">↺</button>
+          </div>
+        </div>
+        <p class="inner-title">Por categoría</p>
+        <div id="tie-categorias-list"></div>
+        <div class="estudio-add-row">
+          <button class="estudio-add-full" style="background:rgba(92,107,192,0.18);border-color:rgba(92,107,192,0.35);color:#AAB2E8;" onclick="openTiempoModal()">+ Registrar manual</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="desktop-only" id="desktop-grid">
   <div class="desktop-grid" id="desktop-grid-inner">
@@ -604,6 +649,33 @@
         <button class="desktop-add-btn" onclick="openEstudioModal()">+ Registrar manual</button>
       </div>
     </div>
+    <!-- Mi Tiempo -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(92,107,192,0.2);">⏱️</div>
+        <div><div class="desktop-card-title">Mi Tiempo</div><div class="desktop-card-sub">Cómo uso mi tiempo</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-hoy" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">hoy</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-semana" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">esta semana</div></div>
+        </div>
+        <div id="d-tie-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.35);"></div>
+        <div style="background:rgba(92,107,192,0.08);border:1px solid rgba(92,107,192,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
+          <div id="d-tiempo-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;margin-bottom:8px;">00:00:00</div>
+          <div class="tema-chips" id="d-tiempo-crono-chips" style="margin-bottom:8px;"></div>
+          <input id="d-tiempo-crono-subcat" placeholder="Actividad…" list="subcats-list" style="width:100%;margin-bottom:8px;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;">
+          <div style="display:flex;gap:6px;">
+            <button id="d-tiempo-crono-start-btn" onclick="tiempoStartPause()" style="flex:1;background:#5C6BC0;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
+            <button onclick="tiempoStop()" style="flex:1;background:rgba(255,255,255,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-family:inherit;cursor:pointer;">■ Guardar</button>
+            <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
+          </div>
+        </div>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por categoría</p>
+        <div id="d-tie-categorias-list" style="max-height:320px;overflow-y:auto;"></div>
+        <button class="desktop-add-btn" onclick="openTiempoModal()">+ Registrar manual</button>
+      </div>
+    </div>
   </div>
 </div>
 </div>
@@ -700,6 +772,30 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-pink" onclick="saveEstudioManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal tiempo -->
+<div class="modal-overlay" id="modal-tiempo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>⏱️ Registrar actividad</h2>
+    <div class="form-row"><label>Categoría</label>
+      <div class="tema-chips" id="modal-tiempo-chips"></div>
+    </div>
+    <div class="form-row"><label>Actividad</label>
+      <input type="text" id="t-subcat" placeholder="Ej: Cocinar, Ver series…" list="subcats-list-modal">
+      <datalist id="subcats-list-modal"></datalist>
+    </div>
+    <div class="three-col">
+      <div class="form-row" style="margin:0"><label>Horas</label><input type="number" id="t-horas" placeholder="1" min="0"></div>
+      <div class="form-row" style="margin:0"><label>Minutos</label><input type="number" id="t-minutos" placeholder="30" min="0" max="59"></div>
+      <div class="form-row" style="margin:0"><label>Fecha</label><input type="date" id="t-fecha"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-orange" style="background:#5C6BC0;" onclick="saveTiempoManual()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1004,7 +1100,7 @@ function toggleMenu(menu){
   else{openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');}
 }
 
-function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;}
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;}
 function openPhotoModal(){
   document.getElementById('modal-photo').classList.add('open');
   document.getElementById('photo-preview').style.display='none';
@@ -1691,7 +1787,7 @@ function fmtVentaja(h){ const r = Math.round(h*10)/10; return (r>=0?'+':'−') +
 function colorVentaja(h){ return h>=0 ? '#5DCAA5' : '#FAC775'; } // ≥0 cumplido (verde) · <0 pendiente (ámbar)
 function fmtHorasCompacta(h){ const min = Math.round(h*60); const hh = Math.floor(min/60), mm = min%60; return mm===0 ? hh+'h' : hh+'h'+String(mm).padStart(2,'0'); }
 
-  // ---- Meta y ventaja POR TEMA ----
+// ---- Meta y ventaja POR TEMA ----
 function metaSemTemaH(nombre){ return temaInfo(nombre).metaSem || 0; }
 function metaGenTemaH(nombre){ return semanasIniciadas() * (temaInfo(nombre).metaSem || 0); }
 function horasSemTema(nombre){
@@ -1732,8 +1828,8 @@ function statsTema(nombre){
 function subtemasDe(tema){ return [...new Set(estudioItems.filter(i=>i.tema===tema && i.subtema).map(i=>i.subtema))].sort(); }
 
 // ---- Chips de tema y datalists ----
-function chipsHTML(activo, onclickName){
-  return TEMAS.map(t=>{
+function chipsHTML(activo, onclickName, lista){
+  return (lista || TEMAS).map(t=>{
     const act = t.nombre === activo;
     const style = act ? `background:${t.bg};border-color:${t.color};color:#fff;` : '';
     return `<button type="button" class="tema-chip" style="${style}" onclick="${onclickName}('${t.nombre}')">${t.nombre}</button>`;
@@ -2016,9 +2112,318 @@ function renderEstudioDesktop(){
   renderTemasEn('d-est-temas-list');
 }
 
+// ===================== MI TIEMPO (por categorías) =====================
+const CATEGORIAS_TIEMPO = [
+  { nombre:'Hogar',            color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)' },
+  { nombre:'Ocio',             color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)' },
+  { nombre:'Deporte',          color:'#E05A14', bg:'rgba(224,90,20,0.15)',   bd:'rgba(224,90,20,0.35)' },
+  { nombre:'Dormir',           color:'#5C6BC0', bg:'rgba(92,107,192,0.15)',  bd:'rgba(92,107,192,0.35)' },
+  { nombre:'Cuidado personal', color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
+];
+const SUBCAT_SUGERIDAS = {
+  'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
+  'Cuidado personal': ['Ducha','Higiene personal'],
+};
+function categoriaInfo(nombre){ return CATEGORIAS_TIEMPO.find(c=>c.nombre===nombre) || { nombre:nombre||'—', color:'#999', bg:'rgba(153,153,153,0.15)', bd:'rgba(153,153,153,0.35)' }; }
+
+let tiempoItems = [];
+let tiempoEditId = null;
+let modalCategoria = '';
+let openCategorias = new Set();
+let openSubcats = new Set();
+
+// ---- Totales ----
+function minutosHoyTiempo(){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return tiempoItems.reduce((a,i)=>{
+    const f = i.created_at ? i.created_at.split('T')[0] : '';
+    return (f && estDiasAtras(f, hoy)===0) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+function minutosSemanaTiempo(){
+  const lunes = lunesDeEstaSemana();
+  return tiempoItems.reduce((a,i)=>{
+    if(!i.created_at) return a;
+    const f = new Date(i.created_at.split('T')[0]+'T00:00:00');
+    return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+function minutosTotalTiempo(){ return tiempoItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0); }
+function statsCategoria(nombre){
+  const items = tiempoItems.filter(i=>i.categoria===nombre);
+  const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
+  const subs = {};
+  items.forEach(i=>{
+    const s = i.subcategoria || 'General';
+    if(!subs[s]) subs[s] = { min:0, count:0, sesiones:[] };
+    subs[s].min += parseInt(i.minutos)||0;
+    subs[s].count++;
+    subs[s].sesiones.push(i);
+  });
+  return { total, subs };
+}
+function subcategoriasDe(categoria){
+  const usadas = tiempoItems.filter(i=>i.categoria===categoria && i.subcategoria).map(i=>i.subcategoria);
+  const sugeridas = SUBCAT_SUGERIDAS[categoria] || [];
+  return [...new Set([...sugeridas, ...usadas])].sort();
+}
+
+// ---- Chips y datalists ----
+function renderCronoChipsTiempo(){
+  const html = chipsHTML(tiempoTimer.categoria, 'seleccionarCategoriaCrono', CATEGORIAS_TIEMPO);
+  ['tiempo-crono-chips','d-tiempo-crono-chips'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
+}
+function renderModalChipsTiempo(){ const el=document.getElementById('modal-tiempo-chips'); if(el) el.innerHTML = chipsHTML(modalCategoria, 'seleccionarCategoriaModal', CATEGORIAS_TIEMPO); }
+function actualizarDatalistTiempo(id, categoria){
+  const dl = document.getElementById(id); if(!dl) return;
+  dl.innerHTML = subcategoriasDe(categoria).map(s=>`<option value="${(s||'').replace(/"/g,'&quot;')}">`).join('');
+}
+
+// ---- Cronómetro ----
+const TIEMPO_TIMER_KEY = 'tiempo_timer';
+let tiempoTimer = { running:false, base:0, startTs:null, categoria:'', subcategoria:'' };
+let tiempoInterval = null;
+
+function guardarTimerTiempoLS(){ try{ localStorage.setItem(TIEMPO_TIMER_KEY, JSON.stringify(tiempoTimer)); }catch(e){} }
+function segundosCronoTiempo(){
+  let s = tiempoTimer.base || 0;
+  if(tiempoTimer.running && tiempoTimer.startTs){ s += Math.floor((Date.now() - tiempoTimer.startTs)/1000); }
+  return s;
+}
+function pintarCronoTiempo(){
+  const txt = formatCrono(segundosCronoTiempo());
+  ['tiempo-crono-display','d-tiempo-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
+  const running = tiempoTimer.running;
+  ['tiempo-crono-start-btn','d-tiempo-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+}
+function iniciarIntervalTiempo(){ if(!tiempoInterval){ tiempoInterval = setInterval(pintarCronoTiempo, 1000); } }
+function pararIntervalTiempo(){ if(tiempoInterval){ clearInterval(tiempoInterval); tiempoInterval = null; } }
+function leerSubcatCrono(){
+  const a = document.getElementById('tiempo-crono-subcat'), b = document.getElementById('d-tiempo-crono-subcat');
+  return (a && a.value.trim()) || (b && b.value.trim()) || tiempoTimer.subcategoria || '';
+}
+function seleccionarCategoriaCrono(nombre){
+  tiempoTimer.categoria = nombre; guardarTimerTiempoLS();
+  renderCronoChipsTiempo();
+  actualizarDatalistTiempo('subcats-list', nombre);
+}
+function tiempoStartPause(){
+  if(!tiempoTimer.running){
+    if(!tiempoTimer.categoria){ alert('Elige una categoría antes de iniciar el cronómetro.'); return; }
+    tiempoTimer.subcategoria = leerSubcatCrono();
+    tiempoTimer.running = true; tiempoTimer.startTs = Date.now(); iniciarIntervalTiempo();
+  } else {
+    tiempoTimer.subcategoria = leerSubcatCrono();
+    tiempoTimer.base = segundosCronoTiempo();
+    tiempoTimer.running = false; tiempoTimer.startTs = null; pararIntervalTiempo();
+  }
+  guardarTimerTiempoLS(); pintarCronoTiempo();
+}
+async function tiempoStop(){
+  const min = Math.round(segundosCronoTiempo()/60);
+  if(min < 1){ alert('El cronómetro aún no marca ni un minuto.'); return; }
+  if(!tiempoTimer.categoria){ alert('Elige una categoría.'); return; }
+  const categoria = tiempoTimer.categoria;
+  const subcategoria = leerSubcatCrono() || 'General';
+  if(!confirm('¿Guardar '+fmtHoras(min)+' en '+categoria+' › '+subcategoria+'?')) return;
+  pararIntervalTiempo();
+  tiempoTimer = { running:false, base:0, startTs:null, categoria:categoria, subcategoria:'' }; guardarTimerTiempoLS();
+  ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  pintarCronoTiempo();
+  await saveTiempoItem({ categoria, subcategoria, minutos:min, created_at:null });
+}
+function tiempoReset(){
+  if(segundosCronoTiempo() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
+  pararIntervalTiempo();
+  const categoria = tiempoTimer.categoria;
+  tiempoTimer = { running:false, base:0, startTs:null, categoria:categoria, subcategoria:'' }; guardarTimerTiempoLS();
+  ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  pintarCronoTiempo();
+}
+function restaurarTiempoTimer(){
+  try{
+    const raw = localStorage.getItem(TIEMPO_TIMER_KEY);
+    if(raw){ const t = JSON.parse(raw); if(t) tiempoTimer = { running:!!t.running, base:t.base||0, startTs:t.startTs||null, categoria:t.categoria||'', subcategoria:t.subcategoria||'' }; }
+    if(tiempoTimer.running) iniciarIntervalTiempo();
+  }catch(e){}
+  renderCronoChipsTiempo();
+  if(tiempoTimer.subcategoria){ ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el && !el.value) el.value = tiempoTimer.subcategoria; }); }
+  if(tiempoTimer.categoria) actualizarDatalistTiempo('subcats-list', tiempoTimer.categoria);
+  pintarCronoTiempo();
+}
+
+// ---- CRUD Supabase ----
+async function loadTiempo(){
+  const {data,error} = await sb.from('tiempo').select('*').order('created_at');
+  if(!error){ tiempoItems = data || []; renderTiempo(); }
+  else { console.log('Error cargando tiempo:', JSON.stringify(error)); }
+}
+async function saveTiempoItem(item){
+  const row = { categoria:item.categoria, subcategoria:item.subcategoria, minutos:item.minutos };
+  if(item.created_at) row.created_at = item.created_at;
+  const {data,error} = await sb.from('tiempo').insert([row]).select();
+  if(!error && data){
+    tiempoItems.push(data[0]);
+    openCategorias.add(item.categoria);
+    renderTiempo();
+  } else {
+    console.log('Error guardando tiempo:', JSON.stringify(error));
+    alert('No se pudo guardar la actividad. Revisa que la tabla "tiempo" tenga las columnas categoria y subcategoria.');
+  }
+}
+async function updateTiempoItem(id, item){
+  const upd = { categoria:item.categoria, subcategoria:item.subcategoria, minutos:item.minutos };
+  if(item.created_at) upd.created_at = item.created_at;
+  const {data,error} = await sb.from('tiempo').update(upd).eq('id',id).select();
+  if(!error && data && data[0]){
+    const i = tiempoItems.findIndex(x=>x.id===id);
+    if(i!==-1) tiempoItems[i] = data[0];
+    renderTiempo();
+  } else {
+    alert('No se pudo actualizar. Intenta de nuevo.');
+  }
+  tiempoEditId = null;
+}
+async function deleteTiempoItem(id){
+  await sb.from('tiempo').delete().eq('id',id);
+  tiempoItems = tiempoItems.filter(i=>i.id!==id); renderTiempo();
+}
+function delTiempo(id){ if(confirm('¿Eliminar esta actividad?')) deleteTiempoItem(id); }
+
+// ---- Modal manual ----
+function openTiempoModal(catPreset, subcatPreset){
+  tiempoEditId = null;
+  document.querySelector('#modal-tiempo h2').textContent = '⏱️ Registrar actividad';
+  document.getElementById('modal-tiempo').classList.add('open');
+  modalCategoria = catPreset || tiempoTimer.categoria || CATEGORIAS_TIEMPO[0].nombre;
+  renderModalChipsTiempo();
+  actualizarDatalistTiempo('subcats-list-modal', modalCategoria);
+  document.getElementById('t-subcat').value = subcatPreset || '';
+  document.getElementById('t-horas').value = '';
+  document.getElementById('t-minutos').value = '';
+  document.getElementById('t-fecha').value = new Date().toISOString().split('T')[0];
+}
+function registrarEnSubcat(categoria, subcategoria){ openTiempoModal(categoria, subcategoria==='General'?'':subcategoria); }
+function seleccionarCategoriaModal(nombre){
+  modalCategoria = nombre; renderModalChipsTiempo();
+  actualizarDatalistTiempo('subcats-list-modal', nombre);
+}
+function editarTiempo(id){
+  const s = tiempoItems.find(i=>i.id===id); if(!s) return;
+  tiempoEditId = id;
+  document.querySelector('#modal-tiempo h2').textContent = '✏️ Editar actividad';
+  document.getElementById('modal-tiempo').classList.add('open');
+  modalCategoria = s.categoria || CATEGORIAS_TIEMPO[0].nombre;
+  renderModalChipsTiempo();
+  actualizarDatalistTiempo('subcats-list-modal', modalCategoria);
+  document.getElementById('t-subcat').value = (s.subcategoria && s.subcategoria!=='General') ? s.subcategoria : '';
+  const min = parseInt(s.minutos)||0;
+  document.getElementById('t-horas').value = Math.floor(min/60) || '';
+  document.getElementById('t-minutos').value = (min%60) || '';
+  document.getElementById('t-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+}
+function saveTiempoManual(){
+  const categoria = modalCategoria;
+  const subcategoria = document.getElementById('t-subcat').value.trim() || 'General';
+  const h = parseInt(document.getElementById('t-horas').value)||0;
+  const m = parseInt(document.getElementById('t-minutos').value)||0;
+  const fecha = document.getElementById('t-fecha').value;
+  const minutos = h*60 + m;
+  if(!categoria){ alert('Elige una categoría.'); return; }
+  if(minutos < 1){ alert('Indica cuánto tiempo dedicaste.'); return; }
+  const hoyStr = new Date().toISOString().split('T')[0];
+  if(tiempoEditId){
+    const created_at = fecha ? fecha+'T12:00:00' : null;
+    updateTiempoItem(tiempoEditId, { categoria, subcategoria, minutos, created_at });
+  } else {
+    const created_at = (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
+    saveTiempoItem({ categoria, subcategoria, minutos, created_at });
+  }
+  closeModals();
+}
+
+// ---- Toggles ----
+function toggleCategoria(n){ if(openCategorias.has(n)) openCategorias.delete(n); else openCategorias.add(n); renderTiempo(); }
+function toggleSubcat(c, s){ const k = c+'||'+s; if(openSubcats.has(k)) openSubcats.delete(k); else openSubcats.add(k); renderTiempo(); }
+
+// ---- Render de las categorías ----
+function renderCategoriasEn(containerId){
+  const cont = document.getElementById(containerId); if(!cont) return;
+  cont.innerHTML = CATEGORIAS_TIEMPO.map(c=>{
+    const st = statsCategoria(c.nombre);
+    const isOpen = openCategorias.has(c.nombre);
+    const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
+    const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
+      const subKey = c.nombre+'||'+sname;
+      const subOpen = openSubcats.has(subKey);
+      const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
+        const fecha = se.created_at ? new Date(se.created_at.split('T')[0]+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+        return `<div class="ses-row">
+          <span class="ses-fecha">${fecha}</span>
+          <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+          <button class="sub-btn" onclick="event.stopPropagation();editarTiempo(${se.id})" title="Editar">✏️</button>
+          <button class="sub-btn" onclick="event.stopPropagation();delTiempo(${se.id})" title="Eliminar">🗑</button>
+        </div>`;
+      }).join('');
+      const sn = sname.replace(/'/g,"\\'");
+      return `<div>
+        <div class="sub-row" onclick="toggleSubcat('${c.nombre}','${sn}')">
+          <span class="sub-name">${sname}</span>
+          <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
+          <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubcat('${c.nombre}','${sn}')" title="Registrar aquí">➕</button>
+          <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
+        </div>
+        <div class="ses-list ${subOpen?'open':''}">${sesionesHTML}</div>
+      </div>`;
+    }).join('') : '<div class="sub-empty">Sin actividades todavía</div>';
+
+    return `<div class="tema-area" style="border-color:${c.bd};">
+      <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('${c.nombre}')">
+        <div class="tema-dot" style="background:${c.color};"></div>
+        <div class="tema-name">${c.nombre}</div>
+        <div class="tema-total" style="color:${c.color};">${fmtHoras(st.total)}</div>
+        <span class="chevron ${isOpen?'open':''}">▾</span>
+      </div>
+      <div class="tema-body ${isOpen?'open':''}">
+        ${subsHTML}
+        <button class="tema-add" onclick="openTiempoModal('${c.nombre}')">+ Registrar en ${c.nombre}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---- Render principal ----
+function renderTiempo(){
+  const minHoy = minutosHoyTiempo(), minSem = minutosSemanaTiempo(), minTot = minutosTotalTiempo();
+  const rEl = document.getElementById('tie-hoy-mobile');
+  const sEl = document.getElementById('tie-semana-mobile');
+  const resEl = document.getElementById('tie-resumen-mobile');
+  if(rEl){
+    rEl.textContent = fmtHoras(minHoy);
+    if(sEl) sEl.textContent = fmtHoras(minSem);
+    if(resEl) resEl.textContent = tiempoItems.length ? ('total: '+fmtHoras(minTot)) : '';
+  }
+  renderCronoChipsTiempo();
+  renderCategoriasEn('tie-categorias-list');
+  renderTiempoDesktop();
+}
+
+function renderTiempoDesktop(){
+  if(window.innerWidth < 768) return;
+  const rEl = document.getElementById('d-tie-hoy'); if(!rEl) return;
+  rEl.textContent = fmtHoras(minutosHoyTiempo());
+  const sEl = document.getElementById('d-tie-semana');
+  if(sEl) sEl.textContent = fmtHoras(minutosSemanaTiempo());
+  const resEl = document.getElementById('d-tie-resumen');
+  if(resEl) resEl.textContent = tiempoItems.length ? ('total: '+fmtHoras(minutosTotalTiempo())) : '';
+  renderCategoriasEn('d-tie-categorias-list');
+}
+
 // ---- Inicialización (aquí las variables ya existen) ----
 loadEstudio();
 restaurarEstudioTimer();
+loadTiempo();
+restaurarTiempoTimer();
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
