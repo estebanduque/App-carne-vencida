@@ -345,6 +345,15 @@
           </div>
         </div>
         <div id="gym-ultimo-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
+        <div class="crono-box" style="background:rgba(224,90,20,0.08);border-color:rgba(224,90,20,0.22);">
+          <div class="crono-display" id="gym-crono-display">00:00:00</div>
+          <div class="crono-btns">
+            <button id="gym-crono-start-btn" class="crono-btn" style="flex:1;background:#E05A14;color:#fff;" onclick="gymStartPause()">▶ Iniciar</button>
+            <button class="crono-btn crono-stop" onclick="gymStop()">■ Terminar</button>
+            <button class="crono-btn crono-reset" onclick="gymReset()" title="Reiniciar">↺</button>
+          </div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">Se registra en Mi Tiempo → Deporte</div>
+        </div>
         <p class="inner-title">Últimas sesiones</p>
         <div id="gym-alert-mobile" class="gym-alert warn" style="display:none;margin:0 0 8px;"></div>
         <div id="gym-groups-list"></div>
@@ -571,6 +580,15 @@
           <div id="d-gym-dias-num" style="font-size:40px;font-weight:700;line-height:1;">—</div>
           <div id="d-gym-dias-lbl" style="font-size:12px;margin-top:4px;opacity:0.8;">días sin ir al gym</div>
           <div id="d-gym-ultimo" style="font-size:11px;margin-top:4px;opacity:0.6;"></div>
+        </div>
+        <div style="background:rgba(224,90,20,0.08);border:1px solid rgba(224,90,20,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
+          <div id="d-gym-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;margin-bottom:8px;">00:00:00</div>
+          <div style="display:flex;gap:6px;">
+            <button id="d-gym-crono-start-btn" onclick="gymStartPause()" style="flex:1;background:#E05A14;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
+            <button onclick="gymStop()" style="flex:1;background:rgba(255,255,255,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-family:inherit;cursor:pointer;">■ Guardar</button>
+            <button onclick="gymReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
+          </div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">Se registra en Mi Tiempo → Deporte</div>
         </div>
         <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Días entrenados</p>
         <div id="d-gym-fechas" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;"></div>
@@ -1265,6 +1283,57 @@ async function updateGymItem(id, item){
     alert('No se pudo actualizar. Intenta de nuevo.');
   }
   gymEditId = null;
+}
+
+// ---- Cronómetro de Gym (se registra directo en Mi Tiempo → Deporte) ----
+const GYM_TIMER_KEY = 'gym_timer';
+let gymTimer = { running:false, base:0, startTs:null };
+let gymInterval = null;
+function guardarTimerGymLS(){ try{ localStorage.setItem(GYM_TIMER_KEY, JSON.stringify(gymTimer)); }catch(e){} }
+function segundosCronoGym(){
+  let s = gymTimer.base || 0;
+  if(gymTimer.running && gymTimer.startTs){ s += Math.floor((Date.now() - gymTimer.startTs)/1000); }
+  return s;
+}
+function pintarCronoGym(){
+  const txt = formatCrono(segundosCronoGym());
+  ['gym-crono-display','d-gym-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
+  const running = gymTimer.running;
+  ['gym-crono-start-btn','d-gym-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+}
+function iniciarIntervalGym(){ if(!gymInterval){ gymInterval = setInterval(pintarCronoGym, 1000); } }
+function pararIntervalGym(){ if(gymInterval){ clearInterval(gymInterval); gymInterval = null; } }
+function gymStartPause(){
+  if(!gymTimer.running){
+    gymTimer.running = true; gymTimer.startTs = Date.now(); iniciarIntervalGym();
+  } else {
+    gymTimer.base = segundosCronoGym();
+    gymTimer.running = false; gymTimer.startTs = null; pararIntervalGym();
+  }
+  guardarTimerGymLS(); pintarCronoGym();
+}
+async function gymStop(){
+  const min = Math.round(segundosCronoGym()/60);
+  if(min < 1){ alert('El cronómetro aún no marca ni un minuto.'); return; }
+  if(!confirm('¿Guardar '+fmtHoras(min)+' de entrenamiento en Deporte › Gym?')) return;
+  pararIntervalGym();
+  gymTimer = { running:false, base:0, startTs:null }; guardarTimerGymLS();
+  pintarCronoGym();
+  await saveTiempoItem({ categoria:'Deporte', subcategoria:'Gym', minutos:min, created_at:null });
+}
+function gymReset(){
+  if(segundosCronoGym() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
+  pararIntervalGym();
+  gymTimer = { running:false, base:0, startTs:null }; guardarTimerGymLS();
+  pintarCronoGym();
+}
+function restaurarGymTimer(){
+  try{
+    const raw = localStorage.getItem(GYM_TIMER_KEY);
+    if(raw){ const t = JSON.parse(raw); if(t) gymTimer = { running:!!t.running, base:t.base||0, startTs:t.startTs||null }; }
+    if(gymTimer.running) iniciarIntervalGym();
+  }catch(e){}
+  pintarCronoGym();
 }
 
 // Notificaciones
@@ -2175,6 +2244,7 @@ const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#D6478F', bg:'rgba(214,71,1
 const SUBCAT_SUGERIDAS = {
   'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
   'Cuidado personal': ['Ducha','Higiene personal'],
+  'Deporte': ['Gym'],
 };
 function categoriaInfo(nombre){ return CATEGORIAS_TIEMPO.find(c=>c.nombre===nombre) || { nombre:nombre||'—', color:'#999', bg:'rgba(153,153,153,0.15)', bd:'rgba(153,153,153,0.35)' }; }
 
@@ -2657,6 +2727,7 @@ loadEstudio();
 restaurarEstudioTimer();
 loadTiempo();
 restaurarTiempoTimer();
+restaurarGymTimer();
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
