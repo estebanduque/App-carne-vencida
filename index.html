@@ -506,6 +506,19 @@
             <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">esta semana</div>
           </div>
         </div>
+        <div id="tie-perdido-franja" style="display:none;border-radius:12px;margin-bottom:6px;background:rgba(239,159,39,0.08);border:1px solid rgba(239,159,39,0.2);overflow:hidden;">
+          <div style="display:flex;">
+            <div style="flex:1;text-align:center;padding:14px 6px;">
+              <div id="tie-perdido-semana-mobile" style="font-size:20px;font-weight:700;line-height:1;color:#EF9F27;">—</div>
+              <div style="font-size:10px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">tiempo perdido esta semana</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,0.1);margin:12px 0;"></div>
+            <div style="flex:1;text-align:center;padding:14px 6px;">
+              <div id="tie-perdido-7d-mobile" style="font-size:20px;font-weight:700;line-height:1;color:#EF9F27;">—</div>
+              <div style="font-size:10px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">tiempo perdido últimos 7 días</div>
+            </div>
+          </div>
+        </div>
         <div id="tie-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
         <div class="crono-box" style="background:rgba(92,107,192,0.08);border-color:rgba(92,107,192,0.22);">
           <div class="crono-display" id="tiempo-crono-display">00:00:00</div>
@@ -663,6 +676,10 @@
         <div class="desktop-stats">
           <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-hoy" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">hoy</div></div>
           <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-semana" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">esta semana</div></div>
+        </div>
+        <div id="d-tie-perdido-stats" class="desktop-stats" style="display:none;margin-top:8px;">
+          <div class="desktop-stat" style="background:rgba(239,159,39,0.08);"><div class="desktop-stat-num" id="d-tie-perdido-semana" style="color:#EF9F27;">0</div><div class="desktop-stat-lbl">perdido esta semana</div></div>
+          <div class="desktop-stat" style="background:rgba(239,159,39,0.08);"><div class="desktop-stat-num" id="d-tie-perdido-7d" style="color:#EF9F27;">0</div><div class="desktop-stat-lbl">perdido últimos 7 días</div></div>
         </div>
         <div id="d-tie-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.35);"></div>
         <div style="background:rgba(92,107,192,0.08);border:1px solid rgba(92,107,192,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
@@ -2184,6 +2201,43 @@ function minutosSemanaTiempo(){
   }, 0);
 }
 function minutosTotalTiempo(){ return tiempoItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0); }
+function minutosEnRangoTiempo(dias){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return tiempoItems.reduce((a,i)=>{
+    const f = i.created_at ? i.created_at.split('T')[0] : ''; if(!f) return a;
+    const d = estDiasAtras(f, hoy);
+    return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+
+// ---- Tiempo perdido (no registrado en ninguna categoría) ----
+const TIEMPO_PERDIDO_DESDE = '2026-09-07';    // franja oculta hasta el lunes 7 de septiembre
+const TIEMPO_PERDIDO_7D_DESDE = '2026-09-10'; // valor "últimos 7 días" oculto hasta el jueves 10
+function minutosPerdidoSemana(){
+  const lunes = lunesDeEstaSemana();
+  const transcurrido = Math.max(0, Math.floor((Date.now() - lunes.getTime())/60000));
+  const registrado = minutosSemanaTiempo() + minutosSemanaCalendario();
+  return Math.max(0, transcurrido - registrado);
+}
+function minutosPerdido7Dias(){
+  const inicio = new Date(); inicio.setHours(0,0,0,0); inicio.setDate(inicio.getDate()-6);
+  const transcurrido = Math.max(0, Math.floor((Date.now() - inicio.getTime())/60000));
+  const registrado = minutosEnRangoTiempo(7) + minutosEnRango(7);
+  return Math.max(0, transcurrido - registrado);
+}
+function renderPerdidoFranja(){
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const mostrarFranja = hoyStr >= TIEMPO_PERDIDO_DESDE;
+  const mostrar7d = hoyStr >= TIEMPO_PERDIDO_7D_DESDE;
+  ['tie-perdido-franja','d-tie-perdido-stats'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.style.display = mostrarFranja ? '' : 'none';
+  });
+  if(!mostrarFranja) return;
+  const pS = fmtHoras(minutosPerdidoSemana());
+  ['tie-perdido-semana-mobile','d-tie-perdido-semana'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = pS; });
+  const p7 = mostrar7d ? fmtHoras(minutosPerdido7Dias()) : '—';
+  ['tie-perdido-7d-mobile','d-tie-perdido-7d'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = p7; });
+}
 function statsCategoria(nombre){
   const items = tiempoItems.filter(i=>i.categoria===nombre);
   const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
@@ -2581,6 +2635,7 @@ function renderTiempo(){
   renderCategoriasEn('tie-categorias-list');
   renderGridSemana('tie-grid-semana');
   renderLegendSemana('tie-grid-legend');
+  renderPerdidoFranja();
   renderTiempoDesktop();
 }
 
