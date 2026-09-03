@@ -1864,6 +1864,35 @@ function calcularCreatedAt(fecha, horaInicio, minutos, esEdicion){
   return (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : new Date().toISOString();
 }
 
+// ---- Feedback al iniciar un cronómetro desde el botón ▶ de una subcategoría ----
+function feedbackInicioCrono(el, color){
+  if(navigator.vibrate){ try{ navigator.vibrate(35); }catch(e){} }
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.15);
+    osc.onended = () => ctx.close();
+  }catch(e){}
+  if(el){
+    const prev = { background:el.style.background, color:el.style.color, borderRadius:el.style.borderRadius, transition:el.style.transition };
+    el.style.transition = 'background 0.15s, color 0.15s';
+    el.style.background = color || '#5C6BC0';
+    el.style.color = '#fff';
+    el.style.borderRadius = '50%';
+    setTimeout(()=>{
+      el.style.background = prev.background; el.style.color = prev.color;
+      el.style.borderRadius = prev.borderRadius; el.style.transition = prev.transition;
+    }, 450);
+  }
+}
+
 // ---- Regla de solapamiento: 2 actividades no pueden ocurrir al mismo tiempo ----
 // Un registro sin hora real (mediodía usado como marcador para fechas pasadas sin "hora de inicio")
 // no tiene una ubicación horaria confiable, así que queda exento de esta regla.
@@ -2106,7 +2135,7 @@ function estudioStartPause(){
   }
   guardarTimerLS(); pintarCrono();
 }
-async function iniciarCronoEstudioDesdeSubtema(tema){
+async function iniciarCronoEstudioDesdeSubtema(tema, btnEl, color){
   const segActual = segundosCrono();
   if(segActual > 0){
     const minActual = Math.round(segActual/60);
@@ -2129,6 +2158,7 @@ async function iniciarCronoEstudioDesdeSubtema(tema){
   actualizarDatalist('subtemas-list', tema);
   ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   pintarCrono();
+  feedbackInicioCrono(btnEl, color);
 }
 async function estudioStop(){
   const min = Math.round(segundosCrono()/60);
@@ -2518,7 +2548,7 @@ function tiempoStartPause(){
   }
   guardarTimerTiempoLS(); pintarCronoTiempo();
 }
-async function iniciarCronoDesdeSubcat(categoria, subcategoria){
+async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
   const sc = subcategoria==='General' ? '' : subcategoria;
   const segActual = segundosCronoTiempo();
   if(segActual > 0){
@@ -2542,6 +2572,7 @@ async function iniciarCronoDesdeSubcat(categoria, subcategoria){
   actualizarDatalistTiempo('subcats-list', categoria);
   ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = sc; });
   pintarCronoTiempo();
+  feedbackInicioCrono(btnEl, color);
 }
 async function tiempoStop(){
   const min = Math.round(segundosCronoTiempo()/60);
@@ -2718,7 +2749,7 @@ function renderEstudioBlockHTML(){
       <div class="sub-row" onclick="toggleSubcat('Estudio','${sn}')">
         <span class="sub-name">${sname}</span>
         <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
-        <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${sn}')" title="Iniciar cronómetro">▶</button>
+        <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${sn}', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
         <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${sn}','')" title="Registrar aquí">➕</button>
         <span class="chevron ${subOpen?'open':''}" style="font-size:13px;">▾</span>
       </div>
@@ -2764,7 +2795,7 @@ function renderCategoriasEn(containerId){
         <div class="sub-row" onclick="toggleSubcat('${c.nombre}','${sn}')">
           <span class="sub-name">${sname}</span>
           <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
-          <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoDesdeSubcat('${c.nombre}','${sn}')" title="Iniciar cronómetro">▶</button>
+          <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoDesdeSubcat('${c.nombre}','${sn}', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
           <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubcat('${c.nombre}','${sn}')" title="Registrar aquí">➕</button>
           <span class="chevron ${subOpen?'open':''}" style="font-size:13px;">▾</span>
         </div>
