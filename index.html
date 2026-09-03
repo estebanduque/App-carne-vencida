@@ -275,6 +275,39 @@
   .btn-save-pink { background: #D6478F; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #fff; font-weight: 600; font-family: inherit; }
   .btn-save-pink:active { background: #B23875; }
 
+  /* Mi Tiempo: fondo claro específico para este módulo */
+  #menu-section-tiempo .menu-toggle, #menu-section-tiempo .menu-body, #desktop-card-tiempo.desktop-card { background:#EEF1FB; border-color:rgba(36,40,80,0.15); }
+  #menu-section-tiempo .menu-toggle:active { background:#E3E7F8; }
+  #menu-section-tiempo .menu-title h2, #desktop-card-tiempo .desktop-card-title { color:#242850; }
+  #menu-section-tiempo .menu-title p, #desktop-card-tiempo .desktop-card-sub { color:rgba(36,40,80,0.55); }
+  #menu-section-tiempo .menu-chevron, #menu-section-tiempo .inner-title { color:rgba(36,40,80,0.45); }
+  #desktop-card-tiempo .desktop-card-header { border-bottom-color:rgba(36,40,80,0.08); }
+  #menu-section-tiempo .crono-display { color:#242850; }
+  #menu-section-tiempo .crono-sub { background:#fff; border-color:rgba(36,40,80,0.15); color:#242850; }
+  #menu-section-tiempo .crono-sub::placeholder { color:rgba(36,40,80,0.35); }
+  #menu-section-tiempo .crono-stop { background:rgba(36,40,80,0.08); color:#242850; }
+  #menu-section-tiempo .crono-stop:active { background:rgba(36,40,80,0.14); }
+  #menu-section-tiempo .crono-reset { background:rgba(36,40,80,0.06); color:rgba(36,40,80,0.5); }
+  #menu-section-tiempo .tema-chip, #desktop-card-tiempo .tema-chip { background:#fff; border-color:rgba(36,40,80,0.15); color:rgba(36,40,80,0.6); }
+  #menu-section-tiempo .tema-area, #desktop-card-tiempo .tema-area { border-color:rgba(36,40,80,0.12); }
+  #menu-section-tiempo .tema-body, #desktop-card-tiempo .tema-body { background:rgba(36,40,80,0.03); }
+  #menu-section-tiempo .tema-name, #desktop-card-tiempo .tema-name { color:#242850; }
+  #menu-section-tiempo .sub-row, #desktop-card-tiempo .sub-row { border-top-color:rgba(36,40,80,0.08); }
+  #menu-section-tiempo .sub-name, #desktop-card-tiempo .sub-name { color:#242850; }
+  #menu-section-tiempo .chevron, #desktop-card-tiempo .chevron { color:rgba(36,40,80,0.4); }
+  #menu-section-tiempo .sub-btn, #desktop-card-tiempo .sub-btn { color:rgba(36,40,80,0.55); }
+  #menu-section-tiempo .ses-list, #desktop-card-tiempo .ses-list { background:rgba(36,40,80,0.03); }
+  #menu-section-tiempo .ses-row, #desktop-card-tiempo .ses-row { border-top-color:rgba(36,40,80,0.06); }
+  #menu-section-tiempo .ses-fecha, #desktop-card-tiempo .ses-fecha { color:rgba(36,40,80,0.5); }
+  #menu-section-tiempo .ses-dur, #desktop-card-tiempo .ses-dur { color:#242850; }
+  #menu-section-tiempo .sub-empty, #desktop-card-tiempo .sub-empty { color:rgba(36,40,80,0.35); }
+  #menu-section-tiempo .tema-add, #desktop-card-tiempo .tema-add { background:rgba(36,40,80,0.04); border-color:rgba(36,40,80,0.18); color:rgba(36,40,80,0.55); }
+  #menu-section-tiempo .tema-add:active { background:rgba(36,40,80,0.08); }
+  #desktop-card-tiempo .desktop-stat { background:#fff; }
+  #desktop-card-tiempo .desktop-stat-lbl { color:rgba(36,40,80,0.5); }
+  #desktop-card-tiempo .desktop-add-btn { background:rgba(36,40,80,0.05); border-color:rgba(36,40,80,0.15); color:rgba(36,40,80,0.55); }
+  #desktop-card-tiempo .desktop-add-btn:hover { background:rgba(36,40,80,0.09); }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -493,7 +526,7 @@
   </div>
 
   <!-- ===== MENÚ MI TIEMPO ===== -->
-  <div class="menu-section" style="margin-top:12px;">
+  <div class="menu-section" id="menu-section-tiempo" style="margin-top:12px;">
     <button class="menu-toggle" id="toggle-tiempo" onclick="toggleMenu('tiempo')">
       <div class="menu-icon tiempo">⏱️</div>
       <div class="menu-title">
@@ -504,32 +537,32 @@
     </button>
     <div class="menu-body" id="body-tiempo">
       <div class="menu-inner">
-        <div style="border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,0.05);display:flex;overflow:hidden;">
+        <div style="border-radius:12px;margin-bottom:6px;background:#fff;display:flex;overflow:hidden;">
           <div style="flex:1;text-align:center;padding:16px 6px;">
             <div id="tie-hoy-mobile" style="font-size:24px;font-weight:700;line-height:1;color:#5C6BC0;">—</div>
-            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">hoy</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(36,40,80,0.5);line-height:1.25;">hoy</div>
           </div>
-          <div style="width:1px;background:rgba(255,255,255,0.1);margin:14px 0;"></div>
+          <div style="width:1px;background:rgba(36,40,80,0.1);margin:14px 0;"></div>
           <div style="flex:1;text-align:center;padding:16px 6px;">
             <div id="tie-semana-mobile" style="font-size:24px;font-weight:700;line-height:1;color:#5C6BC0;">—</div>
-            <div style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">esta semana</div>
+            <div style="font-size:11px;margin-top:6px;color:rgba(36,40,80,0.5);line-height:1.25;">esta semana</div>
           </div>
         </div>
-        <div id="tie-perdido-franja" style="display:none;border-radius:12px;margin-bottom:6px;background:rgba(239,159,39,0.08);border:1px solid rgba(239,159,39,0.2);overflow:hidden;">
+        <div id="tie-perdido-franja" style="display:none;border-radius:12px;margin-bottom:6px;background:rgba(239,159,39,0.1);border:1px solid rgba(239,159,39,0.25);overflow:hidden;">
           <div style="display:flex;">
             <div style="flex:1;text-align:center;padding:14px 6px;">
-              <div id="tie-perdido-semana-mobile" style="font-size:20px;font-weight:700;line-height:1;color:#EF9F27;">—</div>
-              <div style="font-size:10px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">tiempo perdido esta semana</div>
+              <div id="tie-perdido-semana-mobile" style="font-size:20px;font-weight:700;line-height:1;color:#C9840F;">—</div>
+              <div style="font-size:10px;margin-top:6px;color:rgba(36,40,80,0.5);line-height:1.25;">tiempo perdido esta semana</div>
             </div>
-            <div style="width:1px;background:rgba(255,255,255,0.1);margin:12px 0;"></div>
+            <div style="width:1px;background:rgba(36,40,80,0.12);margin:12px 0;"></div>
             <div style="flex:1;text-align:center;padding:14px 6px;">
-              <div id="tie-perdido-7d-mobile" style="font-size:20px;font-weight:700;line-height:1;color:#EF9F27;">—</div>
-              <div style="font-size:10px;margin-top:6px;color:rgba(255,255,255,0.4);line-height:1.25;">tiempo perdido últimos 7 días</div>
+              <div id="tie-perdido-7d-mobile" style="font-size:20px;font-weight:700;line-height:1;color:#C9840F;">—</div>
+              <div style="font-size:10px;margin-top:6px;color:rgba(36,40,80,0.5);line-height:1.25;">tiempo perdido últimos 7 días</div>
             </div>
           </div>
         </div>
-        <div id="tie-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
-        <div class="crono-box" style="background:rgba(92,107,192,0.08);border-color:rgba(92,107,192,0.22);">
+        <div id="tie-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(36,40,80,0.4);"></div>
+        <div class="crono-box" style="background:rgba(92,107,192,0.1);border-color:rgba(92,107,192,0.25);">
           <div class="crono-display" id="tiempo-crono-display">00:00:00</div>
           <div class="tema-chips" id="tiempo-crono-chips"></div>
           <input class="crono-sub" id="tiempo-crono-subcat" placeholder="Actividad (ej: Cocinar, Ver series…)" list="subcats-list">
@@ -541,12 +574,12 @@
           </div>
         </div>
         <p class="inner-title">Últimos 7 días</p>
-        <div id="tie-grid-semana" style="margin:0 16px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 8px 8px;"></div>
+        <div id="tie-grid-semana" style="margin:0 16px 8px;background:#fff;border:1px solid rgba(36,40,80,0.1);border-radius:14px;padding:12px 8px 8px;"></div>
         <div id="tie-grid-legend" style="display:flex;flex-wrap:wrap;gap:5px 10px;margin:0 16px 14px;padding:0 4px;"></div>
         <p class="inner-title">Por categoría</p>
         <div id="tie-categorias-list"></div>
         <div class="estudio-add-row">
-          <button class="estudio-add-full" style="background:rgba(92,107,192,0.18);border-color:rgba(92,107,192,0.35);color:#AAB2E8;" onclick="openTiempoModal()">+ Registrar manual</button>
+          <button class="estudio-add-full" style="background:#5C6BC0;border-color:#5C6BC0;color:#fff;" onclick="openTiempoModal()">+ Registrar manual</button>
         </div>
       </div>
     </div>
@@ -685,7 +718,7 @@
       </div>
     </div>
     <!-- Mi Tiempo -->
-    <div class="desktop-card">
+    <div class="desktop-card" id="desktop-card-tiempo">
       <div class="desktop-card-header">
         <div class="desktop-card-icon" style="background:rgba(92,107,192,0.2);">⏱️</div>
         <div><div class="desktop-card-title">Mi Tiempo</div><div class="desktop-card-sub">Cómo uso mi tiempo</div></div>
@@ -696,24 +729,24 @@
           <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-semana" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">esta semana</div></div>
         </div>
         <div id="d-tie-perdido-stats" class="desktop-stats" style="display:none;margin-top:8px;">
-          <div class="desktop-stat" style="background:rgba(239,159,39,0.08);"><div class="desktop-stat-num" id="d-tie-perdido-semana" style="color:#EF9F27;">0</div><div class="desktop-stat-lbl">perdido esta semana</div></div>
-          <div class="desktop-stat" style="background:rgba(239,159,39,0.08);"><div class="desktop-stat-num" id="d-tie-perdido-7d" style="color:#EF9F27;">0</div><div class="desktop-stat-lbl">perdido últimos 7 días</div></div>
+          <div class="desktop-stat" style="background:rgba(239,159,39,0.12);"><div class="desktop-stat-num" id="d-tie-perdido-semana" style="color:#C9840F;">0</div><div class="desktop-stat-lbl">perdido esta semana</div></div>
+          <div class="desktop-stat" style="background:rgba(239,159,39,0.12);"><div class="desktop-stat-num" id="d-tie-perdido-7d" style="color:#C9840F;">0</div><div class="desktop-stat-lbl">perdido últimos 7 días</div></div>
         </div>
-        <div id="d-tie-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.35);"></div>
-        <div style="background:rgba(92,107,192,0.08);border:1px solid rgba(92,107,192,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
-          <div id="d-tiempo-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff;margin-bottom:8px;">00:00:00</div>
+        <div id="d-tie-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(36,40,80,0.45);"></div>
+        <div style="background:rgba(92,107,192,0.1);border:1px solid rgba(92,107,192,0.25);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
+          <div id="d-tiempo-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#242850;margin-bottom:8px;">00:00:00</div>
           <div class="tema-chips" id="d-tiempo-crono-chips" style="margin-bottom:8px;"></div>
-          <input id="d-tiempo-crono-subcat" placeholder="Actividad…" list="subcats-list" style="width:100%;margin-bottom:8px;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;">
+          <input id="d-tiempo-crono-subcat" placeholder="Actividad…" list="subcats-list" style="width:100%;margin-bottom:8px;padding:8px 10px;font-size:13px;border:1px solid rgba(36,40,80,0.15);border-radius:8px;background:#fff;color:#242850;font-family:inherit;">
           <div style="display:flex;gap:6px;">
             <button id="d-tiempo-crono-start-btn" onclick="tiempoStartPause()" style="flex:1;background:#5C6BC0;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
-            <button onclick="tiempoStop()" style="flex:1;background:rgba(255,255,255,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-family:inherit;cursor:pointer;">■ Guardar</button>
-            <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
+            <button onclick="tiempoStop()" style="flex:1;background:rgba(36,40,80,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#242850;font-family:inherit;cursor:pointer;">■ Guardar</button>
+            <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(36,40,80,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(36,40,80,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
-        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Últimos 7 días</p>
-        <div id="d-tie-grid-semana" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 8px 6px;margin-bottom:6px;"></div>
+        <p style="font-size:11px;font-weight:500;color:rgba(36,40,80,0.45);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Últimos 7 días</p>
+        <div id="d-tie-grid-semana" style="background:#fff;border:1px solid rgba(36,40,80,0.1);border-radius:12px;padding:10px 8px 6px;margin-bottom:6px;"></div>
         <div id="d-tie-grid-legend" style="display:flex;flex-wrap:wrap;gap:4px 8px;margin-bottom:12px;"></div>
-        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por categoría</p>
+        <p style="font-size:11px;font-weight:500;color:rgba(36,40,80,0.45);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por categoría</p>
         <div id="d-tie-categorias-list" style="max-height:320px;overflow-y:auto;"></div>
         <button class="desktop-add-btn" onclick="openTiempoModal()">+ Registrar manual</button>
       </div>
@@ -1943,10 +1976,10 @@ function statsTema(nombre){
 function subtemasDe(tema){ return [...new Set(estudioItems.filter(i=>i.tema===tema && i.subtema).map(i=>i.subtema))].sort(); }
 
 // ---- Chips de tema y datalists ----
-function chipsHTML(activo, onclickName, lista){
+function chipsHTML(activo, onclickName, lista, claro){
   return (lista || TEMAS).map(t=>{
     const act = t.nombre === activo;
-    const style = act ? `background:${t.bg};border-color:${t.color};color:#fff;` : '';
+    const style = act ? (claro ? `background:${t.color};border-color:${t.color};color:#fff;` : `background:${t.bg};border-color:${t.color};color:#fff;`) : '';
     return `<button type="button" class="tema-chip" style="${style}" onclick="${onclickName}('${t.nombre}')">${t.nombre}</button>`;
   }).join('');
 }
@@ -2003,6 +2036,18 @@ function estudioStartPause(){
     estudioTimer.running = false; estudioTimer.startTs = null; pararInterval();
   }
   guardarTimerLS(); pintarCrono();
+}
+function iniciarCronoEstudioDesdeSubtema(tema){
+  if(estudioTimer.running || segundosCrono() > 0){
+    if(!confirm('¿Cambiar el cronómetro de Mi Estudio a '+tema+'? Se perderá el tiempo no guardado.')) return;
+  }
+  pararInterval();
+  estudioTimer = { running:true, base:0, startTs:Date.now(), tema, subtema:'' };
+  guardarTimerLS(); iniciarInterval();
+  renderCronoChips();
+  actualizarDatalist('subtemas-list', tema);
+  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  pintarCrono();
 }
 async function estudioStop(){
   const min = Math.round(segundosCrono()/60);
@@ -2230,17 +2275,18 @@ function renderEstudioDesktop(){
 }
 
 // ===================== MI TIEMPO (por categorías) =====================
+// Paleta: 3 primarios (rojo/azul/amarillo), 3 secundarios (naranja/verde/violeta) y 3 terciarios de uso común (verde azulado/ámbar/magenta)
 const CATEGORIAS_TIEMPO = [
-  { nombre:'Hogar',             color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)' },
-  { nombre:'Ocio',              color:'#A66BE8', bg:'rgba(166,107,232,0.15)', bd:'rgba(166,107,232,0.35)' },
-  { nombre:'Deporte',           color:'#E05A14', bg:'rgba(224,90,20,0.15)',   bd:'rgba(224,90,20,0.35)' },
-  { nombre:'Dormir',            color:'#5C6BC0', bg:'rgba(92,107,192,0.15)',  bd:'rgba(92,107,192,0.35)' },
-  { nombre:'Cuidado personal',  color:'#22C1A5', bg:'rgba(34,193,165,0.15)',  bd:'rgba(34,193,165,0.35)' },
-  { nombre:'Transporte',        color:'#2FA8C4', bg:'rgba(47,168,196,0.15)',  bd:'rgba(47,168,196,0.35)' },
-  { nombre:'Trabajo',           color:'#C9A227', bg:'rgba(201,162,39,0.15)',  bd:'rgba(201,162,39,0.35)' },
-  { nombre:'Proyecto personal', color:'#4CAF50', bg:'rgba(76,175,80,0.15)',   bd:'rgba(76,175,80,0.35)' },
+  { nombre:'Hogar',             color:'#1E88E5', bg:'rgba(30,136,229,0.15)',  bd:'rgba(30,136,229,0.35)' },  // primario: azul
+  { nombre:'Ocio',              color:'#F2B705', bg:'rgba(242,183,5,0.15)',   bd:'rgba(242,183,5,0.35)' },   // primario: amarillo
+  { nombre:'Deporte',           color:'#FB8C00', bg:'rgba(251,140,0,0.15)',   bd:'rgba(251,140,0,0.35)' },   // secundario: naranja
+  { nombre:'Dormir',            color:'#8E24AA', bg:'rgba(142,36,170,0.15)',  bd:'rgba(142,36,170,0.35)' },  // secundario: violeta
+  { nombre:'Cuidado personal',  color:'#00897B', bg:'rgba(0,137,123,0.15)',   bd:'rgba(0,137,123,0.35)' },   // terciario: verde azulado
+  { nombre:'Transporte',        color:'#FFB300', bg:'rgba(255,179,0,0.15)',   bd:'rgba(255,179,0,0.35)' },   // terciario: ámbar
+  { nombre:'Trabajo',           color:'#E53935', bg:'rgba(229,57,53,0.15)',   bd:'rgba(229,57,53,0.35)' },   // primario: rojo
+  { nombre:'Proyecto personal', color:'#43A047', bg:'rgba(67,160,71,0.15)',   bd:'rgba(67,160,71,0.35)' },   // secundario: verde
 ];
-const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#D6478F', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' };
+const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#D6478F', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' }; // terciario: magenta
 const SUBCAT_SUGERIDAS = {
   'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
   'Cuidado personal': ['Ducha','Higiene personal'],
@@ -2281,7 +2327,7 @@ function minutosEnRangoTiempo(dias){
 }
 
 // ---- Tiempo perdido (no registrado en ninguna categoría) ----
-const TIEMPO_PERDIDO_HABILITADO = false;      // en false: la franja no se muestra nunca, sin importar la fecha
+const TIEMPO_PERDIDO_HABILITADO = true;      // en false: la franja no se muestra nunca, sin importar la fecha
 const TIEMPO_PERDIDO_DESDE = '2026-09-07';    // franja oculta hasta el lunes 7 de septiembre
 const TIEMPO_PERDIDO_7D_DESDE = '2026-09-10'; // valor "últimos 7 días" oculto hasta el jueves 10
 function minutosPerdidoSemana(){
@@ -2330,10 +2376,10 @@ function subcategoriasDe(categoria){
 
 // ---- Chips y datalists ----
 function renderCronoChipsTiempo(){
-  const html = chipsHTML(tiempoTimer.categoria, 'seleccionarCategoriaCrono', CATEGORIAS_TIEMPO);
+  const html = chipsHTML(tiempoTimer.categoria, 'seleccionarCategoriaCrono', CATEGORIAS_TIEMPO, true);
   ['tiempo-crono-chips','d-tiempo-crono-chips'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
 }
-function renderModalChipsTiempo(){ const el=document.getElementById('modal-tiempo-chips'); if(el) el.innerHTML = chipsHTML(modalCategoria, 'seleccionarCategoriaModal', CATEGORIAS_TIEMPO); }
+function renderModalChipsTiempo(){ const el=document.getElementById('modal-tiempo-chips'); if(el) el.innerHTML = chipsHTML(modalCategoria, 'seleccionarCategoriaModal', CATEGORIAS_TIEMPO, true); }
 function actualizarDatalistTiempo(id, categoria){
   const dl = document.getElementById(id); if(!dl) return;
   dl.innerHTML = subcategoriasDe(categoria).map(s=>`<option value="${(s||'').replace(/"/g,'&quot;')}">`).join('');
@@ -2378,6 +2424,19 @@ function tiempoStartPause(){
     tiempoTimer.running = false; tiempoTimer.startTs = null; pararIntervalTiempo();
   }
   guardarTimerTiempoLS(); pintarCronoTiempo();
+}
+function iniciarCronoDesdeSubcat(categoria, subcategoria){
+  const sc = subcategoria==='General' ? '' : subcategoria;
+  if(tiempoTimer.running || segundosCronoTiempo() > 0){
+    if(!confirm('¿Cambiar el cronómetro a '+categoria+(sc?' › '+sc:'')+'? Se perderá el tiempo no guardado.')) return;
+  }
+  pararIntervalTiempo();
+  tiempoTimer = { running:true, base:0, startTs:Date.now(), categoria, subcategoria:sc };
+  guardarTimerTiempoLS(); iniciarIntervalTiempo();
+  renderCronoChipsTiempo();
+  actualizarDatalistTiempo('subcats-list', categoria);
+  ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = sc; });
+  pintarCronoTiempo();
 }
 async function tiempoStop(){
   const min = Math.round(segundosCronoTiempo()/60);
@@ -2542,8 +2601,9 @@ function renderEstudioBlockHTML(){
       <div class="sub-row" onclick="toggleSubcat('Estudio','${sn}')">
         <span class="sub-name">${sname}</span>
         <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
+        <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${sn}')" title="Iniciar cronómetro">▶</button>
         <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${sn}','')" title="Registrar aquí">➕</button>
-        <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
+        <span class="chevron ${subOpen?'open':''}" style="font-size:13px;">▾</span>
       </div>
       <div class="ses-list ${subOpen?'open':''}">${sesionesHTML}</div>
     </div>`;
@@ -2587,8 +2647,9 @@ function renderCategoriasEn(containerId){
         <div class="sub-row" onclick="toggleSubcat('${c.nombre}','${sn}')">
           <span class="sub-name">${sname}</span>
           <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
+          <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoDesdeSubcat('${c.nombre}','${sn}')" title="Iniciar cronómetro">▶</button>
           <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubcat('${c.nombre}','${sn}')" title="Registrar aquí">➕</button>
-          <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
+          <span class="chevron ${subOpen?'open':''}" style="font-size:13px;">▾</span>
         </div>
         <div class="ses-list ${subOpen?'open':''}">${sesionesHTML}</div>
       </div>`;
@@ -2657,17 +2718,17 @@ function renderGridSemana(containerId){
   let svg = `<svg viewBox="0 0 ${W} ${H+padTop}" style="width:100%;height:auto;display:block;">`;
   for(let h=0; h<=24; h+=3){
     const y = padTop + h*hourH;
-    svg += `<line x1="${padLeft}" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
-    if(h<24) svg += `<text x="0" y="${y+9}" font-size="8" fill="rgba(255,255,255,0.35)">${String(h).padStart(2,'0')}</text>`;
+    svg += `<line x1="${padLeft}" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(36,40,80,0.08)" stroke-width="1"/>`;
+    if(h<24) svg += `<text x="0" y="${y+9}" font-size="8" fill="rgba(36,40,80,0.4)">${String(h).padStart(2,'0')}</text>`;
   }
   for(let d=0; d<=7; d++){
     const x = padLeft + d*colW;
-    svg += `<line x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop+H}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+    svg += `<line x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop+H}" stroke="rgba(36,40,80,0.06)" stroke-width="1"/>`;
   }
   days.forEach((d,idx)=>{
     const x = padLeft + idx*colW + colW/2;
     const isToday = d.toISOString().split('T')[0]===hoyStr;
-    svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#fff':'rgba(255,255,255,0.5)'}" text-anchor="middle">${letras[idx]} ${d.getDate()}</text>`;
+    svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#242850':'rgba(36,40,80,0.5)'}" text-anchor="middle">${letras[idx]} ${d.getDate()}</text>`;
   });
   bloquesSemana().forEach(b=>{
     const x = padLeft + b.dayIdx*colW + 1;
@@ -2685,7 +2746,7 @@ function renderLegendSemana(containerId){
   const lista = [...CATEGORIAS_TIEMPO, ESTUDIO_EN_TIEMPO];
   cont.innerHTML = lista.map(c=>`<div style="display:flex;align-items:center;gap:5px;">
     <span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex-shrink:0;"></span>
-    <span style="font-size:10px;color:rgba(255,255,255,0.5);">${c.nombre}</span>
+    <span style="font-size:10px;color:rgba(36,40,80,0.6);">${c.nombre}</span>
   </div>`).join('');
 }
 
