@@ -1349,10 +1349,13 @@ async function gymStop(){
   const min = Math.round(segundosCronoGym()/60);
   if(min < 1){ alert('El cronómetro aún no marca ni un minuto.'); return; }
   if(!confirm('¿Guardar '+fmtHoras(min)+' de entrenamiento en Deporte › Gym?')) return;
+  const created_at = new Date().toISOString();
+  const {start,end} = ventanaDe(created_at, min);
+  if(!(await liberarConflictosParaCrono(start, end, null))) return;
   pararIntervalGym();
   gymTimer = { running:false, base:0, startTs:null }; guardarTimerGymLS();
   pintarCronoGym();
-  await saveTiempoItem({ categoria:'Deporte', subcategoria:'Gym', minutos:min, created_at:null });
+  await saveTiempoItem({ categoria:'Deporte', subcategoria:'Gym', minutos:min, created_at });
 }
 function gymReset(){
   if(segundosCronoGym() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
@@ -1858,7 +1861,73 @@ function calcularCreatedAt(fecha, horaInicio, minutos, esEdicion){
   }
   if(esEdicion) return fecha ? fecha+'T12:00:00' : null;
   const hoyStr = new Date().toISOString().split('T')[0];
-  return (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : null;
+  return (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : new Date().toISOString();
+}
+
+// ---- Regla de solapamiento: 2 actividades no pueden ocurrir al mismo tiempo ----
+// Un registro sin hora real (mediodía usado como marcador para fechas pasadas sin "hora de inicio")
+// no tiene una ubicación horaria confiable, así que queda exento de esta regla.
+function esHoraPrecisa(created_at){
+  if(!created_at) return false;
+  const d = new Date(created_at);
+  return !(d.getHours()===12 && d.getMinutes()===0 && d.getSeconds()===0);
+}
+function ventanaDe(created_at, minutos){
+  const end = new Date(created_at);
+  const start = new Date(end.getTime() - (parseInt(minutos)||0)*60000);
+  return { start, end };
+}
+function seSuperponen(aStart, aEnd, bStart, bEnd){ return aStart < bEnd && bStart < aEnd; }
+function bloquesExistentes(excluir){
+  const out = [];
+  tiempoItems.forEach(i=>{
+    if(excluir && excluir.fuente==='tiempo' && excluir.id===i.id) return;
+    if(!i.created_at || !i.minutos || !esHoraPrecisa(i.created_at)) return;
+    const { start, end } = ventanaDe(i.created_at, i.minutos);
+    out.push({ fuente:'tiempo', id:i.id, start, end, nombre:i.categoria, sub:i.subcategoria });
+  });
+  estudioItems.forEach(i=>{
+    if(excluir && excluir.fuente==='estudio' && excluir.id===i.id) return;
+    if(!i.created_at || !i.minutos || !esHoraPrecisa(i.created_at)) return;
+    const { start, end } = ventanaDe(i.created_at, i.minutos);
+    out.push({ fuente:'estudio', id:i.id, start, end, nombre:i.tema, sub:i.subtema });
+  });
+  return out;
+}
+function hayConflicto(newStart, newEnd, excluir){
+  return bloquesExistentes(excluir).find(b=>seSuperponen(newStart, newEnd, b.start, b.end));
+}
+// El cronómetro manda: no pueden existir 2 cronómetros a la vez, así que su tiempo es siempre
+// el correcto. Cualquier registro (propio o manual) que se le cruce se recorta o se elimina.
+async function liberarConflictosParaCrono(newStart, newEnd, excluir){
+  const conflictos = bloquesExistentes(excluir).filter(b=>seSuperponen(newStart, newEnd, b.start, b.end));
+  if(!conflictos.length) return true;
+  const resumen = conflictos.map(b=>b.nombre+(b.sub?' › '+b.sub:'')).join(', ');
+  if(!confirm('Esto se superpone con: '+resumen+'. Como no se puede tener 2 actividades a la vez, se recortará o eliminará ese tiempo. ¿Continuar?')) return false;
+  for(const b of conflictos){
+    const borrar = () => b.fuente==='tiempo' ? deleteTiempoItem(b.id) : deleteEstudioItem(b.id);
+    const actualizar = (minutos, created_at) => b.fuente==='tiempo'
+      ? updateTiempoItem(b.id, { categoria:b.nombre, subcategoria:b.sub, minutos, created_at })
+      : updateEstudioItem(b.id, { tema:b.nombre, subtema:b.sub, minutos, created_at });
+    const crear = (minutos, created_at) => b.fuente==='tiempo'
+      ? saveTiempoItem({ categoria:b.nombre, subcategoria:b.sub, minutos, created_at })
+      : saveEstudioItem({ tema:b.nombre, subtema:b.sub, minutos, created_at });
+    if(newStart<=b.start && b.end<=newEnd){
+      await borrar();
+    } else if(b.start<newStart && newStart<b.end && b.end<=newEnd){
+      const min = Math.round((newStart-b.start)/60000);
+      if(min<1) await borrar(); else await actualizar(min, newStart.toISOString());
+    } else if(newStart<=b.start && b.start<newEnd && newEnd<b.end){
+      const min = Math.round((b.end-newEnd)/60000);
+      if(min<1) await borrar(); else await actualizar(min, b.end.toISOString());
+    } else if(b.start<newStart && newEnd<b.end){
+      const minAntes = Math.round((newStart-b.start)/60000);
+      const minDespues = Math.round((b.end-newEnd)/60000);
+      if(minAntes>=1) await actualizar(minAntes, newStart.toISOString()); else await borrar();
+      if(minDespues>=1) await crear(minDespues, b.end.toISOString());
+    }
+  }
+  return true;
 }
 function minutosEnRango(dias){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -2037,11 +2106,23 @@ function estudioStartPause(){
   }
   guardarTimerLS(); pintarCrono();
 }
-function iniciarCronoEstudioDesdeSubtema(tema){
-  if(estudioTimer.running || segundosCrono() > 0){
-    if(!confirm('¿Cambiar el cronómetro de Mi Estudio a '+tema+'? Se perderá el tiempo no guardado.')) return;
+async function iniciarCronoEstudioDesdeSubtema(tema){
+  const segActual = segundosCrono();
+  if(segActual > 0){
+    const minActual = Math.round(segActual/60);
+    if(minActual >= 1){
+      const temaActual = estudioTimer.tema;
+      const subActual = leerSubtemaCrono() || 'General';
+      if(!confirm('Se guardará '+fmtHoras(minActual)+' en '+temaActual+' › '+subActual+' y se iniciará el cronómetro en '+tema+'. ¿Continuar?')) return;
+      const created_at = new Date().toISOString();
+      const { start, end } = ventanaDe(created_at, minActual);
+      if(!(await liberarConflictosParaCrono(start, end, null))) return;
+      pararInterval();
+      await saveEstudioItem({ tema:temaActual, subtema:subActual, minutos:minActual, created_at });
+    } else {
+      pararInterval();
+    }
   }
-  pararInterval();
   estudioTimer = { running:true, base:0, startTs:Date.now(), tema, subtema:'' };
   guardarTimerLS(); iniciarInterval();
   renderCronoChips();
@@ -2056,11 +2137,14 @@ async function estudioStop(){
   const tema = estudioTimer.tema;
   const subtema = leerSubtemaCrono() || 'General';
   if(!confirm('¿Guardar '+fmtHoras(min)+' en '+tema+' › '+subtema+'?')) return;
+  const created_at = new Date().toISOString();
+  const {start,end} = ventanaDe(created_at, min);
+  if(!(await liberarConflictosParaCrono(start, end, null))) return;
   pararInterval();
   estudioTimer = { running:false, base:0, startTs:null, tema:tema, subtema:'' }; guardarTimerLS();
   ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   pintarCrono();
-  await saveEstudioItem({ tema, subtema, minutos:min, created_at:null });
+  await saveEstudioItem({ tema, subtema, minutos:min, created_at });
 }
 function estudioReset(){
   if(segundosCrono() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
@@ -2165,6 +2249,15 @@ function saveEstudioManual(){
   if(!tema){ alert('Elige un tema.'); return; }
   if(minutos < 1){ alert('Indica cuánto tiempo estudiaste.'); return; }
   const created_at = calcularCreatedAt(fecha, horaInicio, minutos, !!estudioEditId);
+  if(esHoraPrecisa(created_at)){
+    const excluir = estudioEditId ? { fuente:'estudio', id:estudioEditId } : null;
+    const { start, end } = ventanaDe(created_at, minutos);
+    const conflicto = hayConflicto(start, end, excluir);
+    if(conflicto){
+      alert('Ese horario se superpone con '+conflicto.nombre+(conflicto.sub?' › '+conflicto.sub:'')+'. No se puede tener 2 actividades al mismo tiempo — ajustá la hora o la duración.');
+      return;
+    }
+  }
   if(estudioEditId){
     updateEstudioItem(estudioEditId, { tema, subtema, minutos, created_at });
   } else {
@@ -2425,12 +2518,24 @@ function tiempoStartPause(){
   }
   guardarTimerTiempoLS(); pintarCronoTiempo();
 }
-function iniciarCronoDesdeSubcat(categoria, subcategoria){
+async function iniciarCronoDesdeSubcat(categoria, subcategoria){
   const sc = subcategoria==='General' ? '' : subcategoria;
-  if(tiempoTimer.running || segundosCronoTiempo() > 0){
-    if(!confirm('¿Cambiar el cronómetro a '+categoria+(sc?' › '+sc:'')+'? Se perderá el tiempo no guardado.')) return;
+  const segActual = segundosCronoTiempo();
+  if(segActual > 0){
+    const minActual = Math.round(segActual/60);
+    if(minActual >= 1){
+      const catActual = tiempoTimer.categoria;
+      const subActual = leerSubcatCrono() || 'General';
+      if(!confirm('Se guardará '+fmtHoras(minActual)+' en '+catActual+' › '+subActual+' y se iniciará el cronómetro en '+categoria+(sc?' › '+sc:'')+'. ¿Continuar?')) return;
+      const created_at = new Date().toISOString();
+      const { start, end } = ventanaDe(created_at, minActual);
+      if(!(await liberarConflictosParaCrono(start, end, null))) return;
+      pararIntervalTiempo();
+      await saveTiempoItem({ categoria:catActual, subcategoria:subActual, minutos:minActual, created_at });
+    } else {
+      pararIntervalTiempo();
+    }
   }
-  pararIntervalTiempo();
   tiempoTimer = { running:true, base:0, startTs:Date.now(), categoria, subcategoria:sc };
   guardarTimerTiempoLS(); iniciarIntervalTiempo();
   renderCronoChipsTiempo();
@@ -2445,11 +2550,14 @@ async function tiempoStop(){
   const categoria = tiempoTimer.categoria;
   const subcategoria = leerSubcatCrono() || 'General';
   if(!confirm('¿Guardar '+fmtHoras(min)+' en '+categoria+' › '+subcategoria+'?')) return;
+  const created_at = new Date().toISOString();
+  const {start,end} = ventanaDe(created_at, min);
+  if(!(await liberarConflictosParaCrono(start, end, null))) return;
   pararIntervalTiempo();
   tiempoTimer = { running:false, base:0, startTs:null, categoria:categoria, subcategoria:'' }; guardarTimerTiempoLS();
   ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   pintarCronoTiempo();
-  await saveTiempoItem({ categoria, subcategoria, minutos:min, created_at:null });
+  await saveTiempoItem({ categoria, subcategoria, minutos:min, created_at });
 }
 function tiempoReset(){
   if(segundosCronoTiempo() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
@@ -2554,6 +2662,15 @@ function saveTiempoManual(){
   if(!categoria){ alert('Elige una categoría.'); return; }
   if(minutos < 1){ alert('Indica cuánto tiempo dedicaste.'); return; }
   const created_at = calcularCreatedAt(fecha, horaInicio, minutos, !!tiempoEditId);
+  if(esHoraPrecisa(created_at)){
+    const excluir = tiempoEditId ? { fuente:'tiempo', id:tiempoEditId } : null;
+    const { start, end } = ventanaDe(created_at, minutos);
+    const conflicto = hayConflicto(start, end, excluir);
+    if(conflicto){
+      alert('Ese horario se superpone con '+conflicto.nombre+(conflicto.sub?' › '+conflicto.sub:'')+'. No se puede tener 2 actividades al mismo tiempo — ajustá la hora o la duración.');
+      return;
+    }
+  }
   if(tiempoEditId){
     updateTiempoItem(tiempoEditId, { categoria, subcategoria, minutos, created_at });
   } else {
