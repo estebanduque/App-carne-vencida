@@ -308,6 +308,18 @@
   #desktop-card-tiempo .desktop-add-btn { background:rgba(36,40,80,0.05); border-color:rgba(36,40,80,0.15); color:rgba(36,40,80,0.55); }
   #desktop-card-tiempo .desktop-add-btn:hover { background:rgba(36,40,80,0.09); }
 
+    .bloque-grid { transition: opacity 0.15s, filter 0.15s; }
+    .bloque-grid:hover { filter: brightness(1.12); }
+    .bloque-grid:active { filter: brightness(1.2); }
+    .grid-popover { position: fixed; z-index: 150; background: #1A2D45; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); min-width: 170px; max-width: 230px; font-family: inherit; }
+    .grid-popover-title { font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 1px; }
+    .grid-popover-sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+    .grid-popover-time { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 10px; }
+    .grid-popover-btns { display: flex; gap: 8px; }
+    .grid-popover-btn { flex: 1; border: none; border-radius: 8px; padding: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .legend-chip { cursor: pointer; padding: 3px 7px 3px 3px; border-radius: 20px; border: 1.5px solid transparent; transition: all 0.15s; }
+    .legend-chip:active { transform: scale(0.96); }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -573,8 +585,15 @@
             <button class="crono-btn crono-reset" onclick="tiempoReset()" title="Reiniciar">↺</button>
           </div>
         </div>
-        <p class="inner-title">Últimos 7 días</p>
-        <div id="tie-grid-semana" style="margin:0 16px 8px;background:#fff;border:1px solid rgba(36,40,80,0.1);border-radius:14px;padding:12px 8px 8px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 4px;padding:14px 0 8px;">
+          <span class="inner-title" style="padding:0;">Últimos 7 días</span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button onclick="cambiarZoomGrid(-1)" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(36,40,80,0.15);background:#fff;color:#242850;font-size:15px;font-family:inherit;cursor:pointer;line-height:1;">−</button>
+            <span id="tie-grid-zoom-lbl" style="font-size:11px;color:rgba(36,40,80,0.5);min-width:32px;text-align:center;">100%</span>
+            <button onclick="cambiarZoomGrid(1)" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(36,40,80,0.15);background:#fff;color:#242850;font-size:15px;font-family:inherit;cursor:pointer;line-height:1;">+</button>
+          </div>
+        </div>
+        <div id="tie-grid-semana" style="margin:0 16px 8px;background:#fff;border:1px solid rgba(36,40,80,0.1);border-radius:14px;padding:12px 8px 8px;overflow-y:auto;max-height:480px;"></div>
         <div id="tie-grid-legend" style="display:flex;flex-wrap:wrap;gap:5px 10px;margin:0 16px 14px;padding:0 4px;"></div>
         <p class="inner-title">Por categoría</p>
         <div id="tie-categorias-list"></div>
@@ -743,8 +762,15 @@
             <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(36,40,80,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(36,40,80,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
-        <p style="font-size:11px;font-weight:500;color:rgba(36,40,80,0.45);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Últimos 7 días</p>
-        <div id="d-tie-grid-semana" style="background:#fff;border:1px solid rgba(36,40,80,0.1);border-radius:12px;padding:10px 8px 6px;margin-bottom:6px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <p style="font-size:11px;font-weight:500;color:rgba(36,40,80,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0;">Últimos 7 días</p>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button onclick="cambiarZoomGrid(-1)" style="width:22px;height:22px;border-radius:7px;border:1px solid rgba(36,40,80,0.15);background:#fff;color:#242850;font-size:13px;font-family:inherit;cursor:pointer;line-height:1;">−</button>
+            <span id="d-tie-grid-zoom-lbl" style="font-size:10px;color:rgba(36,40,80,0.5);min-width:28px;text-align:center;">100%</span>
+            <button onclick="cambiarZoomGrid(1)" style="width:22px;height:22px;border-radius:7px;border:1px solid rgba(36,40,80,0.15);background:#fff;color:#242850;font-size:13px;font-family:inherit;cursor:pointer;line-height:1;">+</button>
+          </div>
+        </div>
+        <div id="d-tie-grid-semana" style="background:#fff;border:1px solid rgba(36,40,80,0.1);border-radius:12px;padding:10px 8px 6px;margin-bottom:6px;overflow-y:auto;max-height:420px;"></div>
         <div id="d-tie-grid-legend" style="display:flex;flex-wrap:wrap;gap:4px 8px;margin-bottom:12px;"></div>
         <p style="font-size:11px;font-weight:500;color:rgba(36,40,80,0.45);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por categoría</p>
         <div id="d-tie-categorias-list" style="max-height:320px;overflow-y:auto;"></div>
@@ -899,6 +925,9 @@
     </div>
   </div>
 </div>
+
+<!-- Popover de la grilla semanal de Mi Tiempo -->
+<div id="grid-popover" class="grid-popover" style="display:none;"></div>
 
 <script>
 // ===== CONFIGURACIÓN SUPABASE =====
@@ -1339,6 +1368,7 @@ function pararIntervalGym(){ if(gymInterval){ clearInterval(gymInterval); gymInt
 function gymStartPause(){
   if(!gymTimer.running){
     gymTimer.running = true; gymTimer.startTs = Date.now(); iniciarIntervalGym();
+    feedbackInicioCronoIds(['gym-crono-start-btn','d-gym-crono-start-btn']);
   } else {
     gymTimer.base = segundosCronoGym();
     gymTimer.running = false; gymTimer.startTs = null; pararIntervalGym();
@@ -1892,6 +1922,32 @@ function feedbackInicioCrono(el, color){
     }, 450);
   }
 }
+// Igual que feedbackInicioCrono, pero para los botones grandes "▶ Iniciar" de cada cronómetro
+// principal: hay una copia en la vista móvil y otra en la de escritorio (solo una visible a la
+// vez), así que el sonido/vibración suenan una sola vez y el destello se aplica a ambas copias.
+function feedbackInicioCronoIds(ids){
+  if(navigator.vibrate){ try{ navigator.vibrate(35); }catch(e){} }
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.15);
+    osc.onended = () => ctx.close();
+  }catch(e){}
+  ids.forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    const prevShadow = el.style.boxShadow, prevTransition = el.style.transition;
+    el.style.transition = 'box-shadow 0.15s';
+    el.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.65) inset';
+    setTimeout(()=>{ el.style.boxShadow = prevShadow; el.style.transition = prevTransition; }, 400);
+  });
+}
 
 // ---- Regla de solapamiento: 2 actividades no pueden ocurrir al mismo tiempo ----
 // Un registro sin hora real (mediodía usado como marcador para fechas pasadas sin "hora de inicio")
@@ -2077,7 +2133,7 @@ function subtemasDe(tema){ return [...new Set(estudioItems.filter(i=>i.tema===te
 function chipsHTML(activo, onclickName, lista, claro){
   return (lista || TEMAS).map(t=>{
     const act = t.nombre === activo;
-    const style = act ? (claro ? `background:${t.color};border-color:${t.color};color:#fff;` : `background:${t.bg};border-color:${t.color};color:#fff;`) : '';
+    const style = act ? (claro ? `background:${t.color};border-color:${t.color};color:${colorTextoSobre(t.color)};` : `background:${t.bg};border-color:${t.color};color:#fff;`) : '';
     return `<button type="button" class="tema-chip" style="${style}" onclick="${onclickName}('${t.nombre}')">${t.nombre}</button>`;
   }).join('');
 }
@@ -2128,6 +2184,7 @@ function estudioStartPause(){
     if(!estudioTimer.tema){ alert('Elige un tema antes de iniciar el cronómetro.'); return; }
     estudioTimer.subtema = leerSubtemaCrono();
     estudioTimer.running = true; estudioTimer.startTs = Date.now(); iniciarInterval();
+    feedbackInicioCronoIds(['crono-start-btn','d-crono-start-btn']);
   } else {
     estudioTimer.subtema = leerSubtemaCrono();
     estudioTimer.base = segundosCrono();
@@ -2135,14 +2192,14 @@ function estudioStartPause(){
   }
   guardarTimerLS(); pintarCrono();
 }
-async function iniciarCronoEstudioDesdeSubtema(tema, btnEl, color){
+async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
+  const sub = subtema==='General' ? '' : (subtema||'');
   const segActual = segundosCrono();
   if(segActual > 0){
     const minActual = Math.round(segActual/60);
     if(minActual >= 1){
       const temaActual = estudioTimer.tema;
       const subActual = leerSubtemaCrono() || 'General';
-      if(!confirm('Se guardará '+fmtHoras(minActual)+' en '+temaActual+' › '+subActual+' y se iniciará el cronómetro en '+tema+'. ¿Continuar?')) return;
       const created_at = new Date().toISOString();
       const { start, end } = ventanaDe(created_at, minActual);
       if(!(await liberarConflictosParaCrono(start, end, null))) return;
@@ -2152,11 +2209,11 @@ async function iniciarCronoEstudioDesdeSubtema(tema, btnEl, color){
       pararInterval();
     }
   }
-  estudioTimer = { running:true, base:0, startTs:Date.now(), tema, subtema:'' };
+  estudioTimer = { running:true, base:0, startTs:Date.now(), tema, subtema:sub };
   guardarTimerLS(); iniciarInterval();
   renderCronoChips();
   actualizarDatalist('subtemas-list', tema);
-  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=sub; });
   pintarCrono();
   feedbackInicioCrono(btnEl, color);
 }
@@ -2325,6 +2382,7 @@ function renderTemasEn(containerId){
         <div class="sub-row" onclick="toggleSubtema('${t.nombre}','${sn}')">
           <span class="sub-name">${sname}</span>
           <span class="sub-hrs" style="color:${t.color};">${fmtHoras(sd.min)}</span>
+          <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${t.nombre}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
           <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${t.nombre}','${sn}')" title="Registrar aquí">➕</button>
           <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
         </div>
@@ -2400,16 +2458,67 @@ function renderEstudioDesktop(){
 // ===================== MI TIEMPO (por categorías) =====================
 // Paleta: 3 primarios (rojo/azul/amarillo), 3 secundarios (naranja/verde/violeta) y 3 terciarios de uso común (verde azulado/ámbar/magenta)
 const CATEGORIAS_TIEMPO = [
-  { nombre:'Hogar',             color:'#1E88E5', bg:'rgba(30,136,229,0.15)',  bd:'rgba(30,136,229,0.35)' },  // primario: azul
-  { nombre:'Ocio',              color:'#F2B705', bg:'rgba(242,183,5,0.15)',   bd:'rgba(242,183,5,0.35)' },   // primario: amarillo
-  { nombre:'Deporte',           color:'#FB8C00', bg:'rgba(251,140,0,0.15)',   bd:'rgba(251,140,0,0.35)' },   // secundario: naranja
-  { nombre:'Dormir',            color:'#8E24AA', bg:'rgba(142,36,170,0.15)',  bd:'rgba(142,36,170,0.35)' },  // secundario: violeta
-  { nombre:'Cuidado personal',  color:'#00897B', bg:'rgba(0,137,123,0.15)',   bd:'rgba(0,137,123,0.35)' },   // terciario: verde azulado
-  { nombre:'Transporte',        color:'#FFB300', bg:'rgba(255,179,0,0.15)',   bd:'rgba(255,179,0,0.35)' },   // terciario: ámbar
-  { nombre:'Trabajo',           color:'#E53935', bg:'rgba(229,57,53,0.15)',   bd:'rgba(229,57,53,0.35)' },   // primario: rojo
-  { nombre:'Proyecto personal', color:'#43A047', bg:'rgba(67,160,71,0.15)',   bd:'rgba(67,160,71,0.35)' },   // secundario: verde
+  { nombre:'Hogar' }, { nombre:'Ocio' }, { nombre:'Deporte' }, { nombre:'Dormir' },
+  { nombre:'Cuidado personal' }, { nombre:'Transporte' }, { nombre:'Trabajo' },
+  { nombre:'Proyecto personal' }, { nombre:'Otro' },
+].map(c=>Object.assign(c, { color:'#9E9E9E', bg:'rgba(158,158,158,0.15)', bd:'rgba(158,158,158,0.35)' }));
+
+// Colores fijos, no dependen del ranking de tiempo.
+const COLORES_FIJOS_TIEMPO = { 'Dormir':'#212121', 'Trabajo':'#757575' };
+const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#E53935', bg:'rgba(229,57,53,0.15)', bd:'rgba(229,57,53,0.35)' }; // rojo, fijo
+// El resto de las categorías toma color según cuánto tiempo acumula: las 2 con más tiempo
+// reciben los primarios que quedan libres (azul y amarillo, porque el rojo es de Estudio),
+// las 3 siguientes los secundarios y de ahí en adelante los terciarios.
+const PALETA_TIEMPO = [
+  '#1E88E5', // primario: azul
+  '#F2B705', // primario: amarillo
+  '#FB8C00', // secundario: naranja
+  '#43A047', // secundario: verde
+  '#8E24AA', // secundario: violeta
+  '#00897B', // terciario: verde azulado
+  '#FFB300', // terciario: ámbar
+  '#D6478F', // terciario: magenta
+  '#E64A19', // terciario: rojo anaranjado
+  '#7B1FA2', // terciario: violeta azulado
 ];
-const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#D6478F', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' }; // terciario: magenta
+function hexARgba(hex, alpha){
+  const h = String(hex||'').replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function luminancia(hex){
+  const h = String(hex||'').replace('#','');
+  if(h.length!==6) return 0;
+  const r = parseInt(h.substring(0,2),16)/255, g = parseInt(h.substring(2,4),16)/255, b = parseInt(h.substring(4,6),16)/255;
+  return 0.2126*r + 0.7152*g + 0.0722*b;
+}
+function mezclar(hex, factor, hacia){ // factor 0..1 hacia negro (0) o blanco (255)
+  const h = String(hex||'').replace('#','');
+  const c = [0,2,4].map(i=>{
+    const v = parseInt(h.substring(i,i+2),16);
+    return Math.round(v + (hacia - v)*factor);
+  });
+  return '#'+c.map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+}
+function colorTextoSobre(hex){ return luminancia(hex) > 0.6 ? '#242850' : '#fff'; }
+function colorSobreClaro(hex){ return luminancia(hex) > 0.6 ? mezclar(hex, 0.35, 0) : hex; }   // oscurece amarillos/ámbar
+function colorSobreOscuro(hex){ return luminancia(hex) < 0.22 ? mezclar(hex, 0.55, 255) : hex; } // aclara negro/gris
+function aplicarColorCategoria(cat, hex){
+  cat.color = hex;
+  cat.bg = hexARgba(hex, 0.15);
+  cat.bd = hexARgba(hex, 0.35);
+}
+function recalcularColoresTiempo(){
+  const dinamicas = [];
+  CATEGORIAS_TIEMPO.forEach(c=>{
+    if(COLORES_FIJOS_TIEMPO[c.nombre]) aplicarColorCategoria(c, COLORES_FIJOS_TIEMPO[c.nombre]);
+    else dinamicas.push(c);
+  });
+  dinamicas
+    .map(c=>({ cat:c, total:statsCategoria(c.nombre).total }))
+    .sort((a,b)=> (b.total - a.total) || a.cat.nombre.localeCompare(b.cat.nombre))
+    .forEach((x,i)=> aplicarColorCategoria(x.cat, PALETA_TIEMPO[i % PALETA_TIEMPO.length]));
+}
 const SUBCAT_SUGERIDAS = {
   'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
   'Cuidado personal': ['Ducha','Higiene personal'],
@@ -2422,6 +2531,9 @@ let tiempoEditId = null;
 let modalCategoria = '';
 let openCategorias = new Set();
 let openSubcats = new Set();
+let filtroGridCategoria = null;
+const GRID_ZOOM_NIVELES = [1, 1.5, 2, 3];
+let gridZoom = 1;
 
 // ---- Totales ----
 function minutosHoyTiempo(){
@@ -2541,6 +2653,7 @@ function tiempoStartPause(){
     if(!tiempoTimer.categoria){ alert('Elige una categoría antes de iniciar el cronómetro.'); return; }
     tiempoTimer.subcategoria = leerSubcatCrono();
     tiempoTimer.running = true; tiempoTimer.startTs = Date.now(); iniciarIntervalTiempo();
+    feedbackInicioCronoIds(['tiempo-crono-start-btn','d-tiempo-crono-start-btn']);
   } else {
     tiempoTimer.subcategoria = leerSubcatCrono();
     tiempoTimer.base = segundosCronoTiempo();
@@ -2556,7 +2669,6 @@ async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
     if(minActual >= 1){
       const catActual = tiempoTimer.categoria;
       const subActual = leerSubcatCrono() || 'General';
-      if(!confirm('Se guardará '+fmtHoras(minActual)+' en '+catActual+' › '+subActual+' y se iniciará el cronómetro en '+categoria+(sc?' › '+sc:'')+'. ¿Continuar?')) return;
       const created_at = new Date().toISOString();
       const { start, end } = ventanaDe(created_at, minActual);
       if(!(await liberarConflictosParaCrono(start, end, null))) return;
@@ -2748,8 +2860,8 @@ function renderEstudioBlockHTML(){
     return `<div>
       <div class="sub-row" onclick="toggleSubcat('Estudio','${sn}')">
         <span class="sub-name">${sname}</span>
-        <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
-        <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${sn}', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
+        <span class="sub-hrs" style="color:${colorSobreClaro(c.color)};">${fmtHoras(sd.min)}</span>
+        <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${sn}','', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
         <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${sn}','')" title="Registrar aquí">➕</button>
         <span class="chevron ${subOpen?'open':''}" style="font-size:13px;">▾</span>
       </div>
@@ -2761,7 +2873,7 @@ function renderEstudioBlockHTML(){
     <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('Estudio')">
       <div class="tema-dot" style="background:${c.color};"></div>
       <div class="tema-name">Estudio</div>
-      <div class="tema-total" style="color:${c.color};">${fmtHoras(st.total)}</div>
+      <div class="tema-total" style="color:${colorSobreClaro(c.color)};">${fmtHoras(st.total)}</div>
       <span class="chevron ${isOpen?'open':''}">▾</span>
     </div>
     <div class="tema-body ${isOpen?'open':''}">
@@ -2794,7 +2906,7 @@ function renderCategoriasEn(containerId){
       return `<div>
         <div class="sub-row" onclick="toggleSubcat('${c.nombre}','${sn}')">
           <span class="sub-name">${sname}</span>
-          <span class="sub-hrs" style="color:${c.color};">${fmtHoras(sd.min)}</span>
+          <span class="sub-hrs" style="color:${colorSobreClaro(c.color)};">${fmtHoras(sd.min)}</span>
           <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoDesdeSubcat('${c.nombre}','${sn}', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
           <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubcat('${c.nombre}','${sn}')" title="Registrar aquí">➕</button>
           <span class="chevron ${subOpen?'open':''}" style="font-size:13px;">▾</span>
@@ -2807,7 +2919,7 @@ function renderCategoriasEn(containerId){
       <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('${c.nombre}')">
         <div class="tema-dot" style="background:${c.color};"></div>
         <div class="tema-name">${c.nombre}</div>
-        <div class="tema-total" style="color:${c.color};">${fmtHoras(st.total)}</div>
+        <div class="tema-total" style="color:${colorSobreClaro(c.color)};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
       <div class="tema-body ${isOpen?'open':''}">
@@ -2830,7 +2942,7 @@ function bloquesSemana(){
   const start0 = days[0];
   const end7 = new Date(days[6]); end7.setDate(end7.getDate()+1);
   const bloques = [];
-  function addItem(i, color, editFn){
+  function addItem(i, color, fuente){
     const min = parseInt(i.minutos)||0;
     if(!i.created_at || !min) return;
     const end = new Date(i.created_at);
@@ -2848,23 +2960,60 @@ function bloquesSemana(){
       if(dayIdx>=0 && dayIdx<7){
         const h0 = segStart.getHours() + segStart.getMinutes()/60;
         const h1 = (segEnd - dayStart)/3600000;
-        bloques.push({ dayIdx, h0, h1, color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''), id:i.id, fn:editFn });
+        bloques.push({ dayIdx, h0, h1, color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''), id:i.id, fuente });
       }
       segStart = segEnd;
     }
   }
-  tiempoItems.forEach(i=> addItem(i, categoriaInfo(i.categoria).color, 'editarTiempo'));
-  estudioItems.forEach(i=> addItem(i, ESTUDIO_EN_TIEMPO.color, 'editarEstudio'));
+  tiempoItems.forEach(i=> addItem(i, categoriaInfo(i.categoria).color, 'tiempo'));
+  estudioItems.forEach(i=> addItem(i, ESTUDIO_EN_TIEMPO.color, 'estudio'));
   return bloques;
+}
+function fmtHoraDecimal(h){
+  let hh = Math.floor(h), mm = Math.round((h-hh)*60);
+  if(mm===60){ mm=0; hh++; }
+  return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+}
+function escAttrJs(s){
+  return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+function toggleFiltroGrid(nombre){
+  filtroGridCategoria = (filtroGridCategoria===nombre) ? null : nombre;
+  cerrarPopoverGrid();
+  renderGridSemana('tie-grid-semana'); renderGridSemana('d-tie-grid-semana');
+  renderLegendSemana('tie-grid-legend'); renderLegendSemana('d-tie-grid-legend');
+}
+function cambiarZoomGrid(delta){
+  const idx = GRID_ZOOM_NIVELES.indexOf(gridZoom);
+  const nuevo = Math.max(0, Math.min(GRID_ZOOM_NIVELES.length-1, idx+delta));
+  gridZoom = GRID_ZOOM_NIVELES[nuevo];
+  renderGridSemana('tie-grid-semana'); renderGridSemana('d-tie-grid-semana');
+}
+// Reparte en carriles lado a lado los bloques de un mismo día cuyos horarios se cruzan,
+// así nunca quedan pintados uno encima del otro (algoritmo tipo "agenda" por barrido).
+function asignarCarriles(bloquesDia){
+  const ordenados = bloquesDia.slice().sort((a,b)=>a.h0-b.h0);
+  const finCarriles = [];
+  ordenados.forEach(b=>{
+    let carril = finCarriles.findIndex(fin=>fin<=b.h0);
+    if(carril===-1){ carril = finCarriles.length; finCarriles.push(b.h1); }
+    else { finCarriles[carril] = b.h1; }
+    b.carril = carril;
+  });
+  ordenados.forEach(b=>{ b.totalCarriles = finCarriles.length; });
+  return ordenados;
 }
 function renderGridSemana(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
   const days = diasSemanaGrid();
   const letras = ['L','M','X','J','V','S','D'];
-  const hoyStr = new Date().toISOString().split('T')[0];
-  const W=350, padLeft=24, padTop=20, H=380, colW=(W-padLeft)/7, hourH=H/24;
-  let svg = `<svg viewBox="0 0 ${W} ${H+padTop}" style="width:100%;height:auto;display:block;">`;
-  for(let h=0; h<=24; h+=3){
+  const ahora = new Date();
+  const hoyStr = ahora.toISOString().split('T')[0];
+  const W=350, padLeft=24, padTop=20, H=380*gridZoom, colW=(W-padLeft)/7, hourH=H/24;
+  const pasoHora = gridZoom>=2 ? 1 : (gridZoom>=1.5 ? 2 : 3);
+  let svg = `<svg viewBox="0 0 ${W} ${H+padTop}" preserveAspectRatio="none" style="width:100%;height:${H+padTop}px;display:block;">`;
+  for(let h=0; h<=24; h+=pasoHora){
     const y = padTop + h*hourH;
     svg += `<line x1="${padLeft}" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(36,40,80,0.08)" stroke-width="1"/>`;
     if(h<24) svg += `<text x="0" y="${y+9}" font-size="8" fill="rgba(36,40,80,0.4)">${String(h).padStart(2,'0')}</text>`;
@@ -2873,33 +3022,90 @@ function renderGridSemana(containerId){
     const x = padLeft + d*colW;
     svg += `<line x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop+H}" stroke="rgba(36,40,80,0.06)" stroke-width="1"/>`;
   }
+  let todayIdx = -1;
   days.forEach((d,idx)=>{
     const x = padLeft + idx*colW + colW/2;
     const isToday = d.toISOString().split('T')[0]===hoyStr;
+    if(isToday) todayIdx = idx;
     svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#242850':'rgba(36,40,80,0.5)'}" text-anchor="middle">${letras[idx]} ${d.getDate()}</text>`;
   });
-  bloquesSemana().forEach(b=>{
-    const x = padLeft + b.dayIdx*colW + 1;
-    const y = padTop + b.h0*hourH;
-    const h = Math.max((b.h1-b.h0)*hourH, 2);
-    const w = colW - 2;
-    const title = (b.label + (b.sub?' · '+b.sub:'')).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${b.color}" opacity="0.85" onclick="${b.fn}(${b.id})" style="cursor:pointer;"><title>${title}</title></rect>`;
+  const porDia = {};
+  bloquesSemana().forEach(b=>{ (porDia[b.dayIdx] = porDia[b.dayIdx] || []).push(b); });
+  Object.values(porDia).forEach(grupo=>{
+    asignarCarriles(grupo).forEach(b=>{
+      const carrilW = (colW-2) / b.totalCarriles;
+      const x = padLeft + b.dayIdx*colW + 1 + b.carril*carrilW;
+      const y = padTop + b.h0*hourH;
+      const h = Math.max((b.h1-b.h0)*hourH, 2);
+      const w = Math.max(carrilW - (b.totalCarriles>1 ? 1 : 0), 2);
+      const atenuado = filtroGridCategoria && filtroGridCategoria!==b.label;
+      const opacity = atenuado ? 0.15 : 0.9;
+      svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0" fill="${b.color}" opacity="${opacity}" class="bloque-grid" style="cursor:pointer;" onclick="mostrarInfoBloque(event,'${b.fuente}',${b.id},'${escAttrJs(b.label)}','${escAttrJs(b.sub)}',${b.h0},${b.h1},'${b.color}')"></rect>`;
+    });
   });
+  if(todayIdx>=0){
+    const hNow = ahora.getHours() + ahora.getMinutes()/60;
+    const x0 = padLeft + todayIdx*colW, x1 = x0 + colW;
+    const y = padTop + hNow*hourH;
+    svg += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+    svg += `<circle cx="${x0}" cy="${y}" r="2.5" fill="#E24B4A"/>`;
+  }
   svg += '</svg>';
   cont.innerHTML = svg;
+  const zoomTxt = Math.round(gridZoom*100)+'%';
+  ['tie-grid-zoom-lbl','d-tie-grid-zoom-lbl'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = zoomTxt; });
 }
 function renderLegendSemana(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
   const lista = [...CATEGORIAS_TIEMPO, ESTUDIO_EN_TIEMPO];
-  cont.innerHTML = lista.map(c=>`<div style="display:flex;align-items:center;gap:5px;">
-    <span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex-shrink:0;"></span>
-    <span style="font-size:10px;color:rgba(36,40,80,0.6);">${c.nombre}</span>
-  </div>`).join('');
+  cont.innerHTML = lista.map(c=>{
+    const activo = filtroGridCategoria===c.nombre;
+    const atenuado = filtroGridCategoria && !activo;
+    return `<div class="legend-chip" style="display:flex;align-items:center;gap:5px;${activo?'border-color:'+c.color+';background:'+c.bg+';':''}opacity:${atenuado?0.4:1};" onclick="toggleFiltroGrid('${escAttrJs(c.nombre)}')">
+      <span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex-shrink:0;"></span>
+      <span style="font-size:10px;color:rgba(36,40,80,0.6);">${c.nombre}</span>
+    </div>`;
+  }).join('');
 }
+
+// ---- Popover de bloques de la grilla ----
+function cerrarPopoverGrid(){
+  const pop = document.getElementById('grid-popover');
+  if(pop) pop.style.display = 'none';
+}
+function mostrarInfoBloque(event, fuente, id, nombre, sub, h0, h1, color){
+  event.stopPropagation();
+  const pop = document.getElementById('grid-popover'); if(!pop) return;
+  const dur = Math.round((h1-h0)*60);
+  const editFn = fuente==='tiempo' ? 'editarTiempo' : 'editarEstudio';
+  const delFn = fuente==='tiempo' ? 'delTiempo' : 'delEstudio';
+  pop.innerHTML = `
+    <div class="grid-popover-title" style="color:${colorSobreOscuro(color)};">${nombre}</div>
+    ${sub ? `<div class="grid-popover-sub">${sub}</div>` : ''}
+    <div class="grid-popover-time">${fmtHoraDecimal(h0)}–${fmtHoraDecimal(h1)} · ${fmtHoras(dur)}</div>
+    <div class="grid-popover-btns">
+      <button class="grid-popover-btn" style="background:rgba(255,255,255,0.12);color:#fff;" onclick="cerrarPopoverGrid();${editFn}(${id})">✏️ Editar</button>
+      <button class="grid-popover-btn" style="background:rgba(226,75,74,0.2);color:#F09595;" onclick="cerrarPopoverGrid();${delFn}(${id})">🗑 Borrar</button>
+    </div>`;
+  pop.style.display = 'block';
+  const margin = 10;
+  let x = event.clientX + 10, y = event.clientY + 10;
+  const rect = pop.getBoundingClientRect();
+  if(x + rect.width > window.innerWidth - margin) x = window.innerWidth - rect.width - margin;
+  if(y + rect.height > window.innerHeight - margin) y = window.innerHeight - rect.height - margin;
+  if(x < margin) x = margin;
+  if(y < margin) y = margin;
+  pop.style.left = x+'px';
+  pop.style.top = y+'px';
+}
+document.addEventListener('click', (e)=>{
+  const pop = document.getElementById('grid-popover');
+  if(pop && pop.style.display==='block' && !pop.contains(e.target) && !(e.target.closest && e.target.closest('.bloque-grid'))) cerrarPopoverGrid();
+});
 
 // ---- Render principal ----
 function renderTiempo(){
+  recalcularColoresTiempo();
   const minHoy = minutosHoyTiempo(), minSem = minutosSemanaTiempo(), minTot = minutosTotalTiempo();
   const rEl = document.getElementById('tie-hoy-mobile');
   const sEl = document.getElementById('tie-semana-mobile');
