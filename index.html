@@ -1456,7 +1456,7 @@ async function pedirPermisoNotificaciones(){
 }
 function revisarVencimientos(){
   if(Notification.permission !== 'granted') return;
-  const hoyStr = new Date().toISOString().split('T')[0];
+  const hoyStr = fechaLocal(new Date());
   const horaActual = new Date().getHours();
   const cacheKey = 'ultima_revision_' + hoyStr;
   if(localStorage.getItem(cacheKey)) return;
@@ -1625,7 +1625,7 @@ function renderLentes() {
   document.getElementById('lentes-cambio').textContent = fechaCambio.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
   document.getElementById('lentes-restantes').textContent = diasRestantes + 'd';
   const input = document.getElementById('lentes-fecha-input');
-  if(input) input.value = fechaInicio || new Date().toISOString().split('T')[0];
+  if(input) input.value = fechaInicio || fechaLocal(new Date());
 
   let color, statusText, menuSub;
   if(diasUsados >= LENTES_DIAS) {
@@ -1648,7 +1648,7 @@ function renderLentes() {
 
 async function resetLentes() {
   const input = document.getElementById('lentes-fecha-input');
-  const fecha = input ? input.value : new Date().toISOString().split('T')[0];
+  const fecha = input ? input.value : fechaLocal(new Date());
   if(!fecha) { alert('Elige la fecha de inicio'); return; }
   // Borrar registro anterior e insertar nuevo
   await sb.from('lentes').delete().neq('id', 0);
@@ -1773,7 +1773,7 @@ function renderLentesDesktop() {
     document.getElementById('d-lentes-cambio').textContent = '—';
     document.getElementById('d-lentes-restantes').textContent = '—';
     document.getElementById('d-lentes-sub').textContent = 'Sin registro';
-    if(input) input.value = new Date().toISOString().split('T')[0];
+    if(input) input.value = fechaLocal(new Date());
     return;
   }
 
@@ -1801,7 +1801,7 @@ function renderLentesDesktop() {
 
 async function resetLentesDesktop() {
   const input = document.getElementById('d-lentes-fecha');
-  const fecha = input ? input.value : new Date().toISOString().split('T')[0];
+  const fecha = input ? input.value : fechaLocal(new Date());
   if(!fecha) { alert('Elige la fecha de inicio'); return; }
   await sb.from('lentes').delete().neq('id', 0);
   await sb.from('lentes').insert([{fecha_inicio: fecha}]);
@@ -1869,6 +1869,12 @@ let openTemas = new Set();
 let openSubtemas = new Set();
 
 // ---- Helpers de tiempo/fechas ----
+// Fecha YYYY-MM-DD en hora LOCAL. No usar toISOString() para esto: convierte a UTC y en husos
+// adelantados (p. ej. UTC+2) devuelve el día anterior para una fecha a medianoche local.
+function fechaLocal(d){
+  const x = d || new Date();
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+}
 function estDiasAtras(f, hoy){ return Math.round((hoy - new Date(f+'T00:00:00')) / 86400000); }
 function fmtHoras(min){
   min = Math.round(min || 0);
@@ -1890,7 +1896,7 @@ function calcularCreatedAt(fecha, horaInicio, minutos, esEdicion){
     return new Date(inicio.getTime() + minutos*60000).toISOString();
   }
   if(esEdicion) return fecha ? fecha+'T12:00:00' : null;
-  const hoyStr = new Date().toISOString().split('T')[0];
+  const hoyStr = fechaLocal(new Date());
   return (fecha && fecha !== hoyStr) ? fecha+'T12:00:00' : new Date().toISOString();
 }
 
@@ -2302,7 +2308,7 @@ function openEstudioModal(temaPreset, subtemaPreset){
   document.getElementById('e-subtema').value = subtemaPreset || '';
   document.getElementById('e-horas').value = '';
   document.getElementById('e-minutos').value = '';
-  document.getElementById('e-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('e-fecha').value = fechaLocal(new Date());
   document.getElementById('e-hora').value = '';
 }
 function registrarEnSubtema(tema, subtema){ openEstudioModal(tema, subtema==='General'?'':subtema); }
@@ -2322,7 +2328,7 @@ function editarEstudio(id){
   const min = parseInt(s.minutos)||0;
   document.getElementById('e-horas').value = Math.floor(min/60) || '';
   document.getElementById('e-minutos').value = (min%60) || '';
-  document.getElementById('e-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+  document.getElementById('e-fecha').value = s.created_at ? s.created_at.split('T')[0] : fechaLocal(new Date());
   document.getElementById('e-hora').value = horaInicioDeSesion(s.created_at, min);
 }
 function saveEstudioManual(){
@@ -2578,7 +2584,7 @@ function minutosPerdido7Dias(){
   return Math.max(0, transcurrido - registrado);
 }
 function renderPerdidoFranja(){
-  const hoyStr = new Date().toISOString().split('T')[0];
+  const hoyStr = fechaLocal(new Date());
   const mostrarFranja = TIEMPO_PERDIDO_HABILITADO && hoyStr >= TIEMPO_PERDIDO_DESDE;
   const mostrar7d = TIEMPO_PERDIDO_HABILITADO && hoyStr >= TIEMPO_PERDIDO_7D_DESDE;
   ['tie-perdido-franja','d-tie-perdido-stats'].forEach(id=>{
@@ -2771,7 +2777,7 @@ function openTiempoModal(catPreset, subcatPreset){
   document.getElementById('t-subcat').value = subcatPreset || '';
   document.getElementById('t-horas').value = '';
   document.getElementById('t-minutos').value = '';
-  document.getElementById('t-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('t-fecha').value = fechaLocal(new Date());
   document.getElementById('t-hora').value = '';
 }
 function registrarEnSubcat(categoria, subcategoria){ openTiempoModal(categoria, subcategoria==='General'?'':subcategoria); }
@@ -2791,7 +2797,7 @@ function editarTiempo(id){
   const min = parseInt(s.minutos)||0;
   document.getElementById('t-horas').value = Math.floor(min/60) || '';
   document.getElementById('t-minutos').value = (min%60) || '';
-  document.getElementById('t-fecha').value = s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+  document.getElementById('t-fecha').value = s.created_at ? s.created_at.split('T')[0] : fechaLocal(new Date());
   document.getElementById('t-hora').value = horaInicioDeSesion(s.created_at, min);
 }
 function saveTiempoManual(){
@@ -2960,7 +2966,7 @@ function bloquesSemana(){
       if(dayIdx>=0 && dayIdx<7){
         const h0 = segStart.getHours() + segStart.getMinutes()/60;
         const h1 = (segEnd - dayStart)/3600000;
-        bloques.push({ dayIdx, h0, h1, color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''), id:i.id, fuente });
+        bloques.push({ dayIdx, h0, h1, color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''), id:i.id, fuente, preciso:esHoraPrecisa(i.created_at) });
       }
       segStart = segEnd;
     }
@@ -2990,26 +2996,49 @@ function cambiarZoomGrid(delta){
   gridZoom = GRID_ZOOM_NIVELES[nuevo];
   renderGridSemana('tie-grid-semana'); renderGridSemana('d-tie-grid-semana');
 }
-// Reparte en carriles lado a lado los bloques de un mismo día cuyos horarios se cruzan,
-// así nunca quedan pintados uno encima del otro (algoritmo tipo "agenda" por barrido).
-function asignarCarriles(bloquesDia){
-  const ordenados = bloquesDia.slice().sort((a,b)=>a.h0-b.h0);
-  const finCarriles = [];
-  ordenados.forEach(b=>{
-    let carril = finCarriles.findIndex(fin=>fin<=b.h0);
-    if(carril===-1){ carril = finCarriles.length; finCarriles.push(b.h1); }
-    else { finCarriles[carril] = b.h1; }
-    b.carril = carril;
+// No pueden existir 2 actividades en paralelo: cada minuto del día tiene un único dueño.
+// Si dos actividades se disputan un minuto, gana la que ocupó más segundos de ese minuto;
+// si empatan, gana la cronometrada (hora precisa) y, en último caso, la que empezó antes.
+function resolverOcupacionDia(bloquesDia){
+  if(bloquesDia.length < 2) return bloquesDia;
+  const conSeg = bloquesDia.map(b=>Object.assign({}, b, { s0:Math.round(b.h0*3600), s1:Math.round(b.h1*3600) }));
+  let mIni = 1440, mFin = 0;
+  conSeg.forEach(b=>{
+    mIni = Math.min(mIni, Math.floor(b.s0/60));
+    mFin = Math.max(mFin, Math.ceil(b.s1/60));
   });
-  ordenados.forEach(b=>{ b.totalCarriles = finCarriles.length; });
-  return ordenados;
+  const duenos = [];
+  for(let m=mIni; m<mFin; m++){
+    const ini = m*60, fin = ini+60;
+    let mejor = null, mejorSeg = 0;
+    conSeg.forEach(b=>{
+      const seg = Math.min(b.s1, fin) - Math.max(b.s0, ini);
+      if(seg <= 0) return;
+      if(!mejor || seg > mejorSeg){ mejor = b; mejorSeg = seg; return; }
+      if(seg === mejorSeg && ((b.preciso && !mejor.preciso) || (b.preciso === mejor.preciso && b.s0 < mejor.s0))){
+        mejor = b; mejorSeg = seg;
+      }
+    });
+    duenos.push(mejor);
+  }
+  const salida = [];
+  let actual = null, desde = mIni;
+  duenos.forEach((dueno, i)=>{
+    const m = mIni + i;
+    if(dueno !== actual){
+      if(actual) salida.push(Object.assign({}, actual, { h0:desde/60, h1:m/60 }));
+      actual = dueno; desde = m;
+    }
+  });
+  if(actual) salida.push(Object.assign({}, actual, { h0:desde/60, h1:mFin/60 }));
+  return salida;
 }
 function renderGridSemana(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
   const days = diasSemanaGrid();
   const letras = ['L','M','X','J','V','S','D'];
   const ahora = new Date();
-  const hoyStr = ahora.toISOString().split('T')[0];
+  const hoyStr = fechaLocal(ahora);
   const W=350, padLeft=24, padTop=20, H=380*gridZoom, colW=(W-padLeft)/7, hourH=H/24;
   const pasoHora = gridZoom>=2 ? 1 : (gridZoom>=1.5 ? 2 : 3);
   let svg = `<svg viewBox="0 0 ${W} ${H+padTop}" preserveAspectRatio="none" style="width:100%;height:${H+padTop}px;display:block;">`;
@@ -3025,19 +3054,18 @@ function renderGridSemana(containerId){
   let todayIdx = -1;
   days.forEach((d,idx)=>{
     const x = padLeft + idx*colW + colW/2;
-    const isToday = d.toISOString().split('T')[0]===hoyStr;
+    const isToday = fechaLocal(d)===hoyStr;
     if(isToday) todayIdx = idx;
     svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#242850':'rgba(36,40,80,0.5)'}" text-anchor="middle">${letras[idx]} ${d.getDate()}</text>`;
   });
   const porDia = {};
   bloquesSemana().forEach(b=>{ (porDia[b.dayIdx] = porDia[b.dayIdx] || []).push(b); });
   Object.values(porDia).forEach(grupo=>{
-    asignarCarriles(grupo).forEach(b=>{
-      const carrilW = (colW-2) / b.totalCarriles;
-      const x = padLeft + b.dayIdx*colW + 1 + b.carril*carrilW;
+    resolverOcupacionDia(grupo).forEach(b=>{
+      const x = padLeft + b.dayIdx*colW + 1;
       const y = padTop + b.h0*hourH;
       const h = Math.max((b.h1-b.h0)*hourH, 2);
-      const w = Math.max(carrilW - (b.totalCarriles>1 ? 1 : 0), 2);
+      const w = colW - 2;
       const atenuado = filtroGridCategoria && filtroGridCategoria!==b.label;
       const opacity = atenuado ? 0.15 : 0.9;
       svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0" fill="${b.color}" opacity="${opacity}" class="bloque-grid" style="cursor:pointer;" onclick="mostrarInfoBloque(event,'${b.fuente}',${b.id},'${escAttrJs(b.label)}','${escAttrJs(b.sub)}',${b.h0},${b.h1},'${b.color}')"></rect>`;
