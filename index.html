@@ -1026,7 +1026,7 @@ function toggleVerMasGym() {
   mostrarTodasSesiones = !mostrarTodasSesiones;
   if(mostrarTodasSesiones){
     // Al abrir "ver todas", dejar abierto el mes más reciente
-    const fechas = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean).sort((a,b)=>b.localeCompare(a));
+    const fechas = gymItems.map(i=>diaLocalDe(i.created_at)).filter(Boolean).sort((a,b)=>b.localeCompare(a));
     openMeses.clear();
     if(fechas.length) openMeses.add(fechas[0].slice(0,7));
   }
@@ -1047,7 +1047,7 @@ function renderGym(){
 
   if(diasNumM) {
     if(gymItems.length > 0) {
-      const fechasG = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+      const fechasG = gymItems.map(i=>diaLocalDe(i.created_at)).filter(Boolean);
       const masR = fechasG.sort((a,b)=>b.localeCompare(a))[0];
       const diasSinIr = Math.round((hoyM - new Date(masR+'T00:00:00')) / 86400000);
       let color;
@@ -1080,7 +1080,7 @@ function renderGym(){
   // Agrupar por día
   const dias={};
   gymItems.forEach(i=>{
-    const fecha = i.created_at ? i.created_at.split('T')[0] : 'Sin fecha';
+    const fecha = (diaLocalDe(i.created_at) || 'Sin fecha');
     if(!dias[fecha]) dias[fecha]=[];
     dias[fecha].push(i);
   });
@@ -1176,7 +1176,7 @@ async function repetirGym(id){
   const {data,error} = await sb.from('gym').insert([{grupo:ex.grupo,maquina:ex.maquina,series:ex.series,reps:ex.reps,peso:ex.peso,tiempo:ex.tiempo}]).select();
   if(!error && data){
     gymItems.push(data[0]);
-    if(data[0].created_at) openGroups.add(data[0].created_at.split('T')[0]);
+    if(data[0].created_at) openGroups.add(diaLocalDe(data[0].created_at));
     mostrarTodasSesiones = false;
     renderGym(); renderDesktop(); renderGymAlerta();
   } else {
@@ -1465,7 +1465,7 @@ function revisarVencimientos(){
   // 💪 Gym - más de 2 días sin ir
   if(gymItems.length > 0) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const fechasGym = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+    const fechasGym = gymItems.map(i=>diaLocalDe(i.created_at)).filter(Boolean);
     const masReciente = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
     if(masReciente) {
       const diasSinIr = Math.round((hoy - new Date(masReciente+'T00:00:00')) / 86400000);
@@ -1677,7 +1677,7 @@ function renderDesktop() {
     let ultimaFecha = null;
 
     if(gymItems.length > 0) {
-      const fechasGym = gymItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean);
+      const fechasGym = gymItems.map(i=>diaLocalDe(i.created_at)).filter(Boolean);
       const masRecienteStr = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
       if(masRecienteStr) {
         ultimaFecha = masRecienteStr;
@@ -1707,7 +1707,7 @@ function renderDesktop() {
     } else {
       const diasMap = {};
       gymItems.forEach(i=>{
-        const f = i.created_at?i.created_at.split('T')[0]:'';
+        const f = diaLocalDe(i.created_at);
         if(f) { if(!diasMap[f]) diasMap[f]=[]; diasMap[f].push(i); }
       });
       const diasOrden = Object.entries(diasMap).sort((a,b)=>b[0].localeCompare(a[0]));
@@ -1814,7 +1814,7 @@ function toggleDesktopDay(dayId) {
 function openGymDayModal(fecha) {
   const diasMap = {};
   gymItems.forEach(i=>{
-    const f = i.created_at?i.created_at.split('T')[0]:'';
+    const f = diaLocalDe(i.created_at);
     if(f){ if(!diasMap[f]) diasMap[f]=[]; diasMap[f].push(i); }
   });
   const exs = diasMap[fecha] || [];
@@ -1858,6 +1858,9 @@ function fechaLocal(d){
   const x = d || new Date();
   return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
 }
+// Día 'YYYY-MM-DD' en que ocurrió un registro, en hora local. created_at se guarda en UTC,
+// así que tomarle el prefijo con split('T') corre el día para todo lo registrado de madrugada.
+function diaLocalDe(created_at){ return created_at ? fechaLocal(new Date(created_at)) : ''; }
 function estDiasAtras(f, hoy){ return Math.round((hoy - new Date(f+'T00:00:00')) / 86400000); }
 function fmtHoras(min){
   min = Math.round(min || 0);
@@ -2006,7 +2009,7 @@ async function liberarConflictosParaCrono(newStart, newEnd, excluir){
 function minutosEnRango(dias){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   return estudioItems.reduce((a,i)=>{
-    const f = i.created_at ? i.created_at.split('T')[0] : ''; if(!f) return a;
+    const f = diaLocalDe(i.created_at); if(!f) return a;
     const d = estDiasAtras(f, hoy);
     return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
   }, 0);
@@ -2014,7 +2017,7 @@ function minutosEnRango(dias){
 function minutosHoy(){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   return estudioItems.reduce((a,i)=>{
-    const f = i.created_at ? i.created_at.split('T')[0] : '';
+    const f = diaLocalDe(i.created_at);
     return (f && estDiasAtras(f, hoy)===0) ? a + (parseInt(i.minutos)||0) : a;
   }, 0);
 }
@@ -2034,7 +2037,7 @@ function minutosSemanaCalendario(){
   const lunes = lunesDeEstaSemana();
   return estudioItems.reduce((a,i)=>{
     if(!i.created_at) return a;
-    const f = new Date(i.created_at.split('T')[0]+'T00:00:00');
+    const f = new Date(diaLocalDe(i.created_at)+'T00:00:00');
     return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
   }, 0);
 }
@@ -2085,7 +2088,7 @@ function horasSemTema(nombre){
   const lunes = lunesDeEstaSemana();
   return estudioItems.reduce((a,i)=>{
     if(i.tema!==nombre || !i.created_at) return a;
-    const f = new Date(i.created_at.split('T')[0]+'T00:00:00');
+    const f = new Date(diaLocalDe(i.created_at)+'T00:00:00');
     return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
   }, 0) / 60;
 }
@@ -2093,7 +2096,7 @@ function horasTotTema(nombre){ return estudioItems.filter(i=>i.tema===nombre).re
 function ventajaSemTema(nombre){ return horasSemTema(nombre) - metaSemTemaH(nombre); }
 function ventajaGenTema(nombre){ return horasTotTema(nombre) - metaGenTemaH(nombre); }
 function calcRachaEstudio(){
-  const fechas = [...new Set(estudioItems.map(i=>i.created_at?i.created_at.split('T')[0]:'').filter(Boolean))];
+  const fechas = [...new Set(estudioItems.map(i=>diaLocalDe(i.created_at)).filter(Boolean))];
   if(!fechas.length) return 0;
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const set = new Set(fechas.map(f=>estDiasAtras(f, hoy)));
@@ -2311,7 +2314,7 @@ function editarEstudio(id){
   const min = parseInt(s.minutos)||0;
   document.getElementById('e-horas').value = Math.floor(min/60) || '';
   document.getElementById('e-minutos').value = (min%60) || '';
-  document.getElementById('e-fecha').value = s.created_at ? s.created_at.split('T')[0] : fechaLocal(new Date());
+  document.getElementById('e-fecha').value = (diaLocalDe(s.created_at) || fechaLocal(new Date()));
   document.getElementById('e-hora').value = horaInicioDeSesion(s.created_at, min);
 }
 function saveEstudioManual(){
@@ -2358,7 +2361,7 @@ function renderTemasEn(containerId){
       const subKey = t.nombre+'||'+sname;
       const subOpen = openSubtemas.has(subKey);
       const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
-        const fecha = se.created_at ? new Date(se.created_at.split('T')[0]+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+        const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
         return `<div class="ses-row">
           <span class="ses-fecha">${fecha}</span>
           <span class="ses-dur">${fmtHoras(se.minutos)}</span>
@@ -2528,7 +2531,7 @@ let gridZoom = 1;
 function minutosHoyTiempo(){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   return tiempoItems.reduce((a,i)=>{
-    const f = i.created_at ? i.created_at.split('T')[0] : '';
+    const f = diaLocalDe(i.created_at);
     return (f && estDiasAtras(f, hoy)===0) ? a + (parseInt(i.minutos)||0) : a;
   }, 0);
 }
@@ -2536,7 +2539,7 @@ function minutosSemanaTiempo(){
   const lunes = lunesDeEstaSemana();
   return tiempoItems.reduce((a,i)=>{
     if(!i.created_at) return a;
-    const f = new Date(i.created_at.split('T')[0]+'T00:00:00');
+    const f = new Date(diaLocalDe(i.created_at)+'T00:00:00');
     return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
   }, 0);
 }
@@ -2544,7 +2547,7 @@ function minutosTotalTiempo(){ return tiempoItems.reduce((a,i)=>a+(parseInt(i.mi
 function minutosEnRangoTiempo(dias){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   return tiempoItems.reduce((a,i)=>{
-    const f = i.created_at ? i.created_at.split('T')[0] : ''; if(!f) return a;
+    const f = diaLocalDe(i.created_at); if(!f) return a;
     const d = estDiasAtras(f, hoy);
     return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
   }, 0);
@@ -2781,7 +2784,7 @@ function editarTiempo(id){
   const min = parseInt(s.minutos)||0;
   document.getElementById('t-horas').value = Math.floor(min/60) || '';
   document.getElementById('t-minutos').value = (min%60) || '';
-  document.getElementById('t-fecha').value = s.created_at ? s.created_at.split('T')[0] : fechaLocal(new Date());
+  document.getElementById('t-fecha').value = (diaLocalDe(s.created_at) || fechaLocal(new Date()));
   document.getElementById('t-hora').value = horaInicioDeSesion(s.created_at, min);
 }
 function saveTiempoManual(){
@@ -2839,7 +2842,7 @@ function renderEstudioBlockHTML(){
     const subKey = 'Estudio||'+sname;
     const subOpen = openSubcats.has(subKey);
     const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
-      const fecha = se.created_at ? new Date(se.created_at.split('T')[0]+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+      const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
       return `<div class="ses-row">
         <span class="ses-fecha">${fecha}</span>
         <span class="ses-dur">${fmtHoras(se.minutos)}</span>
@@ -2993,7 +2996,7 @@ function renderCategoriaBlockHTML(c){
       const subKey = c.nombre+'||'+sname;
       const subOpen = openSubcats.has(subKey);
       const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
-        const fecha = se.created_at ? new Date(se.created_at.split('T')[0]+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+        const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
         return `<div class="ses-row">
           <span class="ses-fecha">${fecha}</span>
           <span class="ses-dur">${fmtHoras(se.minutos)}</span>
