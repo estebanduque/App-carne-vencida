@@ -549,17 +549,6 @@
     </button>
     <div class="menu-body" id="body-tiempo">
       <div class="menu-inner">
-        <div style="border-radius:12px;margin-bottom:6px;background:#fff;display:flex;overflow:hidden;">
-          <div style="flex:1;text-align:center;padding:16px 6px;">
-            <div id="tie-hoy-mobile" style="font-size:24px;font-weight:700;line-height:1;color:#5C6BC0;">—</div>
-            <div style="font-size:11px;margin-top:6px;color:rgba(36,40,80,0.5);line-height:1.25;">hoy</div>
-          </div>
-          <div style="width:1px;background:rgba(36,40,80,0.1);margin:14px 0;"></div>
-          <div style="flex:1;text-align:center;padding:16px 6px;">
-            <div id="tie-semana-mobile" style="font-size:24px;font-weight:700;line-height:1;color:#5C6BC0;">—</div>
-            <div style="font-size:11px;margin-top:6px;color:rgba(36,40,80,0.5);line-height:1.25;">esta semana</div>
-          </div>
-        </div>
         <div id="tie-perdido-franja" style="display:none;border-radius:12px;margin-bottom:6px;background:rgba(239,159,39,0.1);border:1px solid rgba(239,159,39,0.25);overflow:hidden;">
           <div style="display:flex;">
             <div style="flex:1;text-align:center;padding:14px 6px;">
@@ -573,7 +562,6 @@
             </div>
           </div>
         </div>
-        <div id="tie-resumen-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(36,40,80,0.4);"></div>
         <div class="crono-box" style="background:rgba(92,107,192,0.1);border-color:rgba(92,107,192,0.25);">
           <div class="crono-display" id="tiempo-crono-display">00:00:00</div>
           <div class="tema-chips" id="tiempo-crono-chips"></div>
@@ -743,15 +731,10 @@
         <div><div class="desktop-card-title">Mi Tiempo</div><div class="desktop-card-sub">Cómo uso mi tiempo</div></div>
       </div>
       <div class="desktop-card-body">
-        <div class="desktop-stats">
-          <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-hoy" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">hoy</div></div>
-          <div class="desktop-stat"><div class="desktop-stat-num" id="d-tie-semana" style="color:#5C6BC0;">0</div><div class="desktop-stat-lbl">esta semana</div></div>
-        </div>
         <div id="d-tie-perdido-stats" class="desktop-stats" style="display:none;margin-top:8px;">
           <div class="desktop-stat" style="background:rgba(239,159,39,0.12);"><div class="desktop-stat-num" id="d-tie-perdido-semana" style="color:#C9840F;">0</div><div class="desktop-stat-lbl">perdido esta semana</div></div>
           <div class="desktop-stat" style="background:rgba(239,159,39,0.12);"><div class="desktop-stat-num" id="d-tie-perdido-7d" style="color:#C9840F;">0</div><div class="desktop-stat-lbl">perdido últimos 7 días</div></div>
         </div>
-        <div id="d-tie-resumen" style="font-size:11px;text-align:center;margin-bottom:10px;color:rgba(36,40,80,0.45);"></div>
         <div style="background:rgba(92,107,192,0.1);border:1px solid rgba(92,107,192,0.25);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
           <div id="d-tiempo-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#242850;margin-bottom:8px;">00:00:00</div>
           <div class="tema-chips" id="d-tiempo-crono-chips" style="margin-bottom:8px;"></div>
@@ -2596,8 +2579,9 @@ function renderPerdidoFranja(){
   const p7 = mostrar7d ? fmtHoras(minutosPerdido7Dias()) : '—';
   ['tie-perdido-7d-mobile','d-tie-perdido-7d'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = p7; });
 }
-function statsCategoria(nombre){
-  const items = tiempoItems.filter(i=>i.categoria===nombre);
+// claveSem: lunes 'YYYY-MM-DD' para acotar a una semana; sin ella suma todo el histórico.
+function statsCategoria(nombre, claveSem){
+  const items = tiempoItems.filter(i=>i.categoria===nombre && (!claveSem || esDeLaSemana(i, claveSem)));
   const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
   const subs = {};
   items.forEach(i=>{
@@ -2833,10 +2817,11 @@ function toggleCategoria(n){ if(openCategorias.has(n)) openCategorias.delete(n);
 function toggleSubcat(c, s){ const k = c+'||'+s; if(openSubcats.has(k)) openSubcats.delete(k); else openSubcats.add(k); renderTiempo(); }
 
 // ---- Estudio como categoría dentro de Mi Tiempo ----
-function statsEstudioComoCategoria(){
-  const total = estudioItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
+function statsEstudioComoCategoria(claveSem){
+  const items = estudioItems.filter(i=>!claveSem || esDeLaSemana(i, claveSem));
+  const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
   const subs = {};
-  estudioItems.forEach(i=>{
+  items.forEach(i=>{
     const s = i.tema || 'General';
     if(!subs[s]) subs[s] = { min:0, count:0, sesiones:[] };
     subs[s].min += parseInt(i.minutos)||0;
@@ -2847,7 +2832,7 @@ function statsEstudioComoCategoria(){
 }
 function renderEstudioBlockHTML(){
   const c = ESTUDIO_EN_TIEMPO;
-  const st = statsEstudioComoCategoria();
+  const st = statsEstudioComoCategoria(claveSemanaActual());
   const isOpen = openCategorias.has('Estudio');
   const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
   const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
@@ -2885,15 +2870,123 @@ function renderEstudioBlockHTML(){
     <div class="tema-body ${isOpen?'open':''}">
       ${subsHTML}
       <button class="tema-add" onclick="openEstudioModal()">+ Registrar en Mi Estudio</button>
+      ${semanasAnterioresHTML('Estudio', estudioItems, c.color, 'estudio')}
     </div>
   </div>`;
+}
+
+// ---- Semanas: los contadores de "Por categoría" arrancan de cero cada lunes ----
+function inicioSemanaDe(fecha){
+  const d = new Date(fecha); d.setHours(0,0,0,0);
+  const dow = d.getDay();
+  d.setDate(d.getDate() - ((dow===0) ? 6 : (dow-1)));
+  return d;
+}
+function claveSemanaDe(created_at){ return created_at ? fechaLocal(inicioSemanaDe(new Date(created_at))) : ''; }
+function claveSemanaActual(){ return fechaLocal(lunesDeEstaSemana()); }
+function esDeLaSemana(item, claveSem){ return claveSemanaDe(item.created_at) === claveSem; }
+function etiquetaSemana(clave){
+  const ini = new Date(clave+'T00:00:00');
+  const fin = new Date(ini); fin.setDate(fin.getDate()+6);
+  const f = x => x.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  return f(ini)+' – '+f(fin);
+}
+function semanasAnterioresDeItems(items){
+  const actual = claveSemanaActual();
+  const porSemana = {};
+  items.forEach(i=>{
+    const k = claveSemanaDe(i.created_at);
+    if(!k || k===actual) return;
+    if(!porSemana[k]) porSemana[k] = { clave:k, total:0, sesiones:[] };
+    porSemana[k].total += parseInt(i.minutos)||0;
+    porSemana[k].sesiones.push(i);
+  });
+  return Object.values(porSemana).sort((a,b)=> b.clave.localeCompare(a.clave));
+}
+let openSemanasPrev = new Set();
+let openSemanaHist = new Set();
+function toggleSemanasPrev(clave){
+  if(openSemanasPrev.has(clave)) openSemanasPrev.delete(clave); else openSemanasPrev.add(clave);
+  renderTiempo();
+}
+function toggleSemanaHist(clave){
+  if(openSemanaHist.has(clave)) openSemanaHist.delete(clave); else openSemanaHist.add(clave);
+  renderTiempo();
+}
+function semanasAnterioresHTML(nombreCat, items, color, fuente){
+  const abierto = openSemanasPrev.has(nombreCat);
+  const semanas = semanasAnterioresDeItems(items);
+  const editFn = fuente==='estudio' ? 'editarEstudio' : 'editarTiempo';
+  const delFn  = fuente==='estudio' ? 'delEstudio' : 'delTiempo';
+  const cuerpo = semanas.length ? semanas.map(s=>{
+    const k = nombreCat+'||'+s.clave;
+    const ab = openSemanaHist.has(k);
+    const filas = s.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
+      const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+      const sub = (fuente==='estudio' ? se.tema : se.subcategoria) || 'General';
+      return `<div class="ses-row">
+        <span class="ses-fecha">${fecha} · ${sub}</span>
+        <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+        <button class="sub-btn" onclick="event.stopPropagation();${editFn}(${se.id})" title="Editar">✏️</button>
+        <button class="sub-btn" onclick="event.stopPropagation();${delFn}(${se.id})" title="Eliminar">🗑</button>
+      </div>`;
+    }).join('');
+    return `<div>
+      <div class="sub-row" onclick="toggleSemanaHist('${escAttrJs(k)}')">
+        <span class="sub-name">${etiquetaSemana(s.clave)}</span>
+        <span class="sub-hrs" style="color:${colorSobreClaro(color)};">${fmtHoras(s.total)}</span>
+        <span class="chevron ${ab?'open':''}" style="font-size:13px;">▾</span>
+      </div>
+      <div class="ses-list ${ab?'open':''}">${filas}</div>
+    </div>`;
+  }).join('') : '<div class="sub-empty">Sin semanas anteriores</div>';
+  return `<button class="tema-add" onclick="toggleSemanasPrev('${escAttrJs(nombreCat)}')">🗂 Semanas anteriores ${abierto?'▴':'▾'}</button>
+    <div${abierto?'':' style="display:none;"'}>${cuerpo}</div>`;
+}
+
+// ---- Orden de la lista "Por categoría" ----
+function minutosCategoriaEnSemana(nombre){
+  const lunes = lunesDeEstaSemana();
+  return tiempoItems.reduce((a,i)=>{
+    if(i.categoria!==nombre || !i.created_at) return a;
+    const f = new Date(fechaLocal(new Date(i.created_at))+'T00:00:00');
+    return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+function minutosCategoriaEnDias(nombre, dias){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return tiempoItems.reduce((a,i)=>{
+    if(i.categoria!==nombre || !i.created_at) return a;
+    const d = estDiasAtras(fechaLocal(new Date(i.created_at)), hoy);
+    return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
+  }, 0);
+}
+// Manda el tiempo de esta semana. Si empatan —caso típico: arranca la semana y está todo en 0—
+// decide el acumulado de las últimas 3 semanas, y por último el nombre para que no baile.
+function categoriasOrdenadas(){
+  const lista = CATEGORIAS_TIEMPO.map(c=>({
+    cat: c, tipo: 'tiempo',
+    semana: minutosCategoriaEnSemana(c.nombre),
+    tresSemanas: minutosCategoriaEnDias(c.nombre, 21),
+  }));
+  lista.push({
+    cat: ESTUDIO_EN_TIEMPO, tipo: 'estudio',
+    semana: minutosSemanaCalendario(),
+    tresSemanas: minutosEnRango(21),
+  });
+  lista.sort((a,b)=> (b.semana - a.semana) || (b.tresSemanas - a.tresSemanas) || a.cat.nombre.localeCompare(b.cat.nombre));
+  return lista;
 }
 
 // ---- Render de las categorías ----
 function renderCategoriasEn(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
-  cont.innerHTML = CATEGORIAS_TIEMPO.map(c=>{
-    const st = statsCategoria(c.nombre);
+  cont.innerHTML = categoriasOrdenadas()
+    .map(x=> x.tipo==='estudio' ? renderEstudioBlockHTML() : renderCategoriaBlockHTML(x.cat))
+    .join('');
+}
+function renderCategoriaBlockHTML(c){
+    const st = statsCategoria(c.nombre, claveSemanaActual());
     const isOpen = openCategorias.has(c.nombre);
     const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
     const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
@@ -2931,16 +3024,17 @@ function renderCategoriasEn(containerId){
       <div class="tema-body ${isOpen?'open':''}">
         ${subsHTML}
         <button class="tema-add" onclick="openTiempoModal('${c.nombre}')">+ Registrar en ${c.nombre}</button>
+        ${semanasAnterioresHTML(c.nombre, tiempoItems.filter(i=>i.categoria===c.nombre), c.color, 'tiempo')}
       </div>
     </div>`;
-  }).join('') + renderEstudioBlockHTML();
 }
 
 // ---- Grilla semanal (últimos 7 días) ----
+// Ventana móvil: los 6 días anteriores más hoy (hoy siempre es la última columna).
 function diasSemanaGrid(){
-  const lunes = lunesDeEstaSemana();
+  const inicio = new Date(); inicio.setHours(0,0,0,0); inicio.setDate(inicio.getDate()-6);
   const days = [];
-  for(let i=0;i<7;i++){ const d = new Date(lunes); d.setDate(lunes.getDate()+i); days.push(d); }
+  for(let i=0;i<7;i++){ const d = new Date(inicio); d.setDate(inicio.getDate()+i); days.push(d); }
   return days;
 }
 function bloquesSemana(){
@@ -3036,7 +3130,7 @@ function resolverOcupacionDia(bloquesDia){
 function renderGridSemana(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
   const days = diasSemanaGrid();
-  const letras = ['L','M','X','J','V','S','D'];
+  const letras = ['D','L','M','X','J','V','S']; // indexadas por getDay()
   const ahora = new Date();
   const hoyStr = fechaLocal(ahora);
   const W=350, padLeft=24, padTop=20, H=380*gridZoom, colW=(W-padLeft)/7, hourH=H/24;
@@ -3056,7 +3150,7 @@ function renderGridSemana(containerId){
     const x = padLeft + idx*colW + colW/2;
     const isToday = fechaLocal(d)===hoyStr;
     if(isToday) todayIdx = idx;
-    svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#242850':'rgba(36,40,80,0.5)'}" text-anchor="middle">${letras[idx]} ${d.getDate()}</text>`;
+    svg += `<text x="${x}" y="${padTop-6}" font-size="9" font-weight="700" fill="${isToday?'#242850':'rgba(36,40,80,0.5)'}" text-anchor="middle">${letras[d.getDay()]} ${d.getDate()}</text>`;
   });
   const porDia = {};
   bloquesSemana().forEach(b=>{ (porDia[b.dayIdx] = porDia[b.dayIdx] || []).push(b); });
@@ -3134,15 +3228,6 @@ document.addEventListener('click', (e)=>{
 // ---- Render principal ----
 function renderTiempo(){
   recalcularColoresTiempo();
-  const minHoy = minutosHoyTiempo(), minSem = minutosSemanaTiempo(), minTot = minutosTotalTiempo();
-  const rEl = document.getElementById('tie-hoy-mobile');
-  const sEl = document.getElementById('tie-semana-mobile');
-  const resEl = document.getElementById('tie-resumen-mobile');
-  if(rEl){
-    rEl.textContent = fmtHoras(minHoy);
-    if(sEl) sEl.textContent = fmtHoras(minSem);
-    if(resEl) resEl.textContent = tiempoItems.length ? ('total: '+fmtHoras(minTot)) : '';
-  }
   renderCronoChipsTiempo();
   if(tiempoTimer.categoria) actualizarDatalistTiempo('subcats-list', tiempoTimer.categoria);
   if(modalCategoria) actualizarDatalistTiempo('subcats-list-modal', modalCategoria);
@@ -3155,12 +3240,7 @@ function renderTiempo(){
 
 function renderTiempoDesktop(){
   if(window.innerWidth < 768) return;
-  const rEl = document.getElementById('d-tie-hoy'); if(!rEl) return;
-  rEl.textContent = fmtHoras(minutosHoyTiempo());
-  const sEl = document.getElementById('d-tie-semana');
-  if(sEl) sEl.textContent = fmtHoras(minutosSemanaTiempo());
-  const resEl = document.getElementById('d-tie-resumen');
-  if(resEl) resEl.textContent = tiempoItems.length ? ('total: '+fmtHoras(minutosTotalTiempo())) : '';
+  if(!document.getElementById('d-tie-categorias-list')) return;
   renderCategoriasEn('d-tie-categorias-list');
   renderGridSemana('d-tie-grid-semana');
   renderLegendSemana('d-tie-grid-legend');
