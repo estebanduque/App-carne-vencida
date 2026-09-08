@@ -1412,11 +1412,24 @@ async function registrarPushSubscription(mostrarAlerta = false) {
     
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
-    
+    const claveNueva = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
+    // Una suscripción queda atada a la clave VAPID con la que se creó. Si la clave cambió,
+    // hay que desuscribirse y volver a suscribir: si no, se guarda una que el servidor de
+    // push va a rechazar con 403 y las notificaciones nunca llegan.
+    if(sub){
+      const actual = new Uint8Array(sub.options && sub.options.applicationServerKey || []);
+      const misma = actual.length === claveNueva.length && actual.every((v,i)=>v===claveNueva[i]);
+      if(!misma){
+        await sub.unsubscribe();
+        sub = null;
+      }
+    }
+
     if(!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        applicationServerKey: claveNueva
       });
     }
     
