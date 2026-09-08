@@ -1864,6 +1864,7 @@ let estudioEditId = null;
 let modalTema = '';
 let openTemas = new Set();
 let openSubtemas = new Set();
+let openBloques = new Set(); // bloques del plan; arrancan colapsados
 
 // ---- Helpers de tiempo/fechas ----
 // Fecha YYYY-MM-DD en hora LOCAL. No usar toISOString() para esto: convierte a UTC y en husos
@@ -2135,12 +2136,12 @@ function statsTema(nombre){
 }
 function subtemasDe(tema){
   const usados = estudioItems.filter(i=>i.tema===tema && i.subtema).map(i=>i.subtema);
-  const plan = (tema===TEMA_PLAN) ? PLAN_DEONTOLOGIE.flatMap(b=>b.subtemas.map(s=>s.nombre)) : [];
+  const plan = (planDe(tema) || []).flatMap(b=>b.subtemas.map(s=>s.nombre));
   return [...new Set([...plan, ...usados])].sort();
 }
 
-// Plan de Déontologie: metas de tiempo por subtema (horas) agrupadas por bloque.
-const TEMA_PLAN = 'Déontologie';
+// Planes de estudio: metas de tiempo (en horas) por subtema, agrupadas por bloque.
+function planDe(tema){ return PLANES_ESTUDIO[tema] || null; }
 const PLAN_DEONTOLOGIE = [
   { bloque:'1. Principes Essentiels, Serment et Éthique', subtemas:[
     { nombre:'Principes du serment (5 vertus)', preguntas:7, meta:7.80 },
@@ -2174,6 +2175,153 @@ const PLAN_DEONTOLOGIE = [
     { nombre:'Institutions (Bâtonnier, CO, CNB)', preguntas:4, meta:4.46 },
   ]},
 ];
+const PLAN_DROIT_CIVIL = [
+  { bloque:'1. Droit des Obligations', subtemas:[
+    { nombre:'Validez del contrato y sus vicios (Error, dolo, violencia)', meta:4.75 },
+    { nombre:'Inejecución, resolución y remedios contractuales', meta:4.00 },
+    { nombre:'Efectos del contrato e imprevisión (Art. 1195)', meta:3.25 },
+    { nombre:'Fase precontractual y promesas de venta (Avant-contrats)', meta:2.50 },
+    { nombre:'Responsabilidad por hecho de las cosas y hecho ajeno', meta:4.00 },
+    { nombre:'Culpa personal y nexo causal', meta:2.50 },
+    { nombre:'Tipos de perjuicios y regímenes especiales (Tránsito/Productos)', meta:1.50 },
+    { nombre:'Circulación de obligaciones (Cesión de crédito, deuda y subrogación)', meta:2.50 },
+    { nombre:'Prescripción extintiva y derecho de la prueba', meta:1.50 },
+    { nombre:'Modalidades de la obligación (Solidaridad e in solidum)', meta:1.50 },
+  ]},
+  { bloque:'2. Procédure Civile', subtemas:[
+    { nombre:'Nulidades procesales (Art. 117 CPC)', meta:4.00 },
+    { nombre:'Fins de non-recevoir (Prescripción, cosa juzgada, mediación previa)', meta:2.50 },
+    { nombre:'La Mise en état y poderes del JME (Art. 789 CPC)', meta:4.00 },
+    { nombre:'Saisine, enrôlement y ordonnance de clôture', meta:2.50 },
+    { nombre:'Reglas de competencia material y territorial (Art. 42 y 46 CPC)', meta:2.50 },
+    { nombre:'Interés y cualidad para actuar', meta:1.50 },
+    { nombre:'Référé y medidas de instrucción preventiva (Art. 145)', meta:1.50 },
+    { nombre:'Recursos ordinarios (Efecto devolutivo y plazos de apelación)', meta:1.50 },
+  ]},
+  { bloque:'3. Droit des Biens', subtemas:[
+    { nombre:'Usucapión inmobiliaria y vicios de la posesión', meta:2.50 },
+    { nombre:'Trastornos anormales de vecindad e empiétement', meta:1.50 },
+    { nombre:'Clasificación de bienes (Muebles/Inmuebles y Frutos/Productos)', meta:1.50 },
+    { nombre:'Estado de enclave y servidumbres de paso (Art. 682 C. civ.)', meta:1.50 },
+    { nombre:'Usufructo (Derechos y obligaciones del usufructuario)', meta:1.50 },
+    { nombre:'Copropiedad de inmuebles edificados (Ley de 1965)', meta:1.50 },
+    { nombre:'Indivisión ordinaria y régimen de administración', meta:1.50 },
+  ]},
+  { bloque:'4. Práctica Activa con Casos Reales', subtemas:[
+    { nombre:'Resolución cronometrada de Sujets de examen', meta:12.25 },
+  ]},
+  { bloque:'5. Méthodologie des Conclusions', subtemas:[
+    { nombre:'Técnica del Silogismo y Par ces motifs', meta:4.75 },
+    { nombre:'Estructura formal del escrito civil', meta:3.25 },
+  ]},
+];
+const PLAN_DROIT_COMMERCIAL = [
+  { bloque:'1. Droit Commercial Général', subtemas:[
+    { nombre:'Actos de comercio, comerciante y cónyuge', meta:4.50 },
+    { nombre:'Estatuto del Entrepreneur Individuel', meta:4.50 },
+    { nombre:'Operaciones sobre el fondo (Cession/Gage)', meta:5.75 },
+    { nombre:'Arrendamientos Comerciales (Baux) [Prioridad Alta]', meta:13.50 },
+  ]},
+  { bloque:'2. Droit des Sociétés', subtemas:[
+    { nombre:"Constitución de sociedades y Reprise d'actes", meta:6.75 },
+    { nombre:'Derechos de socios y Usufructo de acciones', meta:6.75 },
+    { nombre:'Poderes de dirigentes, Responsabilidad y Conventions Réglementées (SARL/SA/SAS) [Prioridad Alta]', meta:20.25 },
+  ]},
+  { bloque:'3. Entreprises en Difficulté', subtemas:[
+    { nombre:'Alerta, Mandat ad hoc y Conciliación', meta:5.75 },
+    { nombre:"Juicio de apertura, Période d'observation y contratos en curso [Prioridad Alta]", meta:11.25 },
+    { nombre:'Declaración de créditos y Période Suspecte [Prioridad Alta]', meta:11.25 },
+    { nombre:'Liquidación Judicial y Sanciones a dirigentes', meta:5.50 },
+  ]},
+  { bloque:'4. Metodología Práctica y Simulación', subtemas:[
+    { nombre:'Metodología del Silogismo y Redacción', meta:2.25 },
+    { nombre:'Resolución de Sujetos de Examen (OB 2026.1) [Práctica Activa]', meta:12.25 },
+    { nombre:'Análisis de Errores y Feedback (Duque Suárez)', meta:2.25 },
+  ]},
+];
+// Procédures son 64 sujets numerados, todos con la misma meta (1h20).
+const META_SUJET = 4/3;
+const PLAN_PROCEDURES = [
+  { bloque:'1. Organisation judiciaire', sujets:[
+    [1,'La compétence'],
+    [15,"L'indépendance des juges"],
+    [16,'Le principe du contradictoire'],
+    [17,"L'oralité des débats"],
+    [18,"La représentation et l'assistance devant les juridictions"],
+    [19,"Les principes d'organisation relatifs à la structure des juridictions"],
+    [20,'Le corps des magistrats de la justice civile'],
+    [21,'Le juge unique'],
+    [22,'Le tribunal judiciaire'],
+    [24,'Le juge des contentieux de la protection'],
+    [25,"Le Conseil de prud'hommes"],
+    [26,'Le tribunal de commerce'],
+    [27,"La Cour d'appel"],
+    [28,"Le premier président de la Cour d'appel"],
+    [29,'La cour de cassation'],
+    [32,'Les juridictions pour mineurs'],
+    [33,'Le tribunal de police'],
+    [34,'Le tribunal correctionnel'],
+    [35,"La Cour d'assises"],
+    [36,'Le ministère public'],
+    [40,'Les critères civils de compétence territoriale'],
+    [41,'Les sanctions des règles de compétence'],
+    [44,'La compétence des juridictions pénales'],
+  ]},
+  { bloque:'2. Procédure civile', sujets:[
+    [5,'Le référé'],
+    [6,'Les voies de recours'],
+    [7,"L'appel"],
+    [8,'Le pourvoi en cassation'],
+    [9,'Le jugement'],
+    [10,"L'autorité de la chose jugée"],
+    [11,'La force exécutoire du jugement'],
+    [23,'Le juge de mise en état'],
+    [39,"L'action en justice"],
+    [42,"Les mesures d'instruction en matière civile"],
+    [43,'Les modes alternatifs de règlement des conflits'],
+  ]},
+  { bloque:'3. Procédure pénale', sujets:[
+    [12,"L'action publique"],
+    [13,"L'action civile"],
+    [14,"L'instruction préparatoire"],
+    [30,"Le juge d'instruction"],
+    [31,'Le juge des libertés et de la détention provisoire'],
+    [45,'Les droits de la victime dans le procès pénal'],
+    [46,'La comparution immédiate'],
+    [47,'Les mesures alternatives aux poursuites'],
+    [48,'Le double degré de juridiction en matière pénale'],
+    [49,"Les juridictions d'appel en matière pénale"],
+    [50,'Les voies de recours en matière pénale'],
+    [51,'Les mesures de privation ou de restriction des libertés avant jugement en matière pénale'],
+    [52,'La détention provisoire'],
+    [53,'La garde à vue'],
+    [54,'Le contrôle judiciaire'],
+    [55,'La nullité des actes de procédure en procédure pénale'],
+    [56,"La présomption d'innocence"],
+    [57,'La preuve en matière pénale'],
+    [58,"Les contrôles d'identité"],
+    [59,'Les perquisitions'],
+  ]},
+  { bloque:'4. Juridiction administrative et procédure administrative', sujets:[
+    [2,'La répartition des compétences entre les deux ordres de juridiction'],
+    [3,"L'ordre judiciaire et la juridiction administrative"],
+    [4,'Le Tribunal des conflits'],
+    [37,"Le Conseil d'Etat"],
+    [38,'Le Conseil constitutionnel'],
+    [60,'Les procédures devant les tribunaux administratifs'],
+    [61,'La compétence territoriale'],
+    [62,"Les procédures d'urgence / L'urgence"],
+    [63,'La procédure contentieuse'],
+    [64,'La procédure gracieuse'],
+  ]},
+].map(b=>({ bloque:b.bloque, subtemas:b.sujets.map(s=>({ nombre:s[0]+'. '+s[1], meta:META_SUJET })) }));
+
+const PLANES_ESTUDIO = {
+  'Déontologie': PLAN_DEONTOLOGIE,
+  'Droit civil': PLAN_DROIT_CIVIL,
+  'Droit commercial': PLAN_DROIT_COMMERCIAL,
+  'Procédures': PLAN_PROCEDURES,
+};
 function metaBloque(b){ return b.subtemas.reduce((a,s)=>a+s.meta, 0); }
 function horasSubtemaPlan(tema, subtema){
   return estudioItems.reduce((a,i)=>
@@ -2424,6 +2572,10 @@ function sesionesSubtemaHTML(sd){
 const COLOR_EXCESO = '#5DCAA5';
 // Hasta la meta la barra se llena con el color del tema. Pasada la meta queda llena y el tramo
 // que sobra se pinta aparte, para que el exceso se vea en vez de perderse en un 100% plano.
+function toggleBloque(clave){
+  if(openBloques.has(clave)) openBloques.delete(clave); else openBloques.add(clave);
+  renderEstudio();
+}
 function barraProgresoHTML(hecho, meta, color){
   if(!(meta > 0)) return '';
   if(hecho <= meta){
@@ -2455,35 +2607,41 @@ function filaSubtemaPlan(t, nombre, hechoH, metaH, sd){
     <div class="ses-list ${subOpen?'open':''}">${sesionesSubtemaHTML(sd)}</div>
   </div>`;
 }
-function renderPlanTemaHTML(t, st){
+function renderPlanTemaHTML(t, st, plan){
   let hechoTotal = 0, metaTotal = 0;
-  const bloques = PLAN_DEONTOLOGIE.map(b=>{
+  const bloques = plan.map(b=>{
     const meta = metaBloque(b);
     const hecho = b.subtemas.reduce((a,s)=>a+horasSubtemaPlan(t.nombre, s.nombre), 0);
     hechoTotal += hecho; metaTotal += meta;
+    const claveB = t.nombre+'||'+b.bloque;
+    const abierto = openBloques.has(claveB);
     const subs = b.subtemas
       .map(s=>filaSubtemaPlan(t, s.nombre, horasSubtemaPlan(t.nombre, s.nombre), s.meta, st.subs[s.nombre]))
       .join('');
     return `<div class="plan-bloque">
-      <div class="plan-linea">
+      <div class="plan-linea" style="cursor:pointer;" onclick="toggleBloque('${escAttrJs(claveB)}')">
         <span class="plan-nombre">${b.bloque}</span>
         <span class="plan-hrs">${fmtHorasCompacta(hecho)} / ${fmtHorasCompacta(meta)}${excesoHTML(hecho, meta)}</span>
         <span class="plan-pct">${Math.round(meta>0?(hecho/meta)*100:0)}%</span>
+        <span class="chevron ${abierto?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
       </div>
       ${barraProgresoHTML(hecho, meta, t.color)}
-      <div class="plan-sub">${subs}</div>
+      <div class="plan-sub"${abierto?'':' style="display:none;"'}>${subs}</div>
     </div>`;
   }).join('');
 
   // Lo registrado con un subtema que no figura en el plan no se pierde: va a su propio grupo.
-  const enPlan = new Set(PLAN_DEONTOLOGIE.flatMap(b=>b.subtemas.map(s=>s.nombre)));
+  const enPlan = new Set(plan.flatMap(b=>b.subtemas.map(s=>s.nombre)));
   const otros = Object.entries(st.subs).filter(([n])=>!enPlan.has(n)).sort((a,b)=>b[1].min-a[1].min);
+  const claveOtros = t.nombre+'||__fuera';
+  const otrosAbierto = openBloques.has(claveOtros);
   const otrosHTML = otros.length ? `<div class="plan-bloque">
-      <div class="plan-linea">
+      <div class="plan-linea" style="cursor:pointer;" onclick="toggleBloque('${escAttrJs(claveOtros)}')">
         <span class="plan-nombre">Fuera del plan</span>
         <span class="plan-hrs">${fmtHorasCompacta(otros.reduce((a,x)=>a+x[1].min,0)/60)}</span>
+        <span class="chevron ${otrosAbierto?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
       </div>
-      <div class="plan-sub">${otros.map(([n,d])=>filaSubtemaPlan(t, n, d.min/60, 0, d)).join('')}</div>
+      <div class="plan-sub"${otrosAbierto?'':' style="display:none;"'}>${otros.map(([n,d])=>filaSubtemaPlan(t, n, d.min/60, 0, d)).join('')}</div>
     </div>` : '';
 
   const pctTotal = metaTotal>0 ? (hechoTotal/metaTotal)*100 : 0;
@@ -2542,7 +2700,7 @@ function renderTemasEn(containerId){
           <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vGen)};">${fmtVentaja(vGen)}</div><div class="tema-stat-lbl">ventaja general</div></div>
         </div>
         <div class="tema-meta-lbl">meta ${fmtHorasCompacta(t.metaSem||0)} / semana</div>
-        ${t.nombre===TEMA_PLAN ? renderPlanTemaHTML(t, st) : subsHTML}
+        ${planDe(t.nombre) ? renderPlanTemaHTML(t, st, planDe(t.nombre)) : subsHTML}
         <button class="tema-add" onclick="openEstudioModal('${t.nombre}')">+ Registrar en ${t.nombre}</button>
       </div>
     </div>`;
