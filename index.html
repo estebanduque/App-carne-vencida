@@ -311,7 +311,9 @@
     /* Plan de estudio con metas por bloque/subtema */
     .plan-bloque { border-top: 1px solid rgba(255,255,255,0.06); padding: 11px 14px 9px; }
     .plan-linea { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
-    .plan-nombre { flex: 1; font-size: 13px; font-weight: 600; color: #fff; min-width: 0; }
+    .plan-nombre { flex: 1; font-size: 13px; font-weight: 600; color: #fff; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Un nombre recortado con "…" se despliega entero al tocarlo */
+    .plan-nombre.expandido, .sub-name.expandido { white-space: normal; overflow: visible; }
     .plan-hrs { font-size: 11px; color: rgba(255,255,255,0.55); white-space: nowrap; font-variant-numeric: tabular-nums; }
     .plan-pct { font-size: 10px; color: rgba(255,255,255,0.4); white-space: nowrap; min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
     .plan-barra { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
@@ -930,7 +932,8 @@
 // ===== CONFIGURACIÓN SUPABASE =====
 const SUPABASE_URL = 'https://suoqdlnmaemugpkbdpef.supabase.co';
 // VAPID public key - reemplaza con tu clave pública generada
-const VAPID_PUBLIC_KEY = 'TU_VAPID_PUBLIC_KEY';
+// Clave pública VAPID (puede ir en el repo). La privada vive solo en los secrets de Supabase.
+const VAPID_PUBLIC_KEY = 'BH1Jbc3VsMo_OGRP1OImsocgz4sHx6r9C_YNcAKx5TThMCD8V05oPjfkm6tkV-f1cHDo2QIcduWAQ8eueyr3bC0';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -1370,7 +1373,7 @@ function gymStartPause(){
     gymTimer.base = segundosCronoGym();
     gymTimer.running = false; gymTimer.startTs = null; pararIntervalGym();
   }
-  guardarTimerGymLS(); pintarCronoGym();
+  guardarTimerGymLS(); pintarCronoGym(); refrescarGrid();
 }
 async function gymStop(){
   const min = Math.round(segundosCronoGym()/60);
@@ -1388,7 +1391,7 @@ function gymReset(){
   if(segundosCronoGym() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
   pararIntervalGym();
   gymTimer = { running:false, base:0, startTs:null }; guardarTimerGymLS();
-  pintarCronoGym();
+  pintarCronoGym(); refrescarGrid();
 }
 function restaurarGymTimer(){
   try{
@@ -1417,11 +1420,14 @@ async function registrarPushSubscription(mostrarAlerta = false) {
       });
     }
     
-    const {error} = await sb.from('push_subscriptions').insert([{
+    // upsert por endpoint: si este dispositivo ya estaba, se actualiza en vez de duplicarse.
+    const {error} = await sb.from('push_subscriptions').upsert([{
+      endpoint: sub.endpoint,
       subscription: sub.toJSON(),
       user_agent: navigator.userAgent.substring(0, 200)
-    }]);
-    
+    }], { onConflict: 'endpoint' });
+
+    if(error) console.error('Error guardando suscripción push:', error.message);
     if(!error) {
       localStorage.setItem('push_sub_registrada', '1');
       if(mostrarAlerta) alert('✅ ¡Notificaciones push activadas!');
@@ -1451,8 +1457,18 @@ async function pedirPermisoNotificaciones(){
     await registrarPushSubscription();
   }
 }
+// En Chrome de Android (y en PWA de iOS) `new Notification()` lanza "Illegal constructor":
+// hay que emitirlas desde el service worker. Por eso antes no aparecía nada en el teléfono.
+async function notificar(titulo, cuerpo){
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification(titulo, { body:cuerpo, icon:'icon-192.png', badge:'icon-192.png', vibrate:[200,100,200] });
+  }catch(e){
+    try{ new Notification(titulo, { body:cuerpo, icon:'icon-192.png' }); }catch(e2){ console.log('No se pudo notificar:', e2.message); }
+  }
+}
 function revisarVencimientos(){
-  if(Notification.permission !== 'granted') return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
   const hoyStr = fechaLocal(new Date());
   const horaActual = new Date().getHours();
   const cacheKey = 'ultima_revision_' + hoyStr;
@@ -1464,8 +1480,8 @@ function revisarVencimientos(){
   items.forEach(item => {
     const d = daysUntil(item.fecha);
     const nombre = item.tipo + (item.desc ? ' · ' + item.desc : '');
-    if(d === 1) new Notification('⚠️ Carne vence mañana', {body: nombre + ' vence mañana. ¡Úsala hoy!', icon:'icon-192.png'});
-    else if(d === 0) new Notification('🔴 ¡Carne vence HOY!', {body: nombre + ' vence hoy. ¡Última oportunidad!', icon:'icon-192.png'});
+    if(d === 1) notificar('⚠️ Carne vence mañana', nombre + ' vence mañana. ¡Úsala hoy!');
+    else if(d === 0) notificar('🔴 ¡Carne vence HOY!', nombre + ' vence hoy. ¡Última oportunidad!');
   });
 
   // 👁️ Lentes - cuando se cumplen los 30 días
@@ -1473,7 +1489,7 @@ function revisarVencimientos(){
   if(fechaLentes) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const diasUsados = Math.round((hoy - new Date(fechaLentes+'T00:00:00')) / 86400000);
-    if(LENTES_DIAS - diasUsados === 0) new Notification('👁️ ¡Cambia tus lentes hoy!', {body:'Hoy se cumplen los 30 días de uso.', icon:'icon-192.png'});
+    if(LENTES_DIAS - diasUsados === 0) notificar('👁️ ¡Cambia tus lentes hoy!', 'Hoy se cumplen los 30 días de uso.');
   }
 
   // 💪 Gym - más de 2 días sin ir
@@ -1483,7 +1499,7 @@ function revisarVencimientos(){
     const masReciente = fechasGym.sort((a,b)=>b.localeCompare(a))[0];
     if(masReciente) {
       const diasSinIr = Math.round((hoy - new Date(masReciente+'T00:00:00')) / 86400000);
-      if(diasSinIr > 2) new Notification('💪 ¡Hace '+diasSinIr+' días que no vas al gym!', {body:'Tu último entreno fue el '+new Date(masReciente+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+'. ¡Anímate!', icon:'icon-192.png'});
+      if(diasSinIr > 2) notificar('💪 ¡Hace '+diasSinIr+' días que no vas al gym!', 'Tu último entreno fue el '+new Date(masReciente+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+'. ¡Anímate!');
     }
   }
 }
@@ -2389,7 +2405,7 @@ function estudioStartPause(){
     estudioTimer.base = segundosCrono();
     estudioTimer.running = false; estudioTimer.startTs = null; pararInterval();
   }
-  guardarTimerLS(); pintarCrono();
+  guardarTimerLS(); pintarCrono(); refrescarGrid();
 }
 async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
   const sub = subtema==='General' ? '' : (subtema||'');
@@ -2414,6 +2430,7 @@ async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
   actualizarDatalist('subtemas-list', tema);
   ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=sub; });
   pintarCrono();
+  refrescarGrid();
   feedbackInicioCrono(btnEl, color);
 }
 async function estudioStop(){
@@ -2438,7 +2455,7 @@ function estudioReset(){
   const tema = estudioTimer.tema;
   estudioTimer = { running:false, base:0, startTs:null, tema:tema, subtema:'' }; guardarTimerLS();
   ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  pintarCrono();
+  pintarCrono(); refrescarGrid();
 }
 function restaurarEstudioTimer(){
   try{
@@ -2597,7 +2614,7 @@ function filaSubtemaPlan(t, nombre, hechoH, metaH, sd){
   const sn = escAttrJs(nombre), tn = escAttrJs(t.nombre);
   return `<div>
     <div class="sub-row" onclick="toggleSubtema('${tn}','${sn}')">
-      <span class="plan-nombre">${nombre}</span>
+      <span class="plan-nombre" ${attrsNombreLargo(nombre)}>${nombre}</span>
       <span class="plan-hrs">${fmtHorasCompacta(hechoH)}${metaH>0?' / '+fmtHorasCompacta(metaH):''}${excesoHTML(hechoH, metaH)}</span>
       <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${tn}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
       <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${tn}','${sn}')" title="Registrar aquí">➕</button>
@@ -2620,7 +2637,7 @@ function renderPlanTemaHTML(t, st, plan){
       .join('');
     return `<div class="plan-bloque">
       <div class="plan-linea" style="cursor:pointer;" onclick="toggleBloque('${escAttrJs(claveB)}')">
-        <span class="plan-nombre">${b.bloque}</span>
+        <span class="plan-nombre" ${attrsNombreLargo(b.bloque)}>${b.bloque}</span>
         <span class="plan-hrs">${fmtHorasCompacta(hecho)} / ${fmtHorasCompacta(meta)}${excesoHTML(hecho, meta)}</span>
         <span class="plan-pct">${Math.round(meta>0?(hecho/meta)*100:0)}%</span>
         <span class="chevron ${abierto?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
@@ -2677,7 +2694,7 @@ function renderTemasEn(containerId){
       const sn = sname.replace(/'/g,"\\'");
       return `<div>
         <div class="sub-row" onclick="toggleSubtema('${t.nombre}','${sn}')">
-          <span class="sub-name">${sname}</span>
+          <span class="sub-name" ${attrsNombreLargo(sname)}>${sname}</span>
           <span class="sub-hrs" style="color:${t.color};">${fmtHoras(sd.min)}</span>
           <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${t.nombre}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
           <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${t.nombre}','${sn}')" title="Registrar aquí">➕</button>
@@ -2957,7 +2974,7 @@ function tiempoStartPause(){
     tiempoTimer.base = segundosCronoTiempo();
     tiempoTimer.running = false; tiempoTimer.startTs = null; pararIntervalTiempo();
   }
-  guardarTimerTiempoLS(); pintarCronoTiempo();
+  guardarTimerTiempoLS(); pintarCronoTiempo(); refrescarGrid();
 }
 async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
   const sc = subcategoria==='General' ? '' : subcategoria;
@@ -2982,6 +2999,7 @@ async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
   actualizarDatalistTiempo('subcats-list', categoria);
   ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = sc; });
   pintarCronoTiempo();
+  refrescarGrid();
   feedbackInicioCrono(btnEl, color);
 }
 async function tiempoStop(){
@@ -3006,7 +3024,7 @@ function tiempoReset(){
   const categoria = tiempoTimer.categoria;
   tiempoTimer = { running:false, base:0, startTs:null, categoria:categoria, subcategoria:'' }; guardarTimerTiempoLS();
   ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  pintarCronoTiempo();
+  pintarCronoTiempo(); refrescarGrid();
 }
 function restaurarTiempoTimer(){
   try{
@@ -3158,7 +3176,7 @@ function renderEstudioBlockHTML(){
     const sn = sname.replace(/'/g,"\\'");
     return `<div>
       <div class="sub-row" onclick="toggleSubcat('Estudio','${sn}')">
-        <span class="sub-name">${sname}</span>
+        <span class="sub-name" ${attrsNombreLargo(sname)}>${sname}</span>
         <span class="sub-hrs" style="color:${colorSobreClaro(c.color)};">${fmtHoras(sd.min)}</span>
         <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${sn}','', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
         <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${sn}','')" title="Registrar aquí">➕</button>
@@ -3312,7 +3330,7 @@ function renderCategoriaBlockHTML(c){
       const sn = sname.replace(/'/g,"\\'");
       return `<div>
         <div class="sub-row" onclick="toggleSubcat('${c.nombre}','${sn}')">
-          <span class="sub-name">${sname}</span>
+          <span class="sub-name" ${attrsNombreLargo(sname)}>${sname}</span>
           <span class="sub-hrs" style="color:${colorSobreClaro(c.color)};">${fmtHoras(sd.min)}</span>
           <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoDesdeSubcat('${c.nombre}','${sn}', this, '${c.color}')" title="Iniciar cronómetro">▶</button>
           <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubcat('${c.nombre}','${sn}')" title="Registrar aquí">➕</button>
@@ -3345,46 +3363,85 @@ function diasSemanaGrid(){
   for(let i=0;i<7;i++){ const d = new Date(inicio); d.setDate(inicio.getDate()+i); days.push(d); }
   return days;
 }
-function bloquesSemana(){
+// Recorta [inicio, fin] a la ventana visible y lo parte en un bloque por día.
+function partirPorDia(inicio, fin, base){
   const days = diasSemanaGrid();
   const start0 = days[0];
   const end7 = new Date(days[6]); end7.setDate(end7.getDate()+1);
+  const out = [];
+  let curStart = new Date(inicio), curEnd = new Date(fin);
+  if(curEnd<=start0 || curStart>=end7) return out;
+  if(curStart<start0) curStart = new Date(start0);
+  if(curEnd>end7) curEnd = new Date(end7);
+  let segStart = curStart;
+  while(segStart < curEnd){
+    const dayStart = new Date(segStart); dayStart.setHours(0,0,0,0);
+    const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
+    const segEnd = curEnd < dayEnd ? curEnd : dayEnd;
+    const dayIdx = Math.round((dayStart - start0)/86400000);
+    if(dayIdx>=0 && dayIdx<7){
+      out.push(Object.assign({}, base, {
+        dayIdx,
+        h0: (segStart - dayStart)/3600000,
+        h1: (segEnd - dayStart)/3600000,
+      }));
+    }
+    segStart = segEnd;
+  }
+  return out;
+}
+// Lo que marca cada cronómetro y todavía no se guardó, para verlo en la grilla en vivo.
+function bloquesEnCurso(){
+  const ahora = new Date();
+  const out = [];
+  const agregar = (segundos, label, sub, color)=>{
+    if(!(segundos > 0) || !label) return;
+    const ini = new Date(ahora.getTime() - segundos*1000);
+    out.push(...partirPorDia(ini, ahora, { color, label, sub:sub||'', id:null, fuente:'curso', preciso:true, enCurso:true }));
+  };
+  agregar(segundosCronoTiempo(), tiempoTimer.categoria, leerSubcatCrono(), categoriaInfo(tiempoTimer.categoria).color);
+  agregar(segundosCrono(), estudioTimer.tema, leerSubtemaCrono(), ESTUDIO_EN_TIEMPO.color);
+  agregar(segundosCronoGym(), 'Deporte', 'Gym', categoriaInfo('Deporte').color);
+  return out;
+}
+function bloquesSemana(){
   const bloques = [];
   function addItem(i, color, fuente){
     const min = parseInt(i.minutos)||0;
     if(!i.created_at || !min) return;
-    const end = new Date(i.created_at);
-    let curStart = new Date(end.getTime() - min*60000);
-    let curEnd = end;
-    if(curEnd<=start0 || curStart>=end7) return;
-    if(curStart<start0) curStart = new Date(start0);
-    if(curEnd>end7) curEnd = new Date(end7);
-    let segStart = curStart;
-    while(segStart < curEnd){
-      const dayStart = new Date(segStart); dayStart.setHours(0,0,0,0);
-      const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
-      const segEnd = curEnd < dayEnd ? curEnd : dayEnd;
-      const dayIdx = Math.round((dayStart - start0)/86400000);
-      if(dayIdx>=0 && dayIdx<7){
-        const h0 = segStart.getHours() + segStart.getMinutes()/60;
-        const h1 = (segEnd - dayStart)/3600000;
-        bloques.push({ dayIdx, h0, h1, color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''), id:i.id, fuente, preciso:esHoraPrecisa(i.created_at) });
-      }
-      segStart = segEnd;
-    }
+    const fin = new Date(i.created_at);
+    const ini = new Date(fin.getTime() - min*60000);
+    bloques.push(...partirPorDia(ini, fin, {
+      color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''),
+      id:i.id, fuente, preciso:esHoraPrecisa(i.created_at),
+    }));
   }
   tiempoItems.forEach(i=> addItem(i, categoriaInfo(i.categoria).color, 'tiempo'));
   estudioItems.forEach(i=> addItem(i, ESTUDIO_EN_TIEMPO.color, 'estudio'));
-  return bloques;
+  return bloques.concat(bloquesEnCurso());
 }
 function fmtHoraDecimal(h){
   let hh = Math.floor(h), mm = Math.round((h-hh)*60);
   if(mm===60){ mm=0; hh++; }
   return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
 }
+function escHtmlAttr(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+// Se pone en el <span> del nombre: lo despliega sin disparar el toggle de la fila.
+function attrsNombreLargo(texto){
+  return `title="${escHtmlAttr(texto)}" onclick="event.stopPropagation();this.classList.toggle('expandido')"`;
+}
 function escAttrJs(s){
   return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+function hayCronoEnCurso(){
+  return segundosCronoTiempo()>0 || segundosCrono()>0 || segundosCronoGym()>0;
+}
+function refrescarGrid(){
+  renderGridSemana('tie-grid-semana');
+  renderGridSemana('d-tie-grid-semana');
 }
 function toggleFiltroGrid(nombre){
   filtroGridCategoria = (filtroGridCategoria===nombre) ? null : nombre;
@@ -3469,6 +3526,12 @@ function renderGridSemana(containerId){
       const h = Math.max((b.h1-b.h0)*hourH, 2);
       const w = colW - 2;
       const atenuado = filtroGridCategoria && filtroGridCategoria!==b.label;
+      if(b.enCurso){
+        // Todavía sin guardar: se dibuja translúcido y con borde punteado, y no se puede editar.
+        const titulo = escHtmlAttr(b.label + (b.sub?' · '+b.sub:'') + ' (en curso)');
+        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0" fill="${b.color}" opacity="${atenuado?0.1:0.4}" stroke="${b.color}" stroke-width="1" stroke-dasharray="2,1.5" style="pointer-events:none;"><title>${titulo}</title></rect>`;
+        return;
+      }
       const opacity = atenuado ? 0.15 : 0.9;
       svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0" fill="${b.color}" opacity="${opacity}" class="bloque-grid" style="cursor:pointer;" onclick="mostrarInfoBloque(event,'${b.fuente}',${b.id},'${escAttrJs(b.label)}','${escAttrJs(b.sub)}',${b.h0},${b.h1},'${b.color}')"></rect>`;
     });
@@ -3560,6 +3623,10 @@ restaurarEstudioTimer();
 loadTiempo();
 restaurarTiempoTimer();
 restaurarGymTimer();
+
+// Mientras haya un cronómetro corriendo, la grilla se refresca sola para que el bloque en curso
+// vaya creciendo. Cada 30s alcanza: a este zoom un minuto mide menos de un píxel.
+setInterval(()=>{ if(hayCronoEnCurso()) refrescarGrid(); }, 30000);
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
