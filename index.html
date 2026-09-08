@@ -33,8 +33,12 @@
     .menu-chevron { font-size: 20px; color: rgba(255,255,255,0.4); transition: transform 0.25s; }
     .menu-chevron.open { transform: rotate(180deg); }
 
-    .menu-body { background: #1A2D45; border: 1px solid rgba(255,255,255,0.1); border-top: none; border-radius: 0 0 18px 18px; max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
-    .menu-body.open { max-height: 2000px; }
+    /* Acordeón sin tope de altura: grid-template-rows 0fr->1fr anima hasta la altura real
+       del contenido. Con max-height fijo, lo que pasaba del tope quedaba recortado y era
+       imposible llegar a verlo (le pasaba a Mi Estudio con un tema largo desplegado). */
+    .menu-body { background: #1A2D45; border: 1px solid rgba(255,255,255,0.1); border-top: none; border-radius: 0 0 18px 18px; display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s ease; }
+    .menu-body.open { grid-template-rows: 1fr; }
+    .menu-body > .menu-inner { overflow: hidden; min-height: 0; }
     .menu-inner { padding: 0 0 16px; }
 
     /* Stats */
@@ -90,7 +94,7 @@
     .chevron { font-size: 16px; color: rgba(255,255,255,0.4); transition: transform 0.2s; display: inline-block; }
     .chevron.open { transform: rotate(180deg); }
     .exercises { border-top: 1px solid rgba(255,255,255,0.06); max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    .exercises.open { max-height: 1000px; }
+    .exercises.open { max-height: 1000px; overflow-y: auto; }
     .exercise-row { padding: 11px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .exercise-row:last-child { border-bottom: none; }
     .ex-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); flex-shrink: 0; }
@@ -250,8 +254,9 @@
   .tema-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .tema-name { flex: 1; font-size: 15px; font-weight: 600; color: #fff; }
   .tema-total { font-size: 14px; font-weight: 700; }
-  .tema-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: rgba(0,0,0,0.12); }
-  .tema-body.open { max-height: 3000px; }
+  .tema-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s ease; background: rgba(0,0,0,0.12); }
+  .tema-body.open { grid-template-rows: 1fr; }
+  .tema-body > .tema-body-inner { overflow: hidden; min-height: 0; }
   .tema-stats { display: flex; gap: 10px; padding: 12px 14px 4px; }
   .tema-stat { flex: 1; text-align: center; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 6px; }
   .tema-stat-num { font-size: 22px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -263,7 +268,7 @@
   .sub-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 4px; flex-shrink: 0; }
   .sub-empty { padding: 14px 16px; font-size: 13px; color: rgba(255,255,255,0.3); text-align: center; }
   .ses-list { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; background: rgba(0,0,0,0.18); }
-  .ses-list.open { max-height: 800px; }
+  .ses-list.open { max-height: 800px; overflow-y: auto; }  /* si no entra, se scrollea en vez de recortarse */
   .ses-row { padding: 8px 14px 8px 26px; display: flex; align-items: center; gap: 8px; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.04); }
   .ses-fecha { flex: 1; color: rgba(255,255,255,0.5); }
   .ses-dur { color: rgba(255,255,255,0.8); font-weight: 500; margin-right: 4px; }
@@ -2724,7 +2729,7 @@ function renderTemasEn(containerId){
         <div class="tema-total" style="color:${t.color};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
-      <div class="tema-body ${isOpen?'open':''}">
+      <div class="tema-body ${isOpen?'open':''}"><div class="tema-body-inner">
         <div class="tema-stats">
           <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vSem)};">${fmtVentaja(vSem)}</div><div class="tema-stat-lbl">ventaja semana</div></div>
           <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vGen)};">${fmtVentaja(vGen)}</div><div class="tema-stat-lbl">ventaja general</div></div>
@@ -2732,7 +2737,7 @@ function renderTemasEn(containerId){
         <div class="tema-meta-lbl">meta ${fmtHorasCompacta(t.metaSem||0)} / semana</div>
         ${planDe(t.nombre) ? renderPlanTemaHTML(t, st, planDe(t.nombre)) : subsHTML}
         <button class="tema-add" onclick="openEstudioModal('${t.nombre}')">+ Registrar en ${t.nombre}</button>
-      </div>
+      </div></div>
     </div>`;
   }).join('');
 }
@@ -3206,11 +3211,11 @@ function renderEstudioBlockHTML(){
       <div class="tema-total" style="color:${colorSobreClaro(c.color)};">${fmtHoras(st.total)}</div>
       <span class="chevron ${isOpen?'open':''}">▾</span>
     </div>
-    <div class="tema-body ${isOpen?'open':''}">
+    <div class="tema-body ${isOpen?'open':''}"><div class="tema-body-inner">
       ${subsHTML}
       <button class="tema-add" onclick="openEstudioModal()">+ Registrar en Mi Estudio</button>
       ${semanasAnterioresHTML('Estudio', estudioItems, c.color, 'estudio')}
-    </div>
+    </div></div>
   </div>`;
 }
 
@@ -3360,11 +3365,11 @@ function renderCategoriaBlockHTML(c){
         <div class="tema-total" style="color:${colorSobreClaro(c.color)};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
-      <div class="tema-body ${isOpen?'open':''}">
+      <div class="tema-body ${isOpen?'open':''}"><div class="tema-body-inner">
         ${subsHTML}
         <button class="tema-add" onclick="openTiempoModal('${c.nombre}')">+ Registrar en ${c.nombre}</button>
         ${semanasAnterioresHTML(c.nombre, tiempoItems.filter(i=>i.categoria===c.nombre), c.color, 'tiempo')}
-      </div>
+      </div></div>
     </div>`;
 }
 
