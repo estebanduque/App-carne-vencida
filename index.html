@@ -308,6 +308,20 @@
   #desktop-card-tiempo .desktop-add-btn { background:rgba(36,40,80,0.05); border-color:rgba(36,40,80,0.15); color:rgba(36,40,80,0.55); }
   #desktop-card-tiempo .desktop-add-btn:hover { background:rgba(36,40,80,0.09); }
 
+    /* Plan de estudio con metas por bloque/subtema */
+    .plan-bloque { border-top: 1px solid rgba(255,255,255,0.06); padding: 11px 14px 9px; }
+    .plan-linea { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+    .plan-nombre { flex: 1; font-size: 13px; font-weight: 600; color: #fff; min-width: 0; }
+    .plan-hrs { font-size: 11px; color: rgba(255,255,255,0.55); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .plan-pct { font-size: 10px; color: rgba(255,255,255,0.4); white-space: nowrap; min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+    .plan-barra { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .plan-barra > div { height: 100%; transition: width 0.4s ease; }
+    .plan-sub { padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.07); margin-left: 14px; }
+    .plan-sub .plan-nombre { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9); }
+    .plan-sub .sub-row { padding: 9px 14px 5px 0; border-top: none; }
+    .plan-sub-barra { padding: 0 14px 9px 0; }
+    .plan-sub .ses-list { margin-right: 14px; }
+
     .bloque-grid { transition: opacity 0.15s, filter 0.15s; }
     .bloque-grid:hover { filter: brightness(1.12); }
     .bloque-grid:active { filter: brightness(1.2); }
@@ -2119,7 +2133,52 @@ function statsTema(nombre){
   });
   return { total, subs };
 }
-function subtemasDe(tema){ return [...new Set(estudioItems.filter(i=>i.tema===tema && i.subtema).map(i=>i.subtema))].sort(); }
+function subtemasDe(tema){
+  const usados = estudioItems.filter(i=>i.tema===tema && i.subtema).map(i=>i.subtema);
+  const plan = (tema===TEMA_PLAN) ? PLAN_DEONTOLOGIE.flatMap(b=>b.subtemas.map(s=>s.nombre)) : [];
+  return [...new Set([...plan, ...usados])].sort();
+}
+
+// Plan de Déontologie: metas de tiempo por subtema (horas) agrupadas por bloque.
+const TEMA_PLAN = 'Déontologie';
+const PLAN_DEONTOLOGIE = [
+  { bloque:'1. Principes Essentiels, Serment et Éthique', subtemas:[
+    { nombre:'Principes du serment (5 vertus)', preguntas:7, meta:7.80 },
+    { nombre:'Principes du RIN (13 devoirs)', preguntas:8, meta:8.92 },
+    { nombre:'Robe, Vie privée & Morale', preguntas:6, meta:6.68 },
+  ]},
+  { bloque:'2. Secret Professionnel et Confidentialité', subtemas:[
+    { nombre:'Portée générale & Ordre public', preguntas:5, meta:5.57 },
+    { nombre:'Correspondances entre avocats', preguntas:6, meta:6.68 },
+    { nombre:'Exceptions, Perquisitions & TRACFIN', preguntas:5, meta:5.57 },
+  ]},
+  { bloque:'3. Honoraires, CARPA et Maniement de Fonds', subtemas:[
+    { nombre:"Fixation & Convention d'honoraires", preguntas:6, meta:6.68 },
+    { nombre:'CARPA & Maniement de fonds tiers', preguntas:5, meta:5.57 },
+    { nombre:'Aide Juridictionnelle & Taxation', preguntas:5, meta:5.57 },
+  ]},
+  { bloque:"4. Conflits d'intérêts et Relation Client", subtemas:[
+    { nombre:'Prévention des conflits & Déport', preguntas:5, meta:5.57 },
+    { nombre:'Devoir de conseil & Mandat', preguntas:5, meta:5.57 },
+    { nombre:'Mineurs, Rupture & Restitution', preguntas:4, meta:4.46 },
+  ]},
+  { bloque:"5. Modes d'exercice, Structures et Collaboration", subtemas:[
+    { nombre:'Collaboration libérale & salariée', preguntas:6, meta:6.68 },
+    { nombre:'Congé maternité & Protection', preguntas:3, meta:3.34 },
+    { nombre:"Structures d'exercice (SELARL, SCP, SCM)", preguntas:4, meta:4.46 },
+    { nombre:'Incompatibilités, Cumul & Succursales', preguntas:4, meta:4.46 },
+  ]},
+  { bloque:'6. Discipline, Publicité et Institutions Ordinales', subtemas:[
+    { nombre:'Procédure disciplinaire & Sanctions', preguntas:5, meta:5.57 },
+    { nombre:'Publicité, Démarchage & Réseaux sociaux', preguntas:6, meta:6.68 },
+    { nombre:'Institutions (Bâtonnier, CO, CNB)', preguntas:4, meta:4.46 },
+  ]},
+];
+function metaBloque(b){ return b.subtemas.reduce((a,s)=>a+s.meta, 0); }
+function horasSubtemaPlan(tema, subtema){
+  return estudioItems.reduce((a,i)=>
+    (i.tema===tema && (i.subtema||'General')===subtema) ? a+(parseInt(i.minutos)||0) : a, 0) / 60;
+}
 
 // ---- Chips de tema y datalists ----
 function chipsHTML(activo, onclickName, lista, claro){
@@ -2350,6 +2409,94 @@ function toggleTema(n){ if(openTemas.has(n)) openTemas.delete(n); else openTemas
 function toggleSubtema(t, s){ const k = t+'||'+s; if(openSubtemas.has(k)) openSubtemas.delete(k); else openSubtemas.add(k); renderEstudio(); }
 
 // ---- Render de las 4 áreas de tema ----
+function sesionesSubtemaHTML(sd){
+  if(!sd) return '';
+  return sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
+    const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
+    return `<div class="ses-row">
+      <span class="ses-fecha">${fecha}</span>
+      <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+      <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
+      <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
+    </div>`;
+  }).join('');
+}
+const COLOR_EXCESO = '#5DCAA5';
+// Hasta la meta la barra se llena con el color del tema. Pasada la meta queda llena y el tramo
+// que sobra se pinta aparte, para que el exceso se vea en vez de perderse en un 100% plano.
+function barraProgresoHTML(hecho, meta, color){
+  if(!(meta > 0)) return '';
+  if(hecho <= meta){
+    return `<div class="plan-barra"><div style="width:${((hecho/meta)*100).toFixed(1)}%;background:${color};"></div></div>`;
+  }
+  const pctMeta = (meta/hecho)*100;
+  return `<div class="plan-barra" style="display:flex;">
+    <div style="width:${pctMeta.toFixed(1)}%;background:${color};"></div>
+    <div style="width:${(100-pctMeta).toFixed(1)}%;background:${COLOR_EXCESO};"></div>
+  </div>`;
+}
+function excesoHTML(hecho, meta){
+  return (meta > 0 && hecho > meta)
+    ? ` <span style="color:${COLOR_EXCESO};">+${fmtHorasCompacta(hecho-meta)}</span>`
+    : '';
+}
+function filaSubtemaPlan(t, nombre, hechoH, metaH, sd){
+  const subOpen = openSubtemas.has(t.nombre+'||'+nombre);
+  const sn = escAttrJs(nombre), tn = escAttrJs(t.nombre);
+  return `<div>
+    <div class="sub-row" onclick="toggleSubtema('${tn}','${sn}')">
+      <span class="plan-nombre">${nombre}</span>
+      <span class="plan-hrs">${fmtHorasCompacta(hechoH)}${metaH>0?' / '+fmtHorasCompacta(metaH):''}${excesoHTML(hechoH, metaH)}</span>
+      <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${tn}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
+      <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${tn}','${sn}')" title="Registrar aquí">➕</button>
+      <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
+    </div>
+    ${metaH>0 ? `<div class="plan-sub-barra">${barraProgresoHTML(hechoH, metaH, t.color)}</div>` : ''}
+    <div class="ses-list ${subOpen?'open':''}">${sesionesSubtemaHTML(sd)}</div>
+  </div>`;
+}
+function renderPlanTemaHTML(t, st){
+  let hechoTotal = 0, metaTotal = 0;
+  const bloques = PLAN_DEONTOLOGIE.map(b=>{
+    const meta = metaBloque(b);
+    const hecho = b.subtemas.reduce((a,s)=>a+horasSubtemaPlan(t.nombre, s.nombre), 0);
+    hechoTotal += hecho; metaTotal += meta;
+    const subs = b.subtemas
+      .map(s=>filaSubtemaPlan(t, s.nombre, horasSubtemaPlan(t.nombre, s.nombre), s.meta, st.subs[s.nombre]))
+      .join('');
+    return `<div class="plan-bloque">
+      <div class="plan-linea">
+        <span class="plan-nombre">${b.bloque}</span>
+        <span class="plan-hrs">${fmtHorasCompacta(hecho)} / ${fmtHorasCompacta(meta)}${excesoHTML(hecho, meta)}</span>
+        <span class="plan-pct">${Math.round(meta>0?(hecho/meta)*100:0)}%</span>
+      </div>
+      ${barraProgresoHTML(hecho, meta, t.color)}
+      <div class="plan-sub">${subs}</div>
+    </div>`;
+  }).join('');
+
+  // Lo registrado con un subtema que no figura en el plan no se pierde: va a su propio grupo.
+  const enPlan = new Set(PLAN_DEONTOLOGIE.flatMap(b=>b.subtemas.map(s=>s.nombre)));
+  const otros = Object.entries(st.subs).filter(([n])=>!enPlan.has(n)).sort((a,b)=>b[1].min-a[1].min);
+  const otrosHTML = otros.length ? `<div class="plan-bloque">
+      <div class="plan-linea">
+        <span class="plan-nombre">Fuera del plan</span>
+        <span class="plan-hrs">${fmtHorasCompacta(otros.reduce((a,x)=>a+x[1].min,0)/60)}</span>
+      </div>
+      <div class="plan-sub">${otros.map(([n,d])=>filaSubtemaPlan(t, n, d.min/60, 0, d)).join('')}</div>
+    </div>` : '';
+
+  const pctTotal = metaTotal>0 ? (hechoTotal/metaTotal)*100 : 0;
+  const resumen = `<div class="plan-bloque" style="border-top:none;">
+    <div class="plan-linea">
+      <span class="plan-nombre">Avance del plan</span>
+      <span class="plan-hrs">${fmtHorasCompacta(hechoTotal)} / ${fmtHorasCompacta(metaTotal)}${excesoHTML(hechoTotal, metaTotal)}</span>
+      <span class="plan-pct">${Math.round(pctTotal)}%</span>
+    </div>
+    ${barraProgresoHTML(hechoTotal, metaTotal, t.color)}
+  </div>`;
+  return resumen + bloques + otrosHTML;
+}
 function renderTemasEn(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
   cont.innerHTML = TEMAS.map(t=>{
@@ -2395,7 +2542,7 @@ function renderTemasEn(containerId){
           <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vGen)};">${fmtVentaja(vGen)}</div><div class="tema-stat-lbl">ventaja general</div></div>
         </div>
         <div class="tema-meta-lbl">meta ${fmtHorasCompacta(t.metaSem||0)} / semana</div>
-        ${subsHTML}
+        ${t.nombre===TEMA_PLAN ? renderPlanTemaHTML(t, st) : subsHTML}
         <button class="tema-add" onclick="openEstudioModal('${t.nombre}')">+ Registrar en ${t.nombre}</button>
       </div>
     </div>`;
