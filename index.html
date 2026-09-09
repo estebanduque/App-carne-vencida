@@ -313,6 +313,19 @@
   #desktop-card-tiempo .desktop-add-btn { background:rgba(36,40,80,0.05); border-color:rgba(36,40,80,0.15); color:rgba(36,40,80,0.55); }
   #desktop-card-tiempo .desktop-add-btn:hover { background:rgba(36,40,80,0.09); }
 
+    /* Sorteo de tema entre los que ya superaron el 90% de su meta */
+    .ruleta-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 12px 14px; margin: 0 16px 14px; }
+    .ruleta-btn { width: 100%; background: rgba(214,71,143,0.18); border: 1px solid rgba(214,71,143,0.35); border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; color: #F07AB0; font-family: inherit; cursor: pointer; }
+    .ruleta-btn:active { background: rgba(214,71,143,0.3); }
+    .ruleta-btn:disabled { opacity: 0.45; cursor: default; }
+    .ruleta-vacio { font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; margin-top: 8px; line-height: 1.35; }
+    .ruleta-res { margin-top: 10px; background: rgba(0,0,0,0.18); border-radius: 10px; padding: 10px 12px; }
+    .ruleta-tema { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.45); }
+    .ruleta-sub { font-size: 14px; font-weight: 600; color: #fff; margin: 2px 0 6px; }
+    .ruleta-meta { font-size: 11px; color: rgba(255,255,255,0.5); }
+    .ruleta-acciones { display: flex; gap: 6px; margin-top: 9px; }
+    .ruleta-acciones button { flex: 1; border: none; border-radius: 8px; padding: 7px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+
     /* Plan de estudio con metas por bloque/subtema */
     .plan-bloque { border-top: 1px solid rgba(255,255,255,0.06); padding: 11px 14px 9px; }
     .plan-linea { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
@@ -549,6 +562,8 @@
             <button class="crono-btn crono-reset" onclick="estudioReset()" title="Reiniciar">↺</button>
           </div>
         </div>
+        <p class="inner-title">Subtema al azar</p>
+        <div class="ruleta-box" id="est-ruleta"></div>
         <p class="inner-title">Por tema</p>
         <div id="est-temas-list"></div>
         <div class="estudio-add-row">
@@ -743,6 +758,8 @@
             <button onclick="estudioReset()" title="Reiniciar" style="background:rgba(255,255,255,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(255,255,255,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
+        <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Subtema al azar</p>
+        <div class="ruleta-box" id="d-est-ruleta" style="margin:0 0 12px;"></div>
         <p style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Por tema</p>
         <div id="d-est-temas-list" style="max-height:320px;overflow-y:auto;"></div>
         <button class="desktop-add-btn" onclick="openEstudioModal()">+ Registrar manual</button>
@@ -932,6 +949,24 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-green" style="background:#534AB7;" onclick="saveRopa()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: puntos de repaso de un subtema -->
+<div class="modal-overlay" id="modal-puntos">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>✂️ Puntos de repaso</h2>
+    <div id="pt-subtema" style="font-size:13px;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px;margin-bottom:6px;"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:12px;line-height:1.35;">
+      Partir el subtema en puntos concretos hace que el sorteo te lance algo puntual para autoevaluarte, en vez del subtema entero. No cambia el plan ni sus metas.
+    </div>
+    <div id="pt-lista"></div>
+    <button onclick="agregarPunto()" style="width:100%;background:rgba(255,255,255,0.06);border:1px dashed rgba(255,255,255,0.2);border-radius:10px;padding:9px;font-size:12px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;margin-bottom:4px;">+ Otro punto</button>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-pink" onclick="guardarPuntos()">Guardar</button>
     </div>
   </div>
 </div>
@@ -2182,6 +2217,19 @@ function subtemasDe(tema){
 
 // Planes de estudio: metas de tiempo (en horas) por subtema, agrupadas por bloque.
 function planDe(tema){ return PLANES_ESTUDIO[tema] || null; }
+
+// Puntos de repaso: trozos concretos de un subtema, solo para el sorteo.
+// No forman parte del plan ni alteran metas ni barras.
+let puntosRepaso = [];
+async function loadPuntosRepaso(){
+  const {data,error} = await sb.from('puntos_repaso').select('*').order('id');
+  if(!error){ puntosRepaso = data || []; }
+  else { puntosRepaso = []; console.log('puntos_repaso no disponible:', error.message); }
+  renderEstudio();
+}
+function puntosDe(tema, subtema){
+  return puntosRepaso.filter(p=>p.tema===tema && p.subtema===subtema);
+}
 const PLAN_DEONTOLOGIE = [
   { bloque:'1. Principes Essentiels, Serment et Éthique', subtemas:[
     { nombre:'Principes du serment (5 vertus)', preguntas:7, meta:7.80 },
@@ -2642,6 +2690,7 @@ function filaSubtemaPlan(t, nombre, hechoH, metaH, sd){
       <span class="plan-hrs">${fmtHorasCompacta(hechoH)}${metaH>0?' / '+fmtHorasCompacta(metaH):''}${excesoHTML(hechoH, metaH)}</span>
       <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${tn}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
       <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${tn}','${sn}')" title="Registrar aquí">➕</button>
+      ${metaH>0 ? `<button class="sub-btn" style="opacity:${puntosDe(t.nombre,nombre).length?1:0.4};" onclick="event.stopPropagation();openPuntosModal('${tn}','${sn}')" title="Puntos de repaso">✂️</button>` : ''}
       <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
     </div>
     ${metaH>0 ? `<div class="plan-sub-barra">${barraProgresoHTML(hechoH, metaH, t.color)}</div>` : ''}
@@ -2695,6 +2744,126 @@ function renderPlanTemaHTML(t, st, plan){
     ${barraProgresoHTML(hechoTotal, metaTotal, t.color)}
   </div>`;
   return resumen + bloques + otrosHTML;
+}
+// ---- Puntos de repaso: partir un subtema en trozos para autoevaluarse ----
+let ptSubtema = null;   // { tema, subtema }
+let ptLista = [];       // [{ id, texto }]  id null = todavía sin guardar
+function openPuntosModal(tema, subtema){
+  ptSubtema = { tema, subtema };
+  ptLista = puntosDe(tema, subtema).map(p=>({ id:p.id, texto:p.texto }));
+  if(!ptLista.length) ptLista = [{ id:null, texto:'' }, { id:null, texto:'' }];
+  document.getElementById('pt-subtema').innerHTML =
+    '<b>' + escHtmlAttr(subtema) + '</b><br><span style="opacity:0.7;">' + escHtmlAttr(tema) + '</span>';
+  renderPuntos();
+  document.getElementById('modal-puntos').classList.add('open');
+}
+function renderPuntos(){
+  document.getElementById('pt-lista').innerHTML = ptLista.map((p,i)=>`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+      <span style="font-size:11px;color:rgba(255,255,255,0.35);width:14px;">${i+1}</span>
+      <input type="text" value="${escHtmlAttr(p.texto)}" oninput="ptLista[${i}].texto=this.value"
+        placeholder="Ej: requisitos de forma"
+        style="flex:1;min-width:0;padding:9px 11px;font-size:14px;border:1px solid rgba(255,255,255,0.15);border-radius:9px;background:rgba(255,255,255,0.07);color:#fff;font-family:inherit;">
+      <button onclick="quitarPunto(${i})" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;padding:2px 4px;">🗑</button>
+    </div>`).join('');
+}
+function agregarPunto(){ ptLista.push({ id:null, texto:'' }); renderPuntos(); }
+function quitarPunto(i){ ptLista.splice(i,1); renderPuntos(); }
+async function guardarPuntos(){
+  const { tema, subtema } = ptSubtema;
+  const textos = ptLista.map(p=>p.texto.trim()).filter(Boolean);
+  if(new Set(textos).size !== textos.length){ alert('Hay dos puntos con el mismo texto.'); return; }
+
+  // Se reemplaza el conjunto entero: se borra lo que había y se guarda lo que quedó.
+  const previos = puntosDe(tema, subtema).map(p=>p.id);
+  if(previos.length){
+    const {error} = await sb.from('puntos_repaso').delete().in('id', previos);
+    if(error){ alert('No se pudieron actualizar los puntos.'); return; }
+    puntosRepaso = puntosRepaso.filter(p=>!previos.includes(p.id));
+  }
+  if(textos.length){
+    const {data,error} = await sb.from('puntos_repaso')
+      .insert(textos.map(t=>({ tema, subtema, texto:t }))).select();
+    if(error){
+      alert('No se pudo guardar. Si es la primera vez, falta crear la tabla puntos_repaso (supabase/setup-subtemas.sql).');
+      console.log('Error guardando puntos:', error.message);
+      return;
+    }
+    puntosRepaso.push(...data);
+  }
+  closeModals();
+  renderEstudio();
+}
+
+// ---- Sorteo de SUBTEMA entre los que ya pasaron el 90% de su propia meta ----
+const UMBRAL_RULETA = 0.9;
+let temaSorteado = null;
+function subtemasCumplidos(){
+  const out = [];
+  Object.keys(PLANES_ESTUDIO).forEach(tema=>{
+    PLANES_ESTUDIO[tema].forEach(b=>{
+      b.subtemas.forEach(s=>{
+        if(!(s.meta > 0)) return;
+        const hecho = horasSubtemaPlan(tema, s.nombre);
+        if(hecho / s.meta > UMBRAL_RULETA){
+          out.push({ tema, bloque:b.bloque, nombre:s.nombre, hecho, meta:s.meta });
+        }
+      });
+    });
+  });
+  return out;
+}
+// Lo que puede salir sorteado: los puntos de repaso de cada subtema que superó el 90%,
+// o el subtema entero si todavía no le cargaste puntos.
+function itemsSorteables(){
+  const out = [];
+  subtemasCumplidos().forEach(s=>{
+    const puntos = puntosDe(s.tema, s.nombre);
+    if(puntos.length) puntos.forEach(p=>out.push(Object.assign({}, s, { punto:p.texto })));
+    else out.push(Object.assign({}, s, { punto:null }));
+  });
+  return out;
+}
+function sortearTema(){
+  const candidatos = itemsSorteables();
+  if(!candidatos.length){ temaSorteado = null; renderRuleta(); return; }
+  const clave = x => x.tema+'||'+x.nombre+'||'+(x.punto||'');
+  // Con más de uno, no repetir el que ya estaba en pantalla.
+  const pool = candidatos.length > 1 && temaSorteado
+    ? candidatos.filter(c=>clave(c)!==clave(temaSorteado))
+    : candidatos;
+  temaSorteado = pool[Math.floor(Math.random()*pool.length)];
+  renderRuleta();
+}
+function renderRuleta(){
+  const candidatos = itemsSorteables();
+  const listos = subtemasCumplidos().length;
+  const total = Object.keys(PLANES_ESTUDIO).reduce((a,t)=>
+    a + PLANES_ESTUDIO[t].reduce((x,b)=>x+b.subtemas.length, 0), 0);
+  let html = `<button class="ruleta-btn" onclick="sortearTema()"${candidatos.length?'':' disabled'}>🎲 Sortear${candidatos.length?' ('+candidatos.length+' para evaluar)':''}</button>`;
+  if(!candidatos.length){
+    html += `<div class="ruleta-vacio">Ningún subtema superó el 90% de su meta todavía.<br>Van 0 de ${total}.</div>`;
+  } else if(temaSorteado){
+    const s = temaSorteado, t = temaInfo(s.tema);
+    const pct = Math.round(s.hecho / s.meta * 100);
+    const sn = escAttrJs(s.nombre), tn = escAttrJs(s.tema);
+    html += `<div class="ruleta-res">
+      <div class="ruleta-tema" style="color:${t.color};">${s.tema} · ${s.bloque}</div>
+      ${s.punto
+        ? `<div class="ruleta-sub">${s.punto}</div><div class="ruleta-meta" style="margin-bottom:2px;">de ${s.nombre}</div>`
+        : `<div class="ruleta-sub">${s.nombre}</div>`}
+      <div class="ruleta-meta">${fmtHorasCompacta(s.hecho)} de ${fmtHorasCompacta(s.meta)} · ${pct}%</div>
+      <div class="ruleta-acciones">
+        <button style="background:${t.color};color:#fff;" onclick="iniciarCronoEstudioDesdeSubtema('${tn}','${sn}', this, '${t.color}')">▶ Repasar</button>
+        <button style="background:rgba(255,255,255,0.1);color:#fff;" onclick="sortearTema()">🎲 Otro</button>
+      </div>
+    </div>`;
+  } else if(listos && candidatos.length===listos){
+    html += `<div class="ruleta-vacio">${listos} subtema${listos>1?'s':''} listo${listos>1?'s':''}. Con el ✂️ de cada uno podés partirlo en puntos concretos para que el sorteo sea más específico.</div>`;
+  }
+  ['est-ruleta','d-est-ruleta'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.innerHTML = html;
+  });
 }
 function renderTemasEn(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
@@ -2774,6 +2943,7 @@ function renderEstudio(){
   }
 
   renderCronoChips();
+  renderRuleta();
   renderTemasEn('est-temas-list');
   renderEstudioDesktop();
   renderTiempo();
@@ -3681,6 +3851,7 @@ function renderTiempoDesktop(){
 
 // ---- Inicialización (aquí las variables ya existen) ----
 loadEstudio();
+loadPuntosRepaso();
 restaurarEstudioTimer();
 loadTiempo();
 restaurarTiempoTimer();
