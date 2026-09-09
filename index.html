@@ -2785,8 +2785,14 @@ async function guardarPuntos(){
     const {data,error} = await sb.from('puntos_repaso')
       .insert(textos.map(t=>({ tema, subtema, texto:t }))).select();
     if(error){
-      alert('No se pudo guardar. Si es la primera vez, falta crear la tabla puntos_repaso (supabase/setup-subtemas.sql).');
-      console.log('Error guardando puntos:', error.message);
+      const msg = (error.message||'');
+      if(error.code === '42P01' || /puntos_repaso.*not.*(exist|found)/i.test(msg))
+        alert('Falta crear la tabla puntos_repaso: corre supabase/setup-subtemas.sql en el SQL Editor.');
+      else if(error.code === '42501' || /row-level security/i.test(msg))
+        alert('La tabla puntos_repaso existe pero no tiene permisos (RLS sin politica). Corre la parte de "Permisos (RLS)" de supabase/setup-subtemas.sql.');
+      else
+        alert('No se pudo guardar: ' + msg);
+      console.log('Error guardando puntos:', error.code, msg);
       return;
     }
     puntosRepaso.push(...data);
