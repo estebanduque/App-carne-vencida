@@ -623,6 +623,7 @@
           <span class="inner-title" style="padding:0;">Por categoría</span>
           <div id="tie-periodo-sel" style="display:flex;gap:0;border:1px solid rgba(36,40,80,0.15);border-radius:9px;overflow:hidden;"></div>
         </div>
+        <div id="tie-periodo-nav" style="display:flex;align-items:center;justify-content:center;gap:9px;margin:0 16px 10px;"></div>
         <div id="tie-categorias-list"></div>
         <div class="estudio-add-row">
           <button class="estudio-add-full" style="background:#5C6BC0;border-color:#5C6BC0;color:#fff;" onclick="openTiempoModal()">+ Registrar manual</button>
@@ -800,6 +801,7 @@
           <p style="font-size:11px;font-weight:500;color:rgba(36,40,80,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0;">Por categoría</p>
           <div id="d-tie-periodo-sel" style="display:flex;gap:0;border:1px solid rgba(36,40,80,0.15);border-radius:9px;overflow:hidden;"></div>
         </div>
+        <div id="d-tie-periodo-nav" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;"></div>
         <div id="d-tie-categorias-list" style="max-height:320px;overflow-y:auto;"></div>
         <button class="desktop-add-btn" onclick="openTiempoModal()">+ Registrar manual</button>
       </div>
@@ -2045,6 +2047,53 @@ function ventanaDe(created_at, minutos){
   return { start, end };
 }
 function seSuperponen(aStart, aEnd, bStart, bEnd){ return aStart < bEnd && bStart < aEnd; }
+// ---- Reparto de una sesión entre los días que realmente toca ----
+// created_at es el FIN de la sesión. Si empezó antes de medianoche sus minutos
+// pertenecen a dos días distintos: contarlos enteros en el día del fin inflaba
+// el "hoy" (25 min de los cuales solo 5 fueron hoy). Las entradas sin hora
+// precisa (placeholder de las 12:00) no tienen inicio real: van completas.
+function repartoPorDia(created_at, minutos){
+  const min = parseInt(minutos)||0;
+  if(!created_at || min<=0) return {};
+  if(!esHoraPrecisa(created_at)) return { [diaLocalDe(created_at)]: min };
+  const fin = new Date(created_at);
+  const bruto = {};
+  let cur = new Date(fin.getTime() - min*60000);
+  while(cur < fin){
+    const d0 = new Date(cur); d0.setHours(0,0,0,0);
+    const d1 = new Date(d0); d1.setDate(d1.getDate()+1);
+    const hasta = fin < d1 ? fin : d1;
+    const k = fechaLocal(d0);
+    bruto[k] = (bruto[k]||0) + (hasta - cur)/60000;
+    cur = hasta;
+  }
+  const claves = Object.keys(bruto);
+  if(claves.length <= 1) return { [claves[0] || diaLocalDe(created_at)]: min };
+  // Redondeo a minutos enteros sin perder ni inventar tiempo: el resto va al día mayor.
+  const out = {}; let suma = 0;
+  claves.forEach(k=>{ out[k] = Math.round(bruto[k]); suma += out[k]; });
+  if(suma !== min){
+    const mayor = claves.reduce((a,b)=> bruto[b] > bruto[a] ? b : a);
+    out[mayor] += min - suma;
+  }
+  // Un cruce de apenas unos segundos redondea a 0: ese día no participó.
+  for(const k in out) if(out[k] <= 0) delete out[k];
+  return out;
+}
+function minutosItemEnDia(item, fecha){ return repartoPorDia(item.created_at, item.minutos)[fecha] || 0; }
+// Suma los trozos de la sesión que caen dentro de una ventana de días hacia atrás.
+function minutosItemEnUltimos(item, dias, hoy0){
+  const rep = repartoPorDia(item.created_at, item.minutos);
+  let t = 0;
+  for(const f in rep){ const d = estDiasAtras(f, hoy0); if(d>=0 && d<dias) t += rep[f]; }
+  return t;
+}
+function minutosItemDesde(item, desde){
+  const rep = repartoPorDia(item.created_at, item.minutos);
+  let t = 0;
+  for(const f in rep) if(new Date(f+'T00:00:00') >= desde) t += rep[f];
+  return t;
+}
 function bloquesExistentes(excluir){
   const out = [];
   tiempoItems.forEach(i=>{
@@ -2096,20 +2145,14 @@ async function liberarConflictosParaCrono(newStart, newEnd, excluir){
   }
   return true;
 }
-function minutosEnRango(dias){
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return estudioItems.reduce((a,i)=>{
-    const f = diaLocalDe(i.created_at); if(!f) return a;
-    const d = estDiasAtras(f, hoy);
-    return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+function minutosEnRango(dias, refDia){
+  const hoy = refDia ? new Date(refDia+'T00:00:00') : new Date();
+  hoy.setHours(0,0,0,0);
+  return estudioItems.reduce((a,i)=> a + minutosItemEnUltimos(i, dias, hoy), 0);
 }
 function minutosHoy(){
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return estudioItems.reduce((a,i)=>{
-    const f = diaLocalDe(i.created_at);
-    return (f && estDiasAtras(f, hoy)===0) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+  const hoy = fechaLocal(new Date());
+  return estudioItems.reduce((a,i)=> a + minutosItemEnDia(i, hoy), 0);
 }
 function minutosTotal(){ return estudioItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0); }
 
@@ -2125,11 +2168,7 @@ function lunesDeEstaSemana(){
 }
 function minutosSemanaCalendario(){
   const lunes = lunesDeEstaSemana();
-  return estudioItems.reduce((a,i)=>{
-    if(!i.created_at) return a;
-    const f = new Date(diaLocalDe(i.created_at)+'T00:00:00');
-    return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+  return estudioItems.reduce((a,i)=> a + minutosItemDesde(i, lunes), 0);
 }
 function diasHabilesSemana(){           // días hábiles de esta semana ya terminados (< hoy), desde el inicio
   const lunes = lunesDeEstaSemana();
@@ -2169,6 +2208,15 @@ function ventajaSemanalH(){ return (minutosSemanaCalendario()/60) - metaSemanalH
 function ventajaGeneralH(){ return (minutosTotal()/60) - metaGeneralH(); }
 function fmtVentaja(h){ const r = Math.round(h*10)/10; return (r>=0?'+':'−') + Math.abs(r).toFixed(1); }
 function colorVentaja(h){ return h>=0 ? '#5DCAA5' : '#FAC775'; } // ≥0 cumplido (verde) · <0 pendiente (ámbar)
+// Una sesión que cruzó la medianoche solo aporta parte de sus minutos al período
+// que estás viendo: se muestra ese trozo y, en gris, la duración completa.
+function durSesionHTML(se){
+  const total = parseInt(se.minutos)||0;
+  const parte = (se.minPer==null) ? total : Math.round(se.minPer);
+  if(parte === total) return '<span class="ses-dur">'+fmtHoras(total)+'</span>';
+  return '<span class="ses-dur" title="'+fmtHoras(parte)+' de una sesión de '+fmtHoras(total)+' que cruzó la medianoche">'
+    + fmtHoras(parte) + '<span style="opacity:0.45;font-weight:400;"> /'+fmtHoras(total)+'</span></span>';
+}
 function fmtHorasCompacta(h){ const min = Math.round(h*60); const hh = Math.floor(min/60), mm = min%60; return mm===0 ? hh+'h' : hh+'h'+String(mm).padStart(2,'0'); }
 
 // ---- Meta y ventaja POR TEMA ----
@@ -2176,11 +2224,8 @@ function metaSemTemaH(nombre){ return temaInfo(nombre).metaSem || 0; }
 function metaGenTemaH(nombre){ return semanasIniciadas() * (temaInfo(nombre).metaSem || 0); }
 function horasSemTema(nombre){
   const lunes = lunesDeEstaSemana();
-  return estudioItems.reduce((a,i)=>{
-    if(i.tema!==nombre || !i.created_at) return a;
-    const f = new Date(diaLocalDe(i.created_at)+'T00:00:00');
-    return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0) / 60;
+  return estudioItems.reduce((a,i)=>
+    i.tema===nombre ? a + minutosItemDesde(i, lunes) : a, 0) / 60;
 }
 function horasTotTema(nombre){ return estudioItems.filter(i=>i.tema===nombre).reduce((a,i)=>a+(parseInt(i.minutos)||0), 0) / 60; }
 function ventajaSemTema(nombre){ return horasSemTema(nombre) - metaSemTemaH(nombre); }
@@ -2652,7 +2697,7 @@ function sesionesSubtemaHTML(sd){
     const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
     return `<div class="ses-row">
       <span class="ses-fecha">${fecha}</span>
-      <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+      ${durSesionHTML(se)}
       <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
       <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
     </div>`;
@@ -2885,7 +2930,7 @@ function renderTemasEn(containerId){
         const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
         return `<div class="ses-row">
           <span class="ses-fecha">${fecha}</span>
-          <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+          ${durSesionHTML(se)}
           <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
           <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
         </div>`;
@@ -3051,28 +3096,17 @@ let gridZoom = 1;
 
 // ---- Totales ----
 function minutosHoyTiempo(){
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return tiempoItems.reduce((a,i)=>{
-    const f = diaLocalDe(i.created_at);
-    return (f && estDiasAtras(f, hoy)===0) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+  const hoy = fechaLocal(new Date());
+  return tiempoItems.reduce((a,i)=> a + minutosItemEnDia(i, hoy), 0);
 }
 function minutosSemanaTiempo(){
   const lunes = lunesDeEstaSemana();
-  return tiempoItems.reduce((a,i)=>{
-    if(!i.created_at) return a;
-    const f = new Date(diaLocalDe(i.created_at)+'T00:00:00');
-    return (f>=lunes) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+  return tiempoItems.reduce((a,i)=> a + minutosItemDesde(i, lunes), 0);
 }
 function minutosTotalTiempo(){ return tiempoItems.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0); }
 function minutosEnRangoTiempo(dias){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return tiempoItems.reduce((a,i)=>{
-    const f = diaLocalDe(i.created_at); if(!f) return a;
-    const d = estDiasAtras(f, hoy);
-    return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+  return tiempoItems.reduce((a,i)=> a + minutosItemEnUltimos(i, dias, hoy), 0);
 }
 
 // ---- Tiempo perdido (no registrado en ninguna categoría) ----
@@ -3106,15 +3140,17 @@ function renderPerdidoFranja(){
 }
 // claveSem: lunes 'YYYY-MM-DD' para acotar a una semana; sin ella suma todo el histórico.
 function statsCategoria(nombre, clavePer){
-  const items = tiempoItems.filter(i=>i.categoria===nombre && (!clavePer || esDelPeriodo(i, clavePer)));
-  const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
-  const subs = {};
-  items.forEach(i=>{
+  const subs = {}; let total = 0;
+  tiempoItems.forEach(i=>{
+    if(i.categoria!==nombre) return;
+    const min = clavePer ? minutosItemEnPeriodo(i, clavePer) : (parseInt(i.minutos)||0);
+    if(clavePer && min<=0) return;
+    total += min;
     const s = i.subcategoria || 'General';
     if(!subs[s]) subs[s] = { min:0, count:0, sesiones:[] };
-    subs[s].min += parseInt(i.minutos)||0;
+    subs[s].min += min;
     subs[s].count++;
-    subs[s].sesiones.push(i);
+    subs[s].sesiones.push(Object.assign({}, i, { minPer: min }));
   });
   return { total, subs };
 }
@@ -3344,15 +3380,16 @@ function toggleSubcat(c, s){ const k = c+'||'+s; if(openSubcats.has(k)) openSubc
 
 // ---- Estudio como categoría dentro de Mi Tiempo ----
 function statsEstudioComoCategoria(clavePer){
-  const items = estudioItems.filter(i=>!clavePer || esDelPeriodo(i, clavePer));
-  const total = items.reduce((a,i)=>a+(parseInt(i.minutos)||0), 0);
-  const subs = {};
-  items.forEach(i=>{
+  const subs = {}; let total = 0;
+  estudioItems.forEach(i=>{
+    const min = clavePer ? minutosItemEnPeriodo(i, clavePer) : (parseInt(i.minutos)||0);
+    if(clavePer && min<=0) return;
+    total += min;
     const s = i.tema || 'General';
     if(!subs[s]) subs[s] = { min:0, count:0, sesiones:[] };
-    subs[s].min += parseInt(i.minutos)||0;
+    subs[s].min += min;
     subs[s].count++;
-    subs[s].sesiones.push(i);
+    subs[s].sesiones.push(Object.assign({}, i, { minPer: min }));
   });
   return { total, subs };
 }
@@ -3368,7 +3405,7 @@ function renderEstudioBlockHTML(){
       const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
       return `<div class="ses-row">
         <span class="ses-fecha">${fecha}</span>
-        <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+        ${durSesionHTML(se)}
         <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
         <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
       </div>`;
@@ -3386,7 +3423,7 @@ function renderEstudioBlockHTML(){
     </div>`;
   }).join('') : '<div class="sub-empty">Sin sesiones todavía</div>';
 
-  return `<div class="tema-area" style="border-color:${c.bd};">
+  return `<div class="tema-area" data-cat="Estudio" style="border-color:${c.bd};">
     <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('Estudio')">
       <div class="tema-dot" style="background:${c.color};"></div>
       <div class="tema-name">Estudio</div>
@@ -3421,13 +3458,45 @@ function etiquetaSemana(clave){
 // ---- Período de "Por categoría": día o semana ----
 // Toda la sección (totales, orden e historial) trabaja sobre el período elegido.
 let periodoCategorias = 'semana'; // 'dia' | 'semana'
+let offsetPeriodo = 0;            // 0 = período en curso, 1 = el anterior, 2 = el de antes…
 function claveDePeriodo(created_at){
   return periodoCategorias === 'dia' ? diaLocalDe(created_at) : claveSemanaDe(created_at);
 }
-function clavePeriodoActual(){
-  return periodoCategorias === 'dia' ? fechaLocal(new Date()) : claveSemanaActual();
+// La clave del período al que pertenece un día suelto ('YYYY-MM-DD').
+function claveDeFechaEnPeriodo(fecha){
+  if(!fecha) return '';
+  return periodoCategorias === 'dia' ? fecha : fechaLocal(inicioSemanaDe(new Date(fecha+'T12:00:00')));
 }
-function esDelPeriodo(item, clave){ return claveDePeriodo(item.created_at) === clave; }
+function clavePeriodoActual(){
+  if(periodoCategorias === 'dia'){
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - offsetPeriodo);
+    return fechaLocal(d);
+  }
+  const l = lunesDeEstaSemana(); l.setDate(l.getDate() - 7*offsetPeriodo);
+  return fechaLocal(l);
+}
+// Minutos de una sesión que caen dentro del período: una que cruza la medianoche
+// aporta a los dos días, así que se reparte en vez de contarse entera.
+function minutosItemEnPeriodo(item, clave){
+  const rep = repartoPorDia(item.created_at, item.minutos);
+  let t = 0;
+  for(const f in rep) if(claveDeFechaEnPeriodo(f) === clave) t += rep[f];
+  return t;
+}
+function esDelPeriodo(item, clave){ return minutosItemEnPeriodo(item, clave) > 0; }
+// Navegación hacia períodos pasados. Nunca hacia el futuro.
+function moverPeriodo(delta){
+  const n = offsetPeriodo + delta;
+  if(n < 0) return;
+  offsetPeriodo = n;
+  renderTiempo();
+}
+function volverAlPeriodoActual(){ if(offsetPeriodo !== 0){ offsetPeriodo = 0; renderTiempo(); } }
+function etiquetaPeriodoActual(){
+  if(offsetPeriodo === 0) return periodoCategorias === 'dia' ? 'Hoy' : 'Esta semana';
+  if(periodoCategorias === 'dia' && offsetPeriodo === 1) return 'Ayer';
+  return etiquetaPeriodo(clavePeriodoActual());
+}
 function etiquetaPeriodo(clave){
   if(periodoCategorias === 'dia'){
     return new Date(clave+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
@@ -3436,9 +3505,18 @@ function etiquetaPeriodo(clave){
 }
 // Ventana de respaldo para desempatar el orden cuando el período está en cero.
 function diasDeRespaldo(){ return periodoCategorias === 'dia' ? 7 : 21; }
+// Último día que cubre el período elegido (sin pasarse de hoy).
+function ultimoDiaDelPeriodo(){
+  const clave = clavePeriodoActual();
+  if(periodoCategorias === 'dia') return clave;
+  const fin = new Date(clave+'T00:00:00'); fin.setDate(fin.getDate()+6);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return fechaLocal(fin > hoy ? hoy : fin);
+}
 function cambiarPeriodoCategorias(p){
   if(periodoCategorias === p) return;
   periodoCategorias = p;
+  offsetPeriodo = 0;
   openSemanasPrev.clear();
   openSemanaHist.clear();
   renderTiempo();
@@ -3447,11 +3525,18 @@ function semanasAnterioresDeItems(items){
   const actual = clavePeriodoActual();
   const porSemana = {};
   items.forEach(i=>{
-    const k = claveDePeriodo(i.created_at);
-    if(!k || k===actual) return;
-    if(!porSemana[k]) porSemana[k] = { clave:k, total:0, sesiones:[] };
-    porSemana[k].total += parseInt(i.minutos)||0;
-    porSemana[k].sesiones.push(i);
+    const reparto = repartoPorDia(i.created_at, i.minutos);
+    const porClave = {};
+    for(const f in reparto){
+      const k = claveDeFechaEnPeriodo(f);
+      if(k) porClave[k] = (porClave[k]||0) + reparto[f];
+    }
+    for(const k in porClave){
+      if(k === actual) continue;
+      if(!porSemana[k]) porSemana[k] = { clave:k, total:0, sesiones:[] };
+      porSemana[k].total += porClave[k];
+      porSemana[k].sesiones.push(Object.assign({}, i, { minPer: porClave[k] }));
+    }
   });
   return Object.values(porSemana).sort((a,b)=> b.clave.localeCompare(a.clave));
 }
@@ -3478,7 +3563,7 @@ function semanasAnterioresHTML(nombreCat, items, color, fuente){
       const sub = (fuente==='estudio' ? se.tema : se.subcategoria) || 'General';
       return `<div class="ses-row">
         <span class="ses-fecha">${fecha} · ${sub}</span>
-        <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+        ${durSesionHTML(se)}
         <button class="sub-btn" onclick="event.stopPropagation();${editFn}(${se.id})" title="Editar">✏️</button>
         <button class="sub-btn" onclick="event.stopPropagation();${delFn}(${se.id})" title="Eliminar">🗑</button>
       </div>`;
@@ -3500,33 +3585,34 @@ function semanasAnterioresHTML(nombreCat, items, color, fuente){
 function minutosCategoriaEnSemana(nombre){
   const clave = clavePeriodoActual();
   return tiempoItems.reduce((a,i)=>
-    (i.categoria===nombre && esDelPeriodo(i, clave)) ? a + (parseInt(i.minutos)||0) : a, 0);
+    i.categoria===nombre ? a + minutosItemEnPeriodo(i, clave) : a, 0);
 }
 function minutosEstudioEnPeriodo(){
   const clave = clavePeriodoActual();
-  return estudioItems.reduce((a,i)=> esDelPeriodo(i, clave) ? a + (parseInt(i.minutos)||0) : a, 0);
+  return estudioItems.reduce((a,i)=> a + minutosItemEnPeriodo(i, clave), 0);
 }
-function minutosCategoriaEnDias(nombre, dias){
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return tiempoItems.reduce((a,i)=>{
-    if(i.categoria!==nombre || !i.created_at) return a;
-    const d = estDiasAtras(fechaLocal(new Date(i.created_at)), hoy);
-    return (d>=0 && d<dias) ? a + (parseInt(i.minutos)||0) : a;
-  }, 0);
+function minutosCategoriaEnDias(nombre, dias, refDia){
+  const hoy = refDia ? new Date(refDia+'T00:00:00') : new Date();
+  hoy.setHours(0,0,0,0);
+  return tiempoItems.reduce((a,i)=>
+    i.categoria===nombre ? a + minutosItemEnUltimos(i, dias, hoy) : a, 0);
 }
 // Manda el tiempo de esta semana. Si empatan —caso típico: arranca la semana y está todo en 0—
 // decide el acumulado de las últimas 3 semanas, y por último el nombre para que no baile.
 function categoriasOrdenadas(){
   const respaldo = diasDeRespaldo();
+  // La ventana de desempate termina en el último día del período que se está viendo,
+  // para que al navegar hacia atrás el orden no lo decida el tiempo de después.
+  const ref = ultimoDiaDelPeriodo();
   const lista = CATEGORIAS_TIEMPO.map(c=>({
     cat: c, tipo: 'tiempo',
     semana: minutosCategoriaEnSemana(c.nombre),
-    tresSemanas: minutosCategoriaEnDias(c.nombre, respaldo),
+    tresSemanas: minutosCategoriaEnDias(c.nombre, respaldo, ref),
   }));
   lista.push({
     cat: ESTUDIO_EN_TIEMPO, tipo: 'estudio',
     semana: minutosEstudioEnPeriodo(),
-    tresSemanas: minutosEnRango(respaldo),
+    tresSemanas: minutosEnRango(respaldo, ref),
   });
   lista.sort((a,b)=> (b.semana - a.semana) || (b.tresSemanas - a.tresSemanas) || a.cat.nombre.localeCompare(b.cat.nombre));
   return lista;
@@ -3538,14 +3624,57 @@ function renderSelectorPeriodo(containerId){
     const act = periodoCategorias===v;
     return `<button onclick="cambiarPeriodoCategorias('${v}')" style="border:none;padding:5px 11px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:${act?'#5C6BC0':'#fff'};color:${act?'#fff':'rgba(36,40,80,0.55)'};">${txt}</button>`;
   }).join('');
+  renderNavPeriodo(containerId.replace('-sel','-nav'));
+}
+// ‹ ›  para recorrer días o semanas pasadas. Nunca deja pasar de hoy.
+function renderNavPeriodo(containerId){
+  const cont = document.getElementById(containerId); if(!cont) return;
+  const enCurso = offsetPeriodo === 0;
+  const flecha = (onclick, txt, off) =>
+    `<button ${off?'disabled':`onclick="${onclick}"`} style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(36,40,80,0.15);background:#fff;color:#242850;font-size:15px;font-family:inherit;line-height:1;padding:0;cursor:${off?'default':'pointer'};opacity:${off?0.25:1};">${txt}</button>`;
+  cont.innerHTML =
+    flecha('moverPeriodo(1)', '‹', false) +
+    `<span style="font-size:12px;font-weight:600;letter-spacing:0.2px;min-width:132px;text-align:center;color:${enCurso?'rgba(36,40,80,0.55)':'#5C6BC0'};">${etiquetaPeriodoActual()}</span>` +
+    flecha('moverPeriodo(-1)', '›', enCurso) +
+    (enCurso ? '' : `<button onclick="volverAlPeriodoActual()" style="border:1px solid rgba(92,107,192,0.35);background:rgba(92,107,192,0.08);color:#5C6BC0;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;line-height:1;">${periodoCategorias==='dia'?'Hoy':'Actual'}</button>`);
 }
 
 // ---- Render de las categorías ----
+const REORDEN_MS = 380;
+// El contenido se rehace entero en cada render, así que para ver el reordenamiento
+// se anota dónde estaba cada categoría y se la hace viajar desde ahí (FLIP).
 function renderCategoriasEn(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
+  const antes = {};
+  cont.querySelectorAll('.tema-area[data-cat]').forEach(el=>{
+    antes[el.dataset.cat] = el.getBoundingClientRect().top;
+  });
   cont.innerHTML = categoriasOrdenadas()
     .map(x=> x.tipo==='estudio' ? renderEstudioBlockHTML() : renderCategoriaBlockHTML(x.cat))
     .join('');
+  animarReorden(cont, antes);
+}
+function animarReorden(cont, antes){
+  if(!Object.keys(antes).length) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const mover = [];
+  cont.querySelectorAll('.tema-area[data-cat]').forEach(el=>{
+    const y0 = antes[el.dataset.cat];
+    if(y0 === undefined) return;
+    const dy = y0 - el.getBoundingClientRect().top;
+    if(Math.abs(dy) < 1) return;
+    el.style.transition = 'none';
+    el.style.transform = 'translateY('+dy+'px)';
+    mover.push(el);
+  });
+  if(!mover.length) return;
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+    mover.forEach(el=>{
+      el.style.transition = 'transform '+REORDEN_MS+'ms cubic-bezier(0.22,0.61,0.36,1)';
+      el.style.transform = '';
+      setTimeout(()=>{ el.style.transition = ''; }, REORDEN_MS + 60);
+    });
+  }); });
 }
 function renderCategoriaBlockHTML(c){
     const st = statsCategoria(c.nombre, clavePeriodoActual());
@@ -3558,7 +3687,7 @@ function renderCategoriaBlockHTML(c){
         const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
         return `<div class="ses-row">
           <span class="ses-fecha">${fecha}</span>
-          <span class="ses-dur">${fmtHoras(se.minutos)}</span>
+          ${durSesionHTML(se)}
           <button class="sub-btn" onclick="event.stopPropagation();editarTiempo(${se.id})" title="Editar">✏️</button>
           <button class="sub-btn" onclick="event.stopPropagation();delTiempo(${se.id})" title="Eliminar">🗑</button>
         </div>`;
@@ -3576,7 +3705,7 @@ function renderCategoriaBlockHTML(c){
       </div>`;
     }).join('') : '<div class="sub-empty">Sin actividades todavía</div>';
 
-    return `<div class="tema-area" style="border-color:${c.bd};">
+    return `<div class="tema-area" data-cat="${c.nombre}" style="border-color:${c.bd};">
       <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('${c.nombre}')">
         <div class="tema-dot" style="background:${c.color};"></div>
         <div class="tema-name">${c.nombre}</div>
