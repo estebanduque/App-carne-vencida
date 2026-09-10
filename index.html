@@ -58,6 +58,7 @@
     .item-card.danger { border-color: rgba(226,75,74,0.5); background: rgba(226,75,74,0.1); }
     .item-card.warning { border-color: rgba(239,159,39,0.5); background: rgba(239,159,39,0.08); }
     .item-card.ok { border-color: rgba(29,158,117,0.4); background: rgba(29,158,117,0.08); }
+    .item-card.frozen { border-color: rgba(90,169,230,0.45); background: rgba(90,169,230,0.10); }
     .icon-circle { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; background: rgba(255,255,255,0.08); }
     .item-info { flex: 1; min-width: 0; }
     .item-name { font-size: 15px; font-weight: 600; color: #fff; }
@@ -66,12 +67,16 @@
     .badge.danger { background: rgba(226,75,74,0.25); color: #F09595; }
     .badge.warning { background: rgba(239,159,39,0.25); color: #FAC775; }
     .badge.ok { background: rgba(29,158,117,0.25); color: #5DCAA5; }
+    .badge.frozen { background: rgba(90,169,230,0.25); color: #8FCBF2; }
     .delete-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 18px; padding: 4px; flex-shrink: 0; }
     .delete-btn:active { color: #E24B4A; }
     .repeat-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 16px; padding: 4px; flex-shrink: 0; }
     .repeat-btn:active { color: #E05A14; }
     .edit-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 15px; padding: 4px; flex-shrink: 0; }
     .edit-btn:active { color: #7BC8F0; }
+    /* Interruptor frigo <-> congelador: apagado se ve gris, encendido a color */
+    .freeze-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px; flex-shrink: 0; line-height: 1; filter: grayscale(1); opacity: 0.4; transition: filter 0.2s ease, opacity 0.2s ease; }
+    .freeze-btn.on { filter: none; opacity: 1; }
 
     /* Botones agregar */
     .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px 4px; }
@@ -172,6 +177,7 @@
     .desktop-badge.danger { background: rgba(226,75,74,0.2); color: #F09595; }
     .desktop-badge.warning { background: rgba(239,159,39,0.2); color: #FAC775; }
     .desktop-badge.ok { background: rgba(29,158,117,0.2); color: #5DCAA5; }
+    .desktop-badge.frozen { background: rgba(90,169,230,0.2); color: #5AA9E6; }
     .desktop-add-btn { width: 100%; margin-top: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px; font-size: 13px; color: rgba(255,255,255,0.5); font-family: inherit; cursor: pointer; }
     .desktop-add-btn:hover { background: rgba(255,255,255,0.1); }
     .desktop-empty { text-align: center; padding: 20px; color: rgba(255,255,255,0.3); font-size: 13px; }
@@ -1001,7 +1007,9 @@ async function loadItems() {
   if(!error) { items = data || []; render(); renderDesktop(); }
 }
 async function saveItem(item) {
-  const {data,error} = await sb.from('carnes').insert([{tipo:item.tipo,desc:item.desc,fecha:item.fecha,ubicacion:item.ubicacion}]).select();
+  const fila = {tipo:item.tipo, desc:item.desc, fecha:item.fecha, ubicacion:item.ubicacion};
+  if(item.ubicacion === 'Congelador') fila.dias_restantes = daysUntil(item.fecha);
+  const {data,error} = await sb.from('carnes').insert([fila]).select();
   if(!error && data) { items.push(data[0]); render(); renderDesktop(); }
 }
 async function deleteItem(id) {
@@ -1048,29 +1056,82 @@ function daysUntil(s) {
   const t = new Date(); t.setHours(0,0,0,0);
   return Math.round((new Date(s+'T00:00:00') - t) / 86400000);
 }
-function statusOf(s) { const d=daysUntil(s); if(d<=3)return'danger'; if(d<=7)return'warning'; return'ok'; }
-function badgeText(s) {
-  const d=daysUntil(s);
+// ---- Congelador: el vencimiento queda en pausa ----
+// Al congelar se guardan los días que le quedaban (dias_restantes) y el reloj se
+// detiene. Al sacarlo, la fecha se recalcula desde hoy con esos mismos días.
+function esCongelado(it){ return !!it && it.ubicacion === 'Congelador'; }
+function diasRestantesDe(it){
+  if(esCongelado(it) && it.dias_restantes != null) return it.dias_restantes;
+  return daysUntil(it.fecha);   // congelados viejos sin el dato: se comportan como antes
+}
+function fechaEnDias(d){
+  const x = new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate() + (parseInt(d)||0));
+  return fechaLocal(x);
+}
+function statusOf(it) {
+  if(esCongelado(it)) return 'frozen';
+  const d = daysUntil(it.fecha);
+  if(d<=3)return'danger'; if(d<=7)return'warning'; return'ok';
+}
+function badgeText(it) {
+  if(esCongelado(it)){
+    const d = diasRestantesDe(it);
+    return d < 0 ? '❄ vencida' : `❄ ${d}d`;
+  }
+  const d = daysUntil(it.fecha);
   if(d<0)return`Venció hace ${Math.abs(d)}d`;
   if(d===0)return'¡Hoy!'; if(d===1)return'Mañana'; return`${d} días`;
 }
+function tituloBadge(it){
+  if(!esCongelado(it)) return 'Vence el '+new Date(it.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long'});
+  const d = diasRestantesDe(it);
+  return d < 0 ? 'Ya estaba vencida cuando la congelaste'
+               : 'Vencimiento en pausa: le quedan '+d+' día'+(d===1?'':'s')+' desde que la saques';
+}
+// Ordena por urgencia; lo congelado va al final porque no le corre el reloj.
+function ordenCarne(it){ return esCongelado(it) ? 100000 + diasRestantesDe(it) : daysUntil(it.fecha); }
+async function toggleUbicacion(id){
+  const it = items.find(i=>i.id===id); if(!it) return;
+  const patch = esCongelado(it)
+    ? { ubicacion:'Refrigerador', fecha: fechaEnDias(diasRestantesDe(it)), dias_restantes: null }
+    : { ubicacion:'Congelador',   dias_restantes: daysUntil(it.fecha) };
+  const {error} = await sb.from('carnes').update(patch).eq('id', id);
+  if(error){
+    const msg = error.message || '';
+    alert(/dias_restantes/.test(msg)
+      ? 'Falta la columna dias_restantes en la tabla carnes: corre supabase/setup-congelador.sql en el SQL Editor.'
+      : 'No se pudo cambiar de ubicación: ' + msg);
+    console.log('toggleUbicacion:', error.code, msg);
+    return;
+  }
+  Object.assign(it, patch);
+  if(navigator.vibrate) navigator.vibrate(15);
+  render(); renderDesktop();
+}
+function botonCongelarHTML(it){
+  const cong = esCongelado(it);
+  const t = cong ? 'Sacar del congelador: el vencimiento vuelve a correr'
+                 : 'Pasar al congelador: el vencimiento se detiene';
+  return `<button class="freeze-btn ${cong?'on':''}" onclick="toggleUbicacion(${it.id})" title="${t}" aria-label="${t}">❄️</button>`;
+}
 
 function render() {
-  const alerts = items.filter(i=>statusOf(i.fecha)!=='ok').length;
+  const alerts = items.filter(i=>!esCongelado(i) && statusOf(i)!=='ok').length;
   document.getElementById('stat-total').textContent = items.length;
   document.getElementById('stat-alert').textContent = alerts;
   const list = document.getElementById('items-list');
   if(!items.length){list.innerHTML='<div class="empty-msg">Sin carnes registradas.</div>';return;}
-  const sorted=[...items].sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha));
+  const sorted=[...items].sort((a,b)=>ordenCarne(a)-ordenCarne(b));
   list.innerHTML=sorted.map(it=>{
-    const st=statusOf(it.fecha);
+    const st=statusOf(it);
     return`<div class="item-card ${st}">
       <div class="icon-circle">${EMOJIS[it.tipo]||'🍖'}</div>
       <div class="item-info">
         <div class="item-name">${it.tipo}</div>
         <div class="item-sub">${it.desc?it.desc+' · ':''}${it.ubicacion}</div>
       </div>
-      <span class="badge ${st}">${badgeText(it.fecha)}</span>
+      <span class="badge ${st}" title="${tituloBadge(it)}">${badgeText(it)}</span>
+      ${botonCongelarHTML(it)}
       <button class="delete-btn" onclick="delItem(${it.id})" aria-label="Eliminar">🗑</button>
     </div>`;
   }).join('');
@@ -1539,6 +1600,7 @@ function revisarVencimientos(){
 
   // 🥩 Carnes - día que vence y día anterior
   items.forEach(item => {
+    if(esCongelado(item)) return;   // en el congelador el reloj está parado
     const d = daysUntil(item.fecha);
     const nombre = item.tipo + (item.desc ? ' · ' + item.desc : '');
     if(d === 1) notificar('⚠️ Carne vence mañana', nombre + ' vence mañana. ¡Úsala hoy!');
@@ -1737,19 +1799,20 @@ function renderDesktop() {
   if(window.innerWidth < 768) return;
 
   // Carnes
-  const alerts = items.filter(i=>statusOf(i.fecha)!=='ok').length;
+  const alerts = items.filter(i=>!esCongelado(i) && statusOf(i)!=='ok').length;
   document.getElementById('d-stat-total').textContent = items.length;
   document.getElementById('d-stat-alert').textContent = alerts;
   const dList = document.getElementById('d-items-list');
   if(!items.length) { dList.innerHTML='<div class="desktop-empty">Sin carnes registradas.</div>'; }
   else {
-    const sorted=[...items].sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha));
+    const sorted=[...items].sort((a,b)=>ordenCarne(a)-ordenCarne(b));
     dList.innerHTML = sorted.slice(0,4).map(it => {
-      const st=statusOf(it.fecha);
+      const st=statusOf(it);
       return `<div class="desktop-item">
         <div class="desktop-item-icon">${EMOJIS[it.tipo]||'🍖'}</div>
         <div><div class="desktop-item-name">${it.tipo}</div><div class="desktop-item-sub">${it.desc?it.desc+' · ':''}${it.ubicacion}</div></div>
-        <span class="desktop-badge ${st}">${badgeText(it.fecha)}</span>
+        <span class="desktop-badge ${st}" title="${tituloBadge(it)}">${badgeText(it)}</span>
+        ${botonCongelarHTML(it)}
       </div>`;
     }).join('');
   }
