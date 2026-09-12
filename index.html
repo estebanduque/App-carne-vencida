@@ -641,20 +641,6 @@
             <button class="crono-btn crono-reset" onclick="tiempoReset()" title="Reiniciar">↺</button>
           </div>
         </div>
-        <div class="crono-box" style="background:rgba(0,137,123,0.1);border-color:rgba(0,137,123,0.28);">
-          <div style="font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:rgba(36,40,80,0.45);margin-bottom:8px;">🚆 Viaje · corre en paralelo</div>
-          <div class="crono-display" id="viaje-crono-display">00:00:00</div>
-          <select class="crono-sub" id="viaje-crono-medio" onchange="seleccionarMedioViaje(this.value)">
-            <option value="Tren">Tren</option>
-            <option value="Bus">Bus</option>
-            <option value="Avión">Avión</option>
-          </select>
-          <div class="crono-btns">
-            <button id="viaje-crono-start-btn" class="crono-btn" style="flex:1;background:#00897B;color:#fff;" onclick="viajeStartPause()">▶ Iniciar</button>
-            <button class="crono-btn crono-stop" onclick="viajeStop()">■ Terminar</button>
-            <button class="crono-btn crono-reset" onclick="viajeReset()" title="Reiniciar">↺</button>
-          </div>
-        </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 4px;padding:14px 0 8px;">
           <span class="inner-title" style="padding:0;">Últimos 7 días</span>
           <div style="display:flex;align-items:center;gap:4px;">
@@ -858,20 +844,6 @@
             <button id="d-tiempo-crono-start-btn" onclick="tiempoStartPause()" style="flex:1;background:#5C6BC0;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
             <button onclick="tiempoStop()" style="flex:1;background:rgba(36,40,80,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#242850;font-family:inherit;cursor:pointer;">■ Guardar</button>
             <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(36,40,80,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(36,40,80,0.5);font-family:inherit;cursor:pointer;">↺</button>
-          </div>
-        </div>
-        <div style="background:rgba(0,137,123,0.1);border:1px solid rgba(0,137,123,0.28);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
-          <div style="font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:rgba(36,40,80,0.45);margin-bottom:6px;">🚆 Viaje · corre en paralelo</div>
-          <div id="d-viaje-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#242850;margin-bottom:8px;">00:00:00</div>
-          <select id="d-viaje-crono-medio" onchange="seleccionarMedioViaje(this.value)" style="width:100%;margin-bottom:8px;padding:8px 10px;font-size:13px;border:1px solid rgba(36,40,80,0.15);border-radius:8px;background:#fff;color:#242850;font-family:inherit;">
-            <option value="Tren">Tren</option>
-            <option value="Bus">Bus</option>
-            <option value="Avión">Avión</option>
-          </select>
-          <div style="display:flex;gap:6px;">
-            <button id="d-viaje-crono-start-btn" onclick="viajeStartPause()" style="flex:1;background:#00897B;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
-            <button onclick="viajeStop()" style="flex:1;background:rgba(36,40,80,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#242850;font-family:inherit;cursor:pointer;">■ Guardar</button>
-            <button onclick="viajeReset()" title="Reiniciar" style="background:rgba(36,40,80,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(36,40,80,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -3593,74 +3565,6 @@ function restaurarTiempoTimer(){
   pintarCronoTiempo();
 }
 
-// ---- Cronometro de viaje, corre en paralelo al principal ----
-// Un viaje largo convive con lo que hagas adentro, asi que tiene cronometro propio:
-// arrancas "Tren" al subir y segui usando el cronometro normal para leer o trabajar.
-// Lo que guarda cae en Transporte, que esta exento de la regla de solapamiento.
-const VIAJE_TIMER_KEY = 'viaje_timer';
-const MEDIOS_VIAJE = ['Tren','Bus','Avión'];
-let viajeTimer = { running:false, base:0, startTs:null, medio:'Tren' };
-let viajeInterval = null;
-function guardarTimerViajeLS(){ try{ localStorage.setItem(VIAJE_TIMER_KEY, JSON.stringify(viajeTimer)); }catch(e){} }
-function segundosCronoViaje(){
-  let s = viajeTimer.base || 0;
-  if(viajeTimer.running && viajeTimer.startTs){ s += Math.floor((Date.now() - viajeTimer.startTs)/1000); }
-  return s;
-}
-function pintarCronoViaje(){
-  const txt = formatCrono(segundosCronoViaje());
-  ['viaje-crono-display','d-viaje-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
-  const running = viajeTimer.running;
-  ['viaje-crono-start-btn','d-viaje-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
-  ['viaje-crono-medio','d-viaje-crono-medio'].forEach(id=>{ const el=document.getElementById(id); if(el && el.value !== viajeTimer.medio) el.value = viajeTimer.medio; });
-}
-function iniciarIntervalViaje(){ if(!viajeInterval){ viajeInterval = setInterval(pintarCronoViaje, 1000); } }
-function pararIntervalViaje(){ if(viajeInterval){ clearInterval(viajeInterval); viajeInterval = null; } }
-function seleccionarMedioViaje(valor){
-  if(MEDIOS_VIAJE.indexOf(valor) !== -1) viajeTimer.medio = valor;
-  guardarTimerViajeLS(); pintarCronoViaje();
-}
-function viajeStartPause(){
-  if(!viajeTimer.running){
-    viajeTimer.running = true; viajeTimer.startTs = Date.now(); iniciarIntervalViaje();
-    feedbackInicioCronoIds(['viaje-crono-start-btn','d-viaje-crono-start-btn']);
-  } else {
-    viajeTimer.base = segundosCronoViaje();
-    viajeTimer.running = false; viajeTimer.startTs = null; pararIntervalViaje();
-  }
-  guardarTimerViajeLS(); pintarCronoViaje(); refrescarGrid();
-}
-async function viajeStop(){
-  const min = Math.round(segundosCronoViaje()/60);
-  if(min < 1){ alert('El cronómetro de viaje aún no marca ni un minuto.'); return; }
-  const medio = viajeTimer.medio || 'Tren';
-  if(!confirm('¿Guardar '+fmtHoras(min)+' en Transporte › '+medio+'?')) return;
-  const created_at = new Date().toISOString();
-  pararIntervalViaje();
-  viajeTimer = { running:false, base:0, startTs:null, medio };
-  guardarTimerViajeLS(); pintarCronoViaje();
-  // Sin liberarConflictosParaCrono a proposito: el viaje no le pisa el tiempo a nada.
-  await saveTiempoItem({ categoria:'Transporte', subcategoria:medio, minutos:min, created_at });
-}
-function viajeReset(){
-  if(segundosCronoViaje() > 0 && !confirm('¿Descartar el tiempo del viaje?')) return;
-  pararIntervalViaje();
-  viajeTimer = { running:false, base:0, startTs:null, medio: viajeTimer.medio || 'Tren' };
-  guardarTimerViajeLS(); pintarCronoViaje(); refrescarGrid();
-}
-function restaurarViajeTimer(){
-  try{
-    const raw = localStorage.getItem(VIAJE_TIMER_KEY);
-    if(raw){
-      const t = JSON.parse(raw);
-      if(t) viajeTimer = { running:!!t.running, base:t.base||0, startTs:t.startTs||null,
-                           medio: MEDIOS_VIAJE.indexOf(t.medio)!==-1 ? t.medio : 'Tren' };
-    }
-    if(viajeTimer.running) iniciarIntervalViaje();
-  }catch(e){}
-  pintarCronoViaje();
-}
-
 // ---- CRUD Supabase ----
 async function loadTiempo(){
   const {data,error} = await sb.from('tiempo').select('*').order('created_at');
@@ -4156,7 +4060,6 @@ function bloquesEnCurso(){
   agregar(segundosCronoTiempo(), tiempoTimer.categoria, leerSubcatCrono(), categoriaInfo(tiempoTimer.categoria).color);
   agregar(segundosCrono(), estudioTimer.tema, leerSubtemaCrono(), ESTUDIO_EN_TIEMPO.color);
   agregar(segundosCronoGym(), 'Deporte', 'Gym', categoriaInfo('Deporte').color);
-  agregar(segundosCronoViaje(), 'Transporte', viajeTimer.medio, categoriaInfo('Transporte').color);
   return out;
 }
 function bloquesSemana(){
@@ -4192,7 +4095,7 @@ function escAttrJs(s){
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 }
 function hayCronoEnCurso(){
-  return segundosCronoTiempo()>0 || segundosCrono()>0 || segundosCronoGym()>0 || segundosCronoViaje()>0;
+  return segundosCronoTiempo()>0 || segundosCrono()>0 || segundosCronoGym()>0;
 }
 function refrescarGrid(){
   renderGridSemana('tie-grid-semana');
@@ -4922,7 +4825,6 @@ loadPuntosRepaso();
 restaurarEstudioTimer();
 loadTiempo();
 restaurarTiempoTimer();
-restaurarViajeTimer();
 restaurarGymTimer();
 
 // Mientras haya un cronómetro corriendo, la grilla se refresca sola para que el bloque en curso
