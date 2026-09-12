@@ -4513,6 +4513,7 @@ function alternarDictado(){
   if(grabando){ if(reconocedor) reconocedor.stop(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR) return;
+  if(reconocedor){ try{ reconocedor.abort(); }catch(e){} reconocedor = null; }
   const caja = document.getElementById('voz-texto');
   const est = document.getElementById('voz-estado');
   const mic = document.getElementById('voz-mic');
@@ -4521,18 +4522,31 @@ function alternarDictado(){
   reconocedor.lang = 'es-MX';
   reconocedor.continuous = true;
   reconocedor.interimResults = true;
-  reconocedor.onstart = ()=>{ grabando = true; mic.classList.add('grabando'); est.textContent = 'Escuchando… tocá de nuevo para parar'; if(navigator.vibrate) navigator.vibrate(20); };
+  reconocedor.onstart = ()=>{ mic.classList.add('grabando'); est.textContent = 'Escuchando… tocá de nuevo para parar'; if(navigator.vibrate) navigator.vibrate(20); };
+  // Chrome corta y reanuda el reconocimiento solo. Hay que acumular unicamente lo
+  // que ya quedo firme (isFinal) y repintar lo provisorio, si no el texto se duplica
+  // en cada corte: "necesitox necesito comprarx necesito comprar esponjasx...".
+  let firme = base;
   reconocedor.onresult = (ev)=>{
-    let texto = '';
-    for(let k=0;k<ev.results.length;k++) texto += ev.results[k][0].transcript;
-    caja.value = base + texto;
+    let provisorio = '';
+    for(let k=ev.resultIndex; k<ev.results.length; k++){
+      const r = ev.results[k];
+      if(r.isFinal) firme += r[0].transcript + ' ';
+      else provisorio += r[0].transcript;
+    }
+    caja.value = (firme + provisorio).replace(/\s+/g,' ').trim();
   };
   reconocedor.onerror = (ev)=>{
     est.textContent = ev.error==='not-allowed' ? 'No diste permiso al micrófono' :
                       ev.error==='no-speech'   ? 'No se escuchó nada' : 'Error de dictado: '+ev.error;
   };
   reconocedor.onend = ()=>{ grabando = false; mic.classList.remove('grabando'); if(!/Error|permiso|escuchó/.test(document.getElementById('voz-estado').textContent)) est.textContent = 'Listo. Revisá el texto y tocá Interpretar.'; };
-  try { reconocedor.start(); } catch(e){ est.textContent = 'No se pudo abrir el micrófono'; }
+  // 'grabando' se marca aca y no en onstart: onstart llega despues, y un doble
+  // toque alcanzaba para dejar dos reconocedores vivos escribiendo en el mismo
+  // cuadro, cada uno con su propia base. De ahi salia el texto duplicado.
+  grabando = true;
+  try { reconocedor.start(); }
+  catch(e){ grabando = false; mic.classList.remove('grabando'); est.textContent = 'No se pudo abrir el micrófono'; }
 }
 // La clave de Claude vive en la Edge Function, nunca acá: index.html es público.
 async function interpretarNota(){
@@ -4556,7 +4570,7 @@ async function interpretarNota(){
     }
     if(!data || !data.ok){ alert('No se pudo interpretar: ' + ((data&&data.error) || 'respuesta vacía')); return; }
     if(!data.items.length){ alert('No entendí ningún artículo en esa nota. Probá diciéndolo de otra forma.'); return; }
-    itemsInterpretados = data.items.map(x=>Object.assign({}, x, { nota: texto }));
+    itemsInterpretados = data.items.map(x=>Object.assign({}, x, { nota: texto.slice(0,300) }));
     renderPreviewVoz();
     document.getElementById('voz-paso-dictar').style.display = 'none';
     document.getElementById('voz-paso-revisar').style.display = '';
