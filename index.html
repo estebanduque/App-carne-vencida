@@ -243,6 +243,31 @@
 
   .menu-icon.estudio { background: rgba(214,71,143,0.2); }
   .menu-icon.tiempo { background: rgba(92,107,192,0.2); }
+  .menu-icon.compras { background: rgba(0,150,136,0.2); }
+
+  /* Lista de compras */
+  .cmp-banner { margin: 0 16px 12px; padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; gap: 11px; background: rgba(0,150,136,0.14); border: 1px solid rgba(0,150,136,0.45); }
+  .cmp-banner.buscando { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+  .cmp-banner-txt { flex: 1; min-width: 0; }
+  .cmp-banner-tit { font-size: 14px; font-weight: 600; color: #fff; }
+  .cmp-banner-sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .cmp-grupo { margin: 0 16px 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.05); }
+  .cmp-grupo.aqui { border-color: rgba(0,150,136,0.55); background: rgba(0,150,136,0.09); }
+  .cmp-grupo-head { padding: 10px 13px; display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; color: #fff; }
+  .cmp-grupo-n { margin-left: auto; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); }
+  .cmp-row { display: flex; align-items: center; gap: 10px; padding: 9px 13px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .cmp-check { width: 21px; height: 21px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.28); background: none; cursor: pointer; flex-shrink: 0; font-size: 12px; line-height: 1; color: #fff; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .cmp-check.on { background: #009688; border-color: #009688; }
+  .cmp-nom { flex: 1; min-width: 0; font-size: 14px; color: #fff; }
+  .cmp-nom.listo { text-decoration: line-through; color: rgba(255,255,255,0.35); }
+  .cmp-cant { font-size: 12px; color: rgba(255,255,255,0.45); flex-shrink: 0; }
+  .cmp-vacio { text-align: center; padding: 24px 16px; color: rgba(255,255,255,0.35); font-size: 14px; }
+  .cmp-mic { width: 78px; height: 78px; border-radius: 50%; border: none; background: #009688; color: #fff; font-size: 32px; cursor: pointer; margin: 4px auto 10px; display: block; font-family: inherit; }
+  .cmp-mic.grabando { background: #E24B4A; animation: cmp-pulso 1.1s ease-in-out infinite; }
+  @keyframes cmp-pulso { 0%,100% { box-shadow: 0 0 0 0 rgba(226,75,74,0.5); } 50% { box-shadow: 0 0 0 14px rgba(226,75,74,0); } }
+  .cmp-prev { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+  .cmp-prev select { flex-shrink: 0; width: auto; padding: 5px 7px; font-size: 12px; }
+  .cmp-lugar-row { display: flex; align-items: center; gap: 9px; padding: 9px 13px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 13px; color: rgba(255,255,255,0.75); }
   .crono-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 14px; margin: 0 16px 14px; text-align: center; }
   .crono-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; line-height: 1; margin-bottom: 12px; }
   .crono-sub { width: 100%; margin: 10px 0; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
@@ -637,6 +662,32 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== MENU LISTA DE COMPRAS ===== -->
+  <div class="menu-section">
+    <button class="menu-toggle" id="toggle-compras" onclick="toggleMenu('compras')">
+      <div class="menu-icon compras">🛒</div>
+      <div class="menu-title">
+        <h2>Lista de Compras</h2>
+        <p>Dictada por voz, avisa en la tienda</p>
+      </div>
+      <span class="menu-chevron" id="chevron-compras">▾</span>
+    </button>
+    <div class="menu-body" id="body-compras">
+      <div class="menu-inner">
+        <div id="cmp-banner"></div>
+        <div id="cmp-lista"></div>
+        <div class="add-row">
+          <button class="add-btn primary" style="background:#009688;border-color:#009688;" onclick="openVozModal()">🎤 Nota de voz</button>
+          <button class="add-btn" onclick="openCompraModal()">✏️ Manual</button>
+        </div>
+        <div style="padding:0 16px 14px;">
+          <button class="tema-add" style="width:100%;" onclick="toggleLugares()">📍 Mis tiendas <span id="cmp-lugares-chev">▾</span></button>
+          <div id="cmp-lugares"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="desktop-only" id="desktop-grid">
   <div class="desktop-grid" id="desktop-grid-inner">
@@ -813,6 +864,19 @@
       </div>
     </div>
   </div>
+
+    <!-- Lista de compras -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(0,150,136,0.2);">🛒</div>
+        <div><div class="desktop-card-title">Lista de Compras</div><div class="desktop-card-sub">Dictada por voz</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div id="d-cmp-resumen"></div>
+        <div id="d-cmp-lista"></div>
+        <button class="desktop-add-btn" onclick="openVozModal()">🎤 Dictar la lista</button>
+      </div>
+    </div>
 </div>
 </div>
 
@@ -839,6 +903,65 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-green" onclick="savePhoto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nota de voz (lista de compras) -->
+<div class="modal-overlay" id="modal-voz">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🎤 Dictar la lista</h2>
+    <div id="voz-paso-dictar">
+      <button class="cmp-mic" id="voz-mic" onclick="alternarDictado()">🎤</button>
+      <p id="voz-estado" style="text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Tocá el micrófono y decí qué falta</p>
+      <div class="form-row">
+        <label>Lo que escuché <span style="opacity:0.55;font-weight:400;">(podés corregirlo)</span></label>
+        <textarea id="voz-texto" rows="4" placeholder="Ej: necesito leche, dos baguettes y una caja de doliprane" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid rgba(255,255,255,0.15);border-radius:9px;background:rgba(255,255,255,0.07);color:#fff;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+        <button class="btn-save-green" style="background:#009688;" id="voz-btn-interpretar" onclick="interpretarNota()">Interpretar</button>
+      </div>
+    </div>
+    <div id="voz-paso-revisar" style="display:none;">
+      <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Revisá antes de guardar. Podés cambiar la tienda o quitar lo que no va.</p>
+      <div id="voz-preview"></div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="volverADictar()">Atrás</button>
+        <button class="btn-save-green" style="background:#009688;" onclick="guardarInterpretado()">Agregar a la lista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal articulo manual (lista de compras) -->
+<div class="modal-overlay" id="modal-compra">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>✏️ Agregar a la lista</h2>
+    <div class="form-row"><label>Qué</label><input type="text" id="cmp-nombre" placeholder="Ej: leche entera"></div>
+    <div class="form-row"><label>Cantidad (opcional)</label><input type="text" id="cmp-cantidad" placeholder="Ej: 2 litros"></div>
+    <div class="form-row"><label>Dónde se compra</label><select id="cmp-categoria"></select></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" style="background:#009688;" onclick="guardarCompraManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal guardar tienda -->
+<div class="modal-overlay" id="modal-lugar">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📍 Guardar esta tienda</h2>
+    <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Se guarda con las coordenadas donde estás ahora, así la reconoce sola la próxima vez.</p>
+    <div class="form-row"><label>Nombre</label><input type="text" id="lug-nombre" placeholder="Ej: Carrefour de la esquina"></div>
+    <div class="form-row"><label>Tipo</label><select id="lug-categoria"></select></div>
+    <div class="form-row"><label>Radio (metros)</label><input type="number" id="lug-radio" value="120" min="30" max="1000" step="10"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" style="background:#009688;" onclick="guardarLugar()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1316,7 +1439,12 @@ function toggleMenu(menu){
   const chevron=document.getElementById('chevron-'+menu);
   const isOpen=openMenus.has(menu);
   if(isOpen){openMenus.delete(menu);body.classList.remove('open');toggle.classList.remove('open');chevron.classList.remove('open');}
-  else{openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');}
+  else{
+    openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');
+    // La ubicacion se pide al abrir el modulo, no al cargar la app: asi el permiso
+    // llega en un momento en que se entiende para que es.
+    if(menu==='compras') detectarLugar(true);
+  }
 }
 
 function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;}
@@ -4047,7 +4175,476 @@ function renderTiempoDesktop(){
   renderLegendSemana('d-tie-grid-legend');
 }
 
+
+// ===== LISTA DE COMPRAS =====
+// Cada artículo lleva el tipo de tienda donde se consigue. Cuando estás en una
+// tienda de ese tipo, la app te muestra (y te notifica) lo que falta comprar ahí.
+const CATEGORIAS_COMPRA = [
+  { id:'supermercado', nombre:'Supermercado', emoji:'🛒', osm:['shop=supermarket','shop=convenience'] },
+  { id:'panaderia',    nombre:'Panadería',    emoji:'🥖', osm:['shop=bakery'] },
+  { id:'carniceria',   nombre:'Carnicería',   emoji:'🥩', osm:['shop=butcher'] },
+  { id:'verduleria',   nombre:'Verdulería',   emoji:'🥬', osm:['shop=greengrocer'] },
+  { id:'farmacia',     nombre:'Farmacia',     emoji:'💊', osm:['amenity=pharmacy'] },
+  { id:'ferreteria',   nombre:'Ferretería',   emoji:'🔧', osm:['shop=doityourself','shop=hardware'] },
+  { id:'papeleria',    nombre:'Papelería',    emoji:'✏️', osm:['shop=stationery'] },
+  { id:'ropa',         nombre:'Ropa',         emoji:'👕', osm:['shop=clothes'] },
+  { id:'otro',         nombre:'Otro',         emoji:'📦', osm:[] },
+];
+// Un supermercado grande también resuelve lo de la panadería, la carnicería y la verdulería.
+const CUBRE_COMPRA = { supermercado: ['supermercado','panaderia','carniceria','verduleria'] };
+function catCompra(id){ return CATEGORIAS_COMPRA.find(c=>c.id===id) || CATEGORIAS_COMPRA[CATEGORIAS_COMPRA.length-1]; }
+function categoriasQueCubre(id){ return CUBRE_COMPRA[id] || [id]; }
+
+let comprasItems = [];
+let lugares = [];
+let lugarActual = null;      // { lugar, distancia, guardado:bool }
+let estadoUbicacion = '';    // texto para el banner mientras busca o si falla
+let mostrarLugares = false;
+let mostrarCompradas = false;
+
+// ---- Datos ----
+async function loadCompras(){
+  const {data,error} = await sb.from('compras').select('*').order('id');
+  if(error){ console.log('compras no disponible:', error.message); comprasItems = []; }
+  else comprasItems = data || [];
+  renderCompras();
+}
+async function loadLugares(){
+  const {data,error} = await sb.from('lugares').select('*').order('id');
+  if(error){ console.log('lugares no disponible:', error.message); lugares = []; }
+  else lugares = data || [];
+  renderCompras();
+}
+function errorTablaCompras(error, tabla){
+  const msg = error.message || '';
+  if(error.code === '42P01' || error.code === 'PGRST205' || /does not exist|could not find the table/i.test(msg))
+    return 'Falta crear la tabla '+tabla+': corré supabase/setup-compras.sql en el SQL Editor.';
+  if(error.code === '42501' || /row-level security/i.test(msg))
+    return 'La tabla '+tabla+' no tiene permisos (RLS sin política). Corré la parte de "Permisos (RLS)" de supabase/setup-compras.sql.';
+  return 'No se pudo guardar: ' + msg;
+}
+async function agregarCompras(filas){
+  if(!filas.length) return true;
+  const {data,error} = await sb.from('compras').insert(filas).select();
+  if(error){ alert(errorTablaCompras(error, 'compras')); console.log('compras insert:', error.code, error.message); return false; }
+  comprasItems.push(...(data||[]));
+  renderCompras();
+  return true;
+}
+async function toggleComprado(id){
+  const it = comprasItems.find(i=>i.id===id); if(!it) return;
+  const patch = { comprado: !it.comprado, comprado_at: !it.comprado ? new Date().toISOString() : null };
+  const {error} = await sb.from('compras').update(patch).eq('id', id);
+  if(error){ alert(errorTablaCompras(error, 'compras')); return; }
+  Object.assign(it, patch);
+  if(navigator.vibrate) navigator.vibrate(12);
+  renderCompras();
+}
+async function delCompra(id){
+  await sb.from('compras').delete().eq('id', id);
+  comprasItems = comprasItems.filter(i=>i.id!==id);
+  renderCompras();
+}
+async function vaciarCompradas(){
+  const ids = comprasItems.filter(i=>i.comprado).map(i=>i.id);
+  if(!ids.length) return;
+  if(!confirm('¿Borrar '+ids.length+' artículo'+(ids.length===1?'':'s')+' ya comprado'+(ids.length===1?'':'s')+'?')) return;
+  await sb.from('compras').delete().in('id', ids);
+  comprasItems = comprasItems.filter(i=>!i.comprado);
+  renderCompras();
+}
+
+// ---- Ubicación ----
+function distanciaM(lat1, lon1, lat2, lon2){
+  const R = 6371000, rad = x => x*Math.PI/180;
+  const dLat = rad(lat2-lat1), dLon = rad(lon2-lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.min(1, Math.sqrt(a)));
+}
+function posicionActual(){
+  return new Promise((res, rej)=>{
+    if(!navigator.geolocation) return rej(new Error('Este navegador no da la ubicación'));
+    navigator.geolocation.getCurrentPosition(
+      p => res(p.coords),
+      e => rej(new Error(e.code===1 ? 'Permiso de ubicación denegado' : e.code===3 ? 'La ubicación tardó demasiado' : 'No se pudo ubicar')),
+      { enableHighAccuracy:true, timeout:15000, maximumAge:60000 }
+    );
+  });
+}
+// Tiendas reales alrededor, de OpenStreetMap. No necesita clave ni cuenta.
+// Se prueban en orden: el primero es el oficial, los otros son espejos publicos.
+const OVERPASS_SERVIDORES = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+let cacheOverpass = { clave:'', cuando:0, datos:[] };
+async function tiendasCerca(lat, lon, radio){
+  const clave = lat.toFixed(3)+','+lon.toFixed(3)+','+radio;
+  if(cacheOverpass.clave===clave && Date.now()-cacheOverpass.cuando < 5*60*1000) return cacheOverpass.datos;
+  const filtros = CATEGORIAS_COMPRA.flatMap(c => c.osm.map(t=>{
+    const [k,v] = t.split('=');
+    return `nwr["${k}"="${v}"](around:${radio},${lat},${lon});`;
+  })).join('');
+  const consulta = `[out:json][timeout:25];(${filtros});out center tags 40;`;
+  // El servidor publico de Overpass falla cada tanto y, cuando lo hace, devuelve
+  // una pagina de error con HTTP 200: hay que mirar el cuerpo, no solo el codigo.
+  // Por eso se reintenta y se pasa a los espejos antes de darse por vencido.
+  let j = null, ultimoError = 'sin respuesta';
+  for(const url of OVERPASS_SERVIDORES){
+    for(let intento=0; intento<2; intento++){
+      try {
+        const r = await fetch(url, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+          body:'data='+encodeURIComponent(consulta),
+        });
+        const cuerpo = await r.text();
+        if(r.status === 429 || r.status === 504){
+          // Saturado: insistir en el mismo servidor solo empeora. Al siguiente.
+          ultimoError = 'servidor saturado (HTTP '+r.status+')';
+          break;
+        }
+        if(!r.ok){ ultimoError = 'HTTP '+r.status; continue; }
+        if(cuerpo.trim().startsWith('<')){ ultimoError = 'el servidor devolvio un error'; continue; }
+        j = JSON.parse(cuerpo);
+        break;
+      } catch(e){ ultimoError = e.message; }
+    }
+    if(j) break;
+  }
+  if(!j) throw new Error('OpenStreetMap no respondio: '+ultimoError);
+  const datos = (j.elements||[]).map(el=>{
+    const tags = el.tags || {};
+    const cat = CATEGORIAS_COMPRA.find(c => c.osm.some(t=>{ const [k,v]=t.split('='); return tags[k]===v; }));
+    const la = el.lat != null ? el.lat : (el.center||{}).lat;
+    const lo = el.lon != null ? el.lon : (el.center||{}).lon;
+    if(la==null || lo==null || !cat) return null;
+    return { nombre: tags.name || cat.nombre, categoria: cat.id, lat: la, lon: lo,
+             distancia: Math.round(distanciaM(lat, lon, la, lo)) };
+  }).filter(Boolean).sort((a,b)=>a.distancia-b.distancia);
+  cacheOverpass = { clave, cuando: Date.now(), datos };
+  return datos;
+}
+// Primero mira las tiendas que ya guardaste; si ninguna coincide, pregunta a OpenStreetMap.
+async function detectarLugar(silencioso){
+  estadoUbicacion = 'Buscando dónde estás…';
+  renderCompras();
+  let c;
+  try { c = await posicionActual(); }
+  catch(e){ estadoUbicacion = e.message; lugarActual = null; renderCompras(); if(!silencioso) alert(e.message); return; }
+
+  // Con varios comercios alrededor, el util no es el mas cercano sino aquel donde
+  // realmente te falta algo: una carniceria a 7 m no sirve si lo que falta es del super.
+  const elegir = cands => cands.slice().sort((a,b)=>
+    ((pendientesDe(a.lugar.categoria).length ? 0 : 1) - (pendientesDe(b.lugar.categoria).length ? 0 : 1))
+    || (a.distancia - b.distancia))[0] || null;
+
+  const guardadosCerca = [];
+  lugares.forEach(l=>{
+    const d = distanciaM(c.latitude, c.longitude, l.lat, l.lon);
+    if(d <= (l.radio || 120)) guardadosCerca.push({ lugar:l, distancia:Math.round(d), guardado:true });
+  });
+  let mejor = elegir(guardadosCerca);
+  if(!mejor){
+    try {
+      const cerca = await tiendasCerca(c.latitude, c.longitude, 150);
+      mejor = elegir(cerca.map(t=>({ lugar:t, distancia:t.distancia, guardado:false })));
+    } catch(e){ console.log('Overpass:', e.message); }
+  }
+  ultimaPosicion = { lat:c.latitude, lon:c.longitude };
+  estadoUbicacion = mejor ? '' : 'No parece que estés en una tienda';
+  const cambio = !lugarActual || !mejor || lugarActual.lugar.nombre !== mejor.lugar.nombre;
+  lugarActual = mejor;
+  renderCompras();
+  if(mejor && cambio) avisarPendientes(mejor.lugar);
+}
+let ultimaPosicion = null;
+function pendientesDe(categoriaLugar){
+  const cubre = categoriasQueCubre(categoriaLugar);
+  return comprasItems.filter(i=>!i.comprado && cubre.includes(i.categoria));
+}
+// Un aviso por tienda por día: entrar y salir del súper no debe llenar de notificaciones.
+async function avisarPendientes(lugar){
+  const faltan = pendientesDe(lugar.categoria);
+  if(!faltan.length) return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const clave = 'aviso_compra_' + lugar.nombre + '_' + fechaLocal(new Date());
+  if(localStorage.getItem(clave)) return;
+  localStorage.setItem(clave, '1');
+  const lista = faltan.slice(0,5).map(i=>i.nombre).join(', ');
+  await notificar('🛒 Estás en ' + lugar.nombre,
+    'Te faltan ' + faltan.length + ': ' + lista + (faltan.length>5 ? '…' : ''));
+}
+
+// ---- Render ----
+function renderCompras(){
+  const banner = document.getElementById('cmp-banner');
+  if(banner) banner.innerHTML = bannerHTML();
+  const lista = document.getElementById('cmp-lista');
+  if(lista) lista.innerHTML = listaComprasHTML();
+  const lug = document.getElementById('cmp-lugares');
+  if(lug) lug.innerHTML = mostrarLugares ? lugaresHTML() : '';
+  const chev = document.getElementById('cmp-lugares-chev');
+  if(chev) chev.textContent = mostrarLugares ? '▴' : '▾';
+  renderComprasDesktop();
+}
+function bannerHTML(){
+  if(lugarActual){
+    const l = lugarActual.lugar, cat = catCompra(l.categoria);
+    const faltan = pendientesDe(l.categoria);
+    const guardar = lugarActual.guardado ? '' :
+      `<button class="sub-btn" style="font-size:18px;" onclick="openLugarModal()" title="Guardar esta tienda">💾</button>`;
+    return `<div class="cmp-banner">
+      <div style="font-size:22px;">${cat.emoji}</div>
+      <div class="cmp-banner-txt">
+        <div class="cmp-banner-tit">${escHtmlAttr(l.nombre)}</div>
+        <div class="cmp-banner-sub">${faltan.length ? 'Te faltan '+faltan.length+' cosa'+(faltan.length===1?'':'s')+' de acá' : 'No falta nada de acá'} · a ${lugarActual.distancia} m</div>
+      </div>
+      ${guardar}
+      <button class="sub-btn" style="font-size:16px;" onclick="detectarLugar(false)" title="Volver a mirar">🔄</button>
+    </div>`;
+  }
+  return `<div class="cmp-banner buscando">
+    <div style="font-size:20px;">📍</div>
+    <div class="cmp-banner-txt">
+      <div class="cmp-banner-tit">¿Dónde estoy?</div>
+      <div class="cmp-banner-sub">${escHtmlAttr(estadoUbicacion || 'Tocá para buscar tiendas cerca')}</div>
+    </div>
+    <button class="sub-btn" style="font-size:16px;" onclick="detectarLugar(false)" title="Buscar">🔄</button>
+  </div>`;
+}
+function listaComprasHTML(){
+  const pendientes = comprasItems.filter(i=>!i.comprado);
+  const compradas = comprasItems.filter(i=>i.comprado);
+  if(!comprasItems.length) return '<div class="cmp-vacio">La lista está vacía.<br>Dictá una nota de voz para llenarla.</div>';
+
+  const aqui = lugarActual ? categoriasQueCubre(lugarActual.lugar.categoria) : [];
+  // Lo que se consigue donde estás va primero; el resto, por cantidad.
+  const grupos = {};
+  pendientes.forEach(i=>{ (grupos[i.categoria] = grupos[i.categoria] || []).push(i); });
+  const orden = Object.keys(grupos).sort((a,b)=>{
+    const pa = aqui.includes(a) ? 0 : 1, pb = aqui.includes(b) ? 0 : 1;
+    return (pa-pb) || (grupos[b].length - grupos[a].length) || a.localeCompare(b);
+  });
+
+  let html = orden.map(cid=>{
+    const cat = catCompra(cid), enTienda = aqui.includes(cid);
+    const filas = grupos[cid].map(i=>filaCompraHTML(i)).join('');
+    return `<div class="cmp-grupo ${enTienda?'aqui':''}">
+      <div class="cmp-grupo-head">${cat.emoji} ${cat.nombre}${enTienda?' · estás acá':''}<span class="cmp-grupo-n">${grupos[cid].length}</span></div>
+      ${filas}
+    </div>`;
+  }).join('');
+
+  if(!pendientes.length) html = '<div class="cmp-vacio">✅ No falta nada.</div>';
+  if(compradas.length){
+    html += `<div style="padding:0 16px 6px;">
+      <button class="tema-add" style="width:100%;margin:0;" onclick="mostrarCompradas=!mostrarCompradas;renderCompras();">✓ Ya compradas (${compradas.length}) ${mostrarCompradas?'▴':'▾'}</button>
+    </div>`;
+    if(mostrarCompradas){
+      html += `<div class="cmp-grupo">${compradas.map(i=>filaCompraHTML(i)).join('')}
+        <div class="cmp-lugar-row"><button class="tema-add" style="width:100%;margin:0;" onclick="vaciarCompradas()">🗑 Borrar las compradas</button></div>
+      </div>`;
+    }
+  }
+  return html;
+}
+function filaCompraHTML(i){
+  return `<div class="cmp-row">
+    <button class="cmp-check ${i.comprado?'on':''}" onclick="toggleComprado(${i.id})" aria-label="${i.comprado?'Desmarcar':'Marcar como comprado'}">${i.comprado?'✓':''}</button>
+    <span class="cmp-nom ${i.comprado?'listo':''}" ${attrsNombreLargo(i.nombre)}>${escHtmlAttr(i.nombre)}</span>
+    ${i.cantidad ? `<span class="cmp-cant">${escHtmlAttr(i.cantidad)}</span>` : ''}
+    <button class="delete-btn" onclick="delCompra(${i.id})" aria-label="Eliminar">🗑</button>
+  </div>`;
+}
+function lugaresHTML(){
+  if(!lugares.length) return '<div class="cmp-vacio" style="padding:14px;">Ninguna tienda guardada todavía.<br>Cuando estés en una, tocá 💾 en la franja de arriba.</div>';
+  return `<div class="cmp-grupo">` + lugares.map(l=>{
+    const cat = catCompra(l.categoria);
+    return `<div class="cmp-lugar-row">
+      <span>${cat.emoji}</span>
+      <span style="flex:1;min-width:0;" ${attrsNombreLargo(l.nombre)}>${escHtmlAttr(l.nombre)}</span>
+      <span style="font-size:11px;color:rgba(255,255,255,0.35);">${l.radio} m</span>
+      <button class="delete-btn" onclick="delLugar(${l.id})" aria-label="Eliminar">🗑</button>
+    </div>`;
+  }).join('') + `</div>`;
+}
+function toggleLugares(){ mostrarLugares = !mostrarLugares; renderCompras(); }
+function renderComprasDesktop(){
+  const el = document.getElementById('d-cmp-resumen'); if(!el) return;
+  const pendientes = comprasItems.filter(i=>!i.comprado);
+  const aqui = lugarActual ? pendientesDe(lugarActual.lugar.categoria).length : 0;
+  el.innerHTML = lugarActual
+    ? `<div class="cmp-banner" style="margin:0 0 10px;"><div style="font-size:20px;">${catCompra(lugarActual.lugar.categoria).emoji}</div>
+        <div class="cmp-banner-txt"><div class="cmp-banner-tit">${escHtmlAttr(lugarActual.lugar.nombre)}</div>
+        <div class="cmp-banner-sub">${aqui ? 'Te faltan '+aqui+' de acá' : 'No falta nada de acá'}</div></div></div>`
+    : '';
+  const lista = document.getElementById('d-cmp-lista');
+  if(lista) lista.innerHTML = pendientes.length
+    ? pendientes.slice(0,6).map(i=>`<div class="cmp-row" style="padding:7px 0;">
+        <button class="cmp-check ${i.comprado?'on':''}" onclick="toggleComprado(${i.id})"></button>
+        <span class="cmp-nom">${escHtmlAttr(i.nombre)}</span>
+        <span class="cmp-cant">${catCompra(i.categoria).emoji}</span></div>`).join('')
+    : '<div class="desktop-empty">No falta nada.</div>';
+}
+
+// ---- Nota de voz ----
+let reconocedor = null, grabando = false, itemsInterpretados = [];
+function soportaDictado(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function openVozModal(){
+  itemsInterpretados = [];
+  document.getElementById('voz-paso-dictar').style.display = '';
+  document.getElementById('voz-paso-revisar').style.display = 'none';
+  document.getElementById('voz-texto').value = '';
+  const mic = document.getElementById('voz-mic');
+  const est = document.getElementById('voz-estado');
+  if(!soportaDictado()){
+    mic.style.display = 'none';
+    est.textContent = 'Este navegador no dicta. Escribí la lista y la IA la interpreta igual.';
+  } else {
+    mic.style.display = '';
+    mic.classList.remove('grabando');
+    est.textContent = 'Tocá el micrófono y decí qué falta';
+  }
+  document.getElementById('modal-voz').classList.add('open');
+}
+function alternarDictado(){
+  if(grabando){ if(reconocedor) reconocedor.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  const caja = document.getElementById('voz-texto');
+  const est = document.getElementById('voz-estado');
+  const mic = document.getElementById('voz-mic');
+  const base = caja.value ? caja.value.trim() + ' ' : '';
+  reconocedor = new SR();
+  reconocedor.lang = 'es-MX';
+  reconocedor.continuous = true;
+  reconocedor.interimResults = true;
+  reconocedor.onstart = ()=>{ grabando = true; mic.classList.add('grabando'); est.textContent = 'Escuchando… tocá de nuevo para parar'; if(navigator.vibrate) navigator.vibrate(20); };
+  reconocedor.onresult = (ev)=>{
+    let texto = '';
+    for(let k=0;k<ev.results.length;k++) texto += ev.results[k][0].transcript;
+    caja.value = base + texto;
+  };
+  reconocedor.onerror = (ev)=>{
+    est.textContent = ev.error==='not-allowed' ? 'No diste permiso al micrófono' :
+                      ev.error==='no-speech'   ? 'No se escuchó nada' : 'Error de dictado: '+ev.error;
+  };
+  reconocedor.onend = ()=>{ grabando = false; mic.classList.remove('grabando'); if(!/Error|permiso|escuchó/.test(document.getElementById('voz-estado').textContent)) est.textContent = 'Listo. Revisá el texto y tocá Interpretar.'; };
+  try { reconocedor.start(); } catch(e){ est.textContent = 'No se pudo abrir el micrófono'; }
+}
+// La clave de Claude vive en la Edge Function, nunca acá: index.html es público.
+async function interpretarNota(){
+  if(grabando && reconocedor) reconocedor.stop();
+  const texto = document.getElementById('voz-texto').value.trim();
+  if(!texto){ alert('No hay nada que interpretar.'); return; }
+  const btn = document.getElementById('voz-btn-interpretar');
+  const original = btn.textContent;
+  btn.textContent = 'Interpretando…'; btn.disabled = true;
+  try {
+    // OJO: 'bright-worker' es el slug que Supabase le asigno al desplegarla; el nombre
+    // que se ve en el panel es 'interpretar-compras', pero la URL usa el slug y no se
+    // puede renombrar. (A la de las carnes le paso igual: se ve 'notificar-vencimientos'
+    // y responde en 'super-responder'.)
+    const {data, error} = await sb.functions.invoke('bright-worker', { body: { texto } });
+    if(error){
+      let detalle = error.message || 'falló la llamada';
+      try { const j = await error.context.json(); if(j && j.error) detalle = j.error; } catch(_){}
+      alert('No se pudo interpretar: ' + detalle + '\n\nSi es la primera vez, falta desplegar la función y cargar el secreto ANTHROPIC_API_KEY.');
+      return;
+    }
+    if(!data || !data.ok){ alert('No se pudo interpretar: ' + ((data&&data.error) || 'respuesta vacía')); return; }
+    if(!data.items.length){ alert('No entendí ningún artículo en esa nota. Probá diciéndolo de otra forma.'); return; }
+    itemsInterpretados = data.items.map(x=>Object.assign({}, x, { nota: texto }));
+    renderPreviewVoz();
+    document.getElementById('voz-paso-dictar').style.display = 'none';
+    document.getElementById('voz-paso-revisar').style.display = '';
+  } finally {
+    btn.textContent = original; btn.disabled = false;
+  }
+}
+function renderPreviewVoz(){
+  const cont = document.getElementById('voz-preview');
+  cont.innerHTML = itemsInterpretados.map((x,n)=>`<div class="cmp-prev">
+    <span style="flex:1;min-width:0;font-size:14px;color:#fff;">${escHtmlAttr(x.nombre)}${x.cantidad?` <span style="opacity:0.5;font-size:12px;">${escHtmlAttr(x.cantidad)}</span>`:''}</span>
+    <select onchange="itemsInterpretados[${n}].categoria=this.value;renderPreviewVoz();">
+      ${CATEGORIAS_COMPRA.map(c=>`<option value="${c.id}" ${c.id===x.categoria?'selected':''}>${c.emoji} ${c.nombre}</option>`).join('')}
+    </select>
+    <button class="delete-btn" onclick="itemsInterpretados.splice(${n},1);renderPreviewVoz();" aria-label="Quitar">🗑</button>
+  </div>`).join('') || '<div class="cmp-vacio">No queda nada para agregar.</div>';
+}
+function volverADictar(){
+  document.getElementById('voz-paso-revisar').style.display = 'none';
+  document.getElementById('voz-paso-dictar').style.display = '';
+}
+async function guardarInterpretado(){
+  if(!itemsInterpretados.length){ closeModals(); return; }
+  const ok = await agregarCompras(itemsInterpretados.map(x=>({
+    nombre:x.nombre, cantidad:x.cantidad||null, categoria:x.categoria, nota:x.nota||null
+  })));
+  if(ok) closeModals();
+}
+
+// ---- Alta manual y tiendas ----
+function opcionesCategoriaHTML(sel){
+  return CATEGORIAS_COMPRA.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${c.emoji} ${c.nombre}</option>`).join('');
+}
+function openCompraModal(){
+  document.getElementById('cmp-nombre').value = '';
+  document.getElementById('cmp-cantidad').value = '';
+  const sel = lugarActual ? lugarActual.lugar.categoria : 'supermercado';
+  document.getElementById('cmp-categoria').innerHTML = opcionesCategoriaHTML(sel);
+  document.getElementById('modal-compra').classList.add('open');
+}
+async function guardarCompraManual(){
+  const nombre = document.getElementById('cmp-nombre').value.trim();
+  if(!nombre){ alert('Falta el nombre.'); return; }
+  const ok = await agregarCompras([{
+    nombre,
+    cantidad: document.getElementById('cmp-cantidad').value.trim() || null,
+    categoria: document.getElementById('cmp-categoria').value,
+    nota: null,
+  }]);
+  if(ok) closeModals();
+}
+function openLugarModal(){
+  if(!ultimaPosicion){ alert('Primero tocá 🔄 para tomar tu ubicación.'); return; }
+  const sug = lugarActual && !lugarActual.guardado ? lugarActual.lugar : null;
+  document.getElementById('lug-nombre').value = sug ? sug.nombre : '';
+  document.getElementById('lug-categoria').innerHTML = opcionesCategoriaHTML(sug ? sug.categoria : 'supermercado');
+  document.getElementById('lug-radio').value = 120;
+  document.getElementById('modal-lugar').classList.add('open');
+}
+async function guardarLugar(){
+  const nombre = document.getElementById('lug-nombre').value.trim();
+  if(!nombre){ alert('Falta el nombre.'); return; }
+  if(!ultimaPosicion){ alert('No tengo tu ubicación.'); return; }
+  const fila = {
+    nombre,
+    categoria: document.getElementById('lug-categoria').value,
+    lat: ultimaPosicion.lat,
+    lon: ultimaPosicion.lon,
+    radio: parseInt(document.getElementById('lug-radio').value) || 120,
+  };
+  const {data,error} = await sb.from('lugares').insert([fila]).select();
+  if(error){ alert(errorTablaCompras(error, 'lugares')); return; }
+  lugares.push(data[0]);
+  lugarActual = { lugar: data[0], distancia: 0, guardado: true };
+  closeModals();
+  renderCompras();
+}
+async function delLugar(id){
+  if(!confirm('¿Eliminar esta tienda?')) return;
+  await sb.from('lugares').delete().eq('id', id);
+  lugares = lugares.filter(l=>l.id!==id);
+  if(lugarActual && lugarActual.guardado && lugarActual.lugar.id===id) lugarActual = null;
+  renderCompras();
+}
+
 // ---- Inicialización (aquí las variables ya existen) ----
+loadCompras();
+loadLugares();
 loadEstudio();
 loadPuntosRepaso();
 restaurarEstudioTimer();
@@ -4058,6 +4655,12 @@ restaurarGymTimer();
 // Mientras haya un cronómetro corriendo, la grilla se refresca sola para que el bloque en curso
 // vaya creciendo. Cada 30s alcanza: a este zoom un minuto mide menos de un píxel.
 setInterval(()=>{ if(hayCronoEnCurso()) refrescarGrid(); }, 30000);
+
+// Un PWA no puede vigilar la ubicacion en segundo plano, asi que el momento util
+// para mirar es cuando volves a la app: ahi se revisa si entraste a una tienda.
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && openMenus.has('compras')) detectarLugar(true);
+});
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
