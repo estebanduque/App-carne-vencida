@@ -401,7 +401,7 @@
 
   <div class="mobile-only">
   <!-- ===== MENÚ CARNES ===== -->
-  <div class="menu-section">
+  <div class="menu-section" data-modulo="carnes">
     <button class="menu-toggle" id="toggle-carnes" onclick="toggleMenu('carnes')">
       <div class="menu-icon carnes">🥩</div>
       <div class="menu-title">
@@ -427,7 +427,7 @@
   </div>
 
   <!-- ===== MENÚ GYM ===== -->
-  <div class="menu-section" style="margin-top:12px;">
+  <div class="menu-section" data-modulo="gym" style="margin-top:12px;">
     <button class="menu-toggle" id="toggle-gym" onclick="toggleMenu('gym')">
       <div class="menu-icon gym">💪</div>
       <div class="menu-title">
@@ -476,7 +476,7 @@
   </div>
 
   <!-- ===== MENÚ ROPA ===== -->
-  <div class="menu-section" style="margin-top:12px;">
+  <div class="menu-section" data-modulo="ropa" style="margin-top:12px;">
     <button class="menu-toggle" id="toggle-ropa" onclick="toggleMenu('ropa')">
       <div class="menu-icon ropa">👖</div>
       <div class="menu-title">
@@ -501,7 +501,7 @@
   </div>
 
   <!-- ===== MENÚ LENTES ===== -->
-  <div class="menu-section" style="margin-top:12px;">
+  <div class="menu-section" data-modulo="lentes" style="margin-top:12px;">
     <button class="menu-toggle" id="toggle-lentes" onclick="toggleMenu('lentes')">
       <div class="menu-icon lentes">👁️</div>
       <div class="menu-title">
@@ -548,13 +548,14 @@
             </div>
             <button class="lentes-btn" id="lentes-btn" onclick="resetLentes()" style="width:auto;padding:11px 16px;white-space:nowrap;">✅ Guardar</button>
           </div>
+          <button class="lentes-btn" id="lentes-descartar-btn" onclick="descartarLentes()" style="margin-top:10px;background:rgba(226,75,74,0.15);color:#F09595;display:none;">🗑️ Ya me deshice de ellos</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ===== MENÚ ESTUDIO ===== -->
-  <div class="menu-section" style="margin-top:12px;">
+  <div class="menu-section" data-modulo="estudio" style="margin-top:12px;">
     <button class="menu-toggle" id="toggle-estudio" onclick="toggleMenu('estudio')">
       <div class="menu-icon estudio">📚</div>
       <div class="menu-title">
@@ -605,7 +606,7 @@
   </div>
 
   <!-- ===== MENÚ MI TIEMPO ===== -->
-  <div class="menu-section" id="menu-section-tiempo" style="margin-top:12px;">
+  <div class="menu-section" data-modulo="tiempo" id="menu-section-tiempo" style="margin-top:12px;">
     <button class="menu-toggle" id="toggle-tiempo" onclick="toggleMenu('tiempo')">
       <div class="menu-icon tiempo">⏱️</div>
       <div class="menu-title">
@@ -640,6 +641,20 @@
             <button class="crono-btn crono-reset" onclick="tiempoReset()" title="Reiniciar">↺</button>
           </div>
         </div>
+        <div class="crono-box" style="background:rgba(0,137,123,0.1);border-color:rgba(0,137,123,0.28);">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:rgba(36,40,80,0.45);margin-bottom:8px;">🚆 Viaje · corre en paralelo</div>
+          <div class="crono-display" id="viaje-crono-display">00:00:00</div>
+          <select class="crono-sub" id="viaje-crono-medio" onchange="seleccionarMedioViaje(this.value)">
+            <option value="Tren">Tren</option>
+            <option value="Bus">Bus</option>
+            <option value="Avión">Avión</option>
+          </select>
+          <div class="crono-btns">
+            <button id="viaje-crono-start-btn" class="crono-btn" style="flex:1;background:#00897B;color:#fff;" onclick="viajeStartPause()">▶ Iniciar</button>
+            <button class="crono-btn crono-stop" onclick="viajeStop()">■ Terminar</button>
+            <button class="crono-btn crono-reset" onclick="viajeReset()" title="Reiniciar">↺</button>
+          </div>
+        </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 4px;padding:14px 0 8px;">
           <span class="inner-title" style="padding:0;">Últimos 7 días</span>
           <div style="display:flex;align-items:center;gap:4px;">
@@ -664,7 +679,7 @@
   </div>
 
   <!-- ===== MENU LISTA DE COMPRAS ===== -->
-  <div class="menu-section">
+  <div class="menu-section" data-modulo="compras">
     <button class="menu-toggle" id="toggle-compras" onclick="toggleMenu('compras')">
       <div class="menu-icon compras">🛒</div>
       <div class="menu-title">
@@ -791,6 +806,7 @@
           </div>
           <button class="desktop-lentes-save-btn" onclick="resetLentesDesktop()">✅ Guardar</button>
         </div>
+        <button id="d-lentes-descartar-btn" onclick="descartarLentes()" style="width:100%;margin-top:8px;background:rgba(226,75,74,0.15);border:none;border-radius:8px;padding:8px;font-size:12px;color:#F09595;font-weight:600;font-family:inherit;cursor:pointer;display:none;">🗑️ Ya me deshice de ellos</button>
       </div>
     </div>
     <!-- Estudio -->
@@ -842,6 +858,20 @@
             <button id="d-tiempo-crono-start-btn" onclick="tiempoStartPause()" style="flex:1;background:#5C6BC0;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
             <button onclick="tiempoStop()" style="flex:1;background:rgba(36,40,80,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#242850;font-family:inherit;cursor:pointer;">■ Guardar</button>
             <button onclick="tiempoReset()" title="Reiniciar" style="background:rgba(36,40,80,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(36,40,80,0.5);font-family:inherit;cursor:pointer;">↺</button>
+          </div>
+        </div>
+        <div style="background:rgba(0,137,123,0.1);border:1px solid rgba(0,137,123,0.28);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:rgba(36,40,80,0.45);margin-bottom:6px;">🚆 Viaje · corre en paralelo</div>
+          <div id="d-viaje-crono-display" style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#242850;margin-bottom:8px;">00:00:00</div>
+          <select id="d-viaje-crono-medio" onchange="seleccionarMedioViaje(this.value)" style="width:100%;margin-bottom:8px;padding:8px 10px;font-size:13px;border:1px solid rgba(36,40,80,0.15);border-radius:8px;background:#fff;color:#242850;font-family:inherit;">
+            <option value="Tren">Tren</option>
+            <option value="Bus">Bus</option>
+            <option value="Avión">Avión</option>
+          </select>
+          <div style="display:flex;gap:6px;">
+            <button id="d-viaje-crono-start-btn" onclick="viajeStartPause()" style="flex:1;background:#00897B;border:none;border-radius:8px;padding:9px;font-size:13px;color:#fff;font-weight:600;font-family:inherit;cursor:pointer;">▶ Iniciar</button>
+            <button onclick="viajeStop()" style="flex:1;background:rgba(36,40,80,0.08);border:none;border-radius:8px;padding:9px;font-size:13px;color:#242850;font-family:inherit;cursor:pointer;">■ Guardar</button>
+            <button onclick="viajeReset()" title="Reiniciar" style="background:rgba(36,40,80,0.06);border:none;border-radius:8px;padding:9px 12px;font-size:13px;color:rgba(36,40,80,0.5);font-family:inherit;cursor:pointer;">↺</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1433,14 +1463,72 @@ async function repetirGym(id){
   }
 }
 
+// ---- Orden de los modulos por uso (solo movil) ----
+// "Usado" es el tiempo que el panel pasa desplegado con la app a la vista: es lo que
+// distingue mirar algo de abrirlo y cerrarlo al pasar. El orden se recalcula solo al
+// cargar la app; mover las tarjetas mientras las estas tocando desorienta mas que ayuda.
+const USO_MODULOS_KEY = 'uso_modulos';
+// Un tiron de mas de 2 h es casi seguro un panel que quedo abierto con la pantalla
+// apagada. Se cobra hasta ahi para que un olvido no congele el orden para siempre.
+const USO_TRAMO_MAXIMO = 2*60*60*1000;
+let usoModulos = {};          // clave del modulo -> milisegundos acumulados
+let moduloAbiertoDesde = {};  // clave -> cuando empezo a contar (0 = en pausa)
+
+function cargarUsoModulos(){
+  try{
+    const d = JSON.parse(localStorage.getItem(USO_MODULOS_KEY) || '{}');
+    if(d && typeof d === 'object'){
+      for(const k in d){ const v = Number(d[k]); if(v > 0) usoModulos[k] = v; }
+    }
+  }catch(e){}
+}
+function guardarUsoModulos(){ try{ localStorage.setItem(USO_MODULOS_KEY, JSON.stringify(usoModulos)); }catch(e){} }
+function cobrarTramo(clave, desde){
+  if(!desde) return;
+  const ms = Math.min(Math.max(0, Date.now() - desde), USO_TRAMO_MAXIMO);
+  if(ms > 0) usoModulos[clave] = (usoModulos[clave] || 0) + ms;
+}
+function abrirContadorModulo(menu){ moduloAbiertoDesde[menu] = Date.now(); }
+function cerrarContadorModulo(menu){
+  cobrarTramo(menu, moduloAbiertoDesde[menu]);
+  delete moduloAbiertoDesde[menu];
+  guardarUsoModulos();
+}
+// Al irse de la app se cobra lo transcurrido y los relojes quedan en pausa, no borrados:
+// el panel sigue desplegado para cuando vuelvas.
+function pausarContadoresModulos(){
+  for(const k in moduloAbiertoDesde){ cobrarTramo(k, moduloAbiertoDesde[k]); moduloAbiertoDesde[k] = 0; }
+  guardarUsoModulos();
+}
+function reanudarContadoresModulos(){
+  const ahora = Date.now();
+  for(const k in moduloAbiertoDesde) moduloAbiertoDesde[k] = ahora;
+}
+function ordenarModulosPorUso(){
+  const cont = document.querySelector('.mobile-only');
+  if(!cont) return;
+  const secciones = Array.from(cont.children).filter(el => el.dataset && el.dataset.modulo);
+  if(secciones.length < 2) return;
+  const orden = secciones.map((el, i) => ({ el, i, uso: usoModulos[el.dataset.modulo] || 0 }));
+  // Sin historial todos empatan en 0 y se respeta el orden original: nada salta de lugar
+  // hasta que haya un motivo medido.
+  orden.sort((a, b) => (b.uso - a.uso) || (a.i - b.i));
+  orden.forEach(x => cont.appendChild(x.el));
+  // La separacion entre tarjetas venia en el HTML de cada una menos la primera; al
+  // cambiar el orden hay que reponerla segun la posicion nueva.
+  orden.forEach((x, i) => { x.el.style.marginTop = i === 0 ? '0' : '12px'; });
+}
+
 function toggleMenu(menu){
   const body=document.getElementById('body-'+menu);
   const toggle=document.getElementById('toggle-'+menu);
   const chevron=document.getElementById('chevron-'+menu);
   const isOpen=openMenus.has(menu);
-  if(isOpen){openMenus.delete(menu);body.classList.remove('open');toggle.classList.remove('open');chevron.classList.remove('open');}
+  if(isOpen){openMenus.delete(menu);body.classList.remove('open');toggle.classList.remove('open');chevron.classList.remove('open');
+    cerrarContadorModulo(menu);}
   else{
     openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');
+    abrirContadorModulo(menu);
     // La ubicacion se pide al abrir el modulo, no al cargar la app: asi el permiso
     // llega en un momento en que se entiende para que es.
     if(menu==='compras') detectarLugar(true);
@@ -1858,8 +1946,26 @@ function getLentesData() {
   return lentesData ? lentesData.fecha_inicio : null;
 }
 
+// El boton de descartar solo aparece si hay un par en uso: sin registro no hay nada
+// de que deshacerse.
+function mostrarBotonDescartarLentes(hay){
+  ['lentes-descartar-btn','d-lentes-descartar-btn'].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.style.display = hay ? '' : 'none';
+  });
+}
+// Tirar los lentes borra el registro: el contador queda en blanco hasta que estrenes
+// el proximo par. Es lo mismo que ve la app cuando nunca hubo lentes cargados.
+async function descartarLentes(){
+  if(!getLentesData()){ alert('No hay ningún par en uso.'); return; }
+  if(!confirm('¿Ya te deshiciste de estos lentes?\n\nSe borra el registro y el contador vuelve a cero hasta que estrenes el próximo par.')) return;
+  const {error} = await sb.from('lentes').delete().neq('id', 0);
+  if(error){ alert('No se pudo borrar el registro. Intenta de nuevo.'); return; }
+  await loadLentes();
+}
 function renderLentes() {
   const fechaInicio = getLentesData();
+  mostrarBotonDescartarLentes(!!fechaInicio);
   const hoy = new Date(); hoy.setHours(0,0,0,0);
 
   if(!fechaInicio) {
@@ -2028,6 +2134,7 @@ function renderDesktop() {
 
 function renderLentesDesktop() {
   const fechaInicio = getLentesData();
+  mostrarBotonDescartarLentes(!!fechaInicio);
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const input = document.getElementById('d-lentes-fecha');
 
@@ -2238,6 +2345,24 @@ function ventanaDe(created_at, minutos){
   return { start, end };
 }
 function seSuperponen(aStart, aEnd, bStart, bEnd){ return aStart < bEnd && bStart < aEnd; }
+// Viajar en tren, bus o avion no te ocupa entero: en el viaje se puede leer, trabajar
+// o dormir. Estos bloques quedan afuera de la regla de "una sola actividad a la vez":
+// ni bloquean a otra actividad ni son recortados por un cronometro que se les cruce.
+const VIAJES_SOLAPABLES = ['tren','bus','colectivo','micro','omnibus','avion','vuelo','subte','metro'];
+function sinAcentos(txt){
+  const con = 'aaaaaeeeeiiiiooooouuuunc';
+  const de  = 'áàäâãéèëêíìïîóòöôõúùüûñç';
+  return String(txt||'').toLowerCase().split('').map(ch=>{
+    const i = de.indexOf(ch);
+    return i === -1 ? ch : con[i];
+  }).join('');
+}
+// Coincide por pedazo de palabra a proposito: "autobus" y "microbus" tambien cuentan.
+function admiteSolapamiento(categoria, subcategoria){
+  if(sinAcentos(categoria) !== 'transporte') return false;
+  const sub = sinAcentos(subcategoria);
+  return VIAJES_SOLAPABLES.some(v => sub.indexOf(v) !== -1);
+}
 // ---- Reparto de una sesión entre los días que realmente toca ----
 // created_at es el FIN de la sesión. Si empezó antes de medianoche sus minutos
 // pertenecen a dos días distintos: contarlos enteros en el día del fin inflaba
@@ -2289,6 +2414,7 @@ function bloquesExistentes(excluir){
   const out = [];
   tiempoItems.forEach(i=>{
     if(excluir && excluir.fuente==='tiempo' && excluir.id===i.id) return;
+    if(admiteSolapamiento(i.categoria, i.subcategoria)) return;
     if(!i.created_at || !i.minutos || !esHoraPrecisa(i.created_at)) return;
     const { start, end } = ventanaDe(i.created_at, i.minutos);
     out.push({ fuente:'tiempo', id:i.id, start, end, nombre:i.categoria, sub:i.subcategoria });
@@ -3413,7 +3539,8 @@ async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
       const subActual = leerSubcatCrono() || 'General';
       const created_at = new Date().toISOString();
       const { start, end } = ventanaDe(created_at, minActual);
-      if(!(await liberarConflictosParaCrono(start, end, null))) return;
+      if(!admiteSolapamiento(catActual, subActual) &&
+         !(await liberarConflictosParaCrono(start, end, null))) return;
       pararIntervalTiempo();
       await saveTiempoItem({ categoria:catActual, subcategoria:subActual, minutos:minActual, created_at });
     } else {
@@ -3438,7 +3565,8 @@ async function tiempoStop(){
   if(!confirm('¿Guardar '+fmtHoras(min)+' en '+categoria+' › '+subcategoria+'?')) return;
   const created_at = new Date().toISOString();
   const {start,end} = ventanaDe(created_at, min);
-  if(!(await liberarConflictosParaCrono(start, end, null))) return;
+  if(!admiteSolapamiento(categoria, subcategoria) &&
+     !(await liberarConflictosParaCrono(start, end, null))) return;
   pararIntervalTiempo();
   tiempoTimer = { running:false, base:0, startTs:null, categoria:categoria, subcategoria:'' }; guardarTimerTiempoLS();
   ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -3463,6 +3591,74 @@ function restaurarTiempoTimer(){
   if(tiempoTimer.subcategoria){ ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el && !el.value) el.value = tiempoTimer.subcategoria; }); }
   if(tiempoTimer.categoria) actualizarDatalistTiempo('subcats-list', tiempoTimer.categoria);
   pintarCronoTiempo();
+}
+
+// ---- Cronometro de viaje, corre en paralelo al principal ----
+// Un viaje largo convive con lo que hagas adentro, asi que tiene cronometro propio:
+// arrancas "Tren" al subir y segui usando el cronometro normal para leer o trabajar.
+// Lo que guarda cae en Transporte, que esta exento de la regla de solapamiento.
+const VIAJE_TIMER_KEY = 'viaje_timer';
+const MEDIOS_VIAJE = ['Tren','Bus','Avión'];
+let viajeTimer = { running:false, base:0, startTs:null, medio:'Tren' };
+let viajeInterval = null;
+function guardarTimerViajeLS(){ try{ localStorage.setItem(VIAJE_TIMER_KEY, JSON.stringify(viajeTimer)); }catch(e){} }
+function segundosCronoViaje(){
+  let s = viajeTimer.base || 0;
+  if(viajeTimer.running && viajeTimer.startTs){ s += Math.floor((Date.now() - viajeTimer.startTs)/1000); }
+  return s;
+}
+function pintarCronoViaje(){
+  const txt = formatCrono(segundosCronoViaje());
+  ['viaje-crono-display','d-viaje-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
+  const running = viajeTimer.running;
+  ['viaje-crono-start-btn','d-viaje-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+  ['viaje-crono-medio','d-viaje-crono-medio'].forEach(id=>{ const el=document.getElementById(id); if(el && el.value !== viajeTimer.medio) el.value = viajeTimer.medio; });
+}
+function iniciarIntervalViaje(){ if(!viajeInterval){ viajeInterval = setInterval(pintarCronoViaje, 1000); } }
+function pararIntervalViaje(){ if(viajeInterval){ clearInterval(viajeInterval); viajeInterval = null; } }
+function seleccionarMedioViaje(valor){
+  if(MEDIOS_VIAJE.indexOf(valor) !== -1) viajeTimer.medio = valor;
+  guardarTimerViajeLS(); pintarCronoViaje();
+}
+function viajeStartPause(){
+  if(!viajeTimer.running){
+    viajeTimer.running = true; viajeTimer.startTs = Date.now(); iniciarIntervalViaje();
+    feedbackInicioCronoIds(['viaje-crono-start-btn','d-viaje-crono-start-btn']);
+  } else {
+    viajeTimer.base = segundosCronoViaje();
+    viajeTimer.running = false; viajeTimer.startTs = null; pararIntervalViaje();
+  }
+  guardarTimerViajeLS(); pintarCronoViaje(); refrescarGrid();
+}
+async function viajeStop(){
+  const min = Math.round(segundosCronoViaje()/60);
+  if(min < 1){ alert('El cronómetro de viaje aún no marca ni un minuto.'); return; }
+  const medio = viajeTimer.medio || 'Tren';
+  if(!confirm('¿Guardar '+fmtHoras(min)+' en Transporte › '+medio+'?')) return;
+  const created_at = new Date().toISOString();
+  pararIntervalViaje();
+  viajeTimer = { running:false, base:0, startTs:null, medio };
+  guardarTimerViajeLS(); pintarCronoViaje();
+  // Sin liberarConflictosParaCrono a proposito: el viaje no le pisa el tiempo a nada.
+  await saveTiempoItem({ categoria:'Transporte', subcategoria:medio, minutos:min, created_at });
+}
+function viajeReset(){
+  if(segundosCronoViaje() > 0 && !confirm('¿Descartar el tiempo del viaje?')) return;
+  pararIntervalViaje();
+  viajeTimer = { running:false, base:0, startTs:null, medio: viajeTimer.medio || 'Tren' };
+  guardarTimerViajeLS(); pintarCronoViaje(); refrescarGrid();
+}
+function restaurarViajeTimer(){
+  try{
+    const raw = localStorage.getItem(VIAJE_TIMER_KEY);
+    if(raw){
+      const t = JSON.parse(raw);
+      if(t) viajeTimer = { running:!!t.running, base:t.base||0, startTs:t.startTs||null,
+                           medio: MEDIOS_VIAJE.indexOf(t.medio)!==-1 ? t.medio : 'Tren' };
+    }
+    if(viajeTimer.running) iniciarIntervalViaje();
+  }catch(e){}
+  pintarCronoViaje();
 }
 
 // ---- CRUD Supabase ----
@@ -3537,7 +3733,7 @@ function editarTiempo(id){
   document.getElementById('t-fecha').value = (diaLocalDe(s.created_at) || fechaLocal(new Date()));
   document.getElementById('t-hora').value = horaInicioDeSesion(s.created_at, min);
 }
-function saveTiempoManual(){
+async function saveTiempoManual(){
   const categoria = modalCategoria;
   const subcategoria = document.getElementById('t-subcat').value.trim() || 'General';
   const h = parseInt(document.getElementById('t-horas').value)||0;
@@ -3548,21 +3744,23 @@ function saveTiempoManual(){
   if(!categoria){ alert('Elige una categoría.'); return; }
   if(minutos < 1){ alert('Indica cuánto tiempo dedicaste.'); return; }
   const created_at = calcularCreatedAt(fecha, horaInicio, minutos, !!tiempoEditId);
-  if(esHoraPrecisa(created_at)){
-    const excluir = tiempoEditId ? { fuente:'tiempo', id:tiempoEditId } : null;
+  const editId = tiempoEditId;
+  if(esHoraPrecisa(created_at) && !admiteSolapamiento(categoria, subcategoria)){
+    const excluir = editId ? { fuente:'tiempo', id:editId } : null;
     const { start, end } = ventanaDe(created_at, minutos);
-    const conflicto = hayConflicto(start, end, excluir);
-    if(conflicto){
-      alert('Ese horario se superpone con '+conflicto.nombre+(conflicto.sub?' › '+conflicto.sub:'')+'. No se puede tener 2 actividades al mismo tiempo — ajustá la hora o la duración.');
-      return;
+    // Antes esto era un callejon sin salida: el aviso te mandaba a arreglar el otro
+    // registro a mano y, si venias de recortarlo recien, el choque podia ser contra una
+    // version vieja. Ahora se ofrece acomodar lo que estorba, igual que hace el cronometro.
+    if(hayConflicto(start, end, excluir)){
+      if(!(await liberarConflictosParaCrono(start, end, excluir))) return;
     }
   }
-  if(tiempoEditId){
-    updateTiempoItem(tiempoEditId, { categoria, subcategoria, minutos, created_at });
-  } else {
-    saveTiempoItem({ categoria, subcategoria, minutos, created_at });
-  }
   closeModals();
+  if(editId){
+    await updateTiempoItem(editId, { categoria, subcategoria, minutos, created_at });
+  } else {
+    await saveTiempoItem({ categoria, subcategoria, minutos, created_at });
+  }
 }
 
 // ---- Toggles ----
@@ -3958,6 +4156,7 @@ function bloquesEnCurso(){
   agregar(segundosCronoTiempo(), tiempoTimer.categoria, leerSubcatCrono(), categoriaInfo(tiempoTimer.categoria).color);
   agregar(segundosCrono(), estudioTimer.tema, leerSubtemaCrono(), ESTUDIO_EN_TIEMPO.color);
   agregar(segundosCronoGym(), 'Deporte', 'Gym', categoriaInfo('Deporte').color);
+  agregar(segundosCronoViaje(), 'Transporte', viajeTimer.medio, categoriaInfo('Transporte').color);
   return out;
 }
 function bloquesSemana(){
@@ -3993,7 +4192,7 @@ function escAttrJs(s){
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 }
 function hayCronoEnCurso(){
-  return segundosCronoTiempo()>0 || segundosCrono()>0 || segundosCronoGym()>0;
+  return segundosCronoTiempo()>0 || segundosCrono()>0 || segundosCronoGym()>0 || segundosCronoViaje()>0;
 }
 function refrescarGrid(){
   renderGridSemana('tie-grid-semana');
@@ -4261,13 +4460,42 @@ function distanciaM(lat1, lon1, lat2, lon2){
   const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.min(1, Math.sqrt(a)));
 }
+// Cuanto margen de error del GPS se tolera antes de afirmar que estas en una tienda.
+// Puertas adentro Android te ubica por WiFi o por antena, con cientos de metros de
+// error, y con ese dato no se puede decir "estas en el super" sin inventarlo.
+const PRECISION_BUENA = 40;    // metros: fix de satelite de verdad, se acepta enseguida
+const PRECISION_MAXIMA = 100;  // metros: peor que esto, no se afirma nada
+const RADIO_ESTOY = 50;        // metros: cuan cerca hay que estar de una tienda de OSM
+// Se escucha el GPS un rato en lugar de pedir un solo punto: el primer fix casi siempre
+// es el malo (red), y los que siguen mejoran a medida que engancha satelites.
 function posicionActual(){
   return new Promise((res, rej)=>{
     if(!navigator.geolocation) return rej(new Error('Este navegador no da la ubicación'));
-    navigator.geolocation.getCurrentPosition(
-      p => res(p.coords),
-      e => rej(new Error(e.code===1 ? 'Permiso de ubicación denegado' : e.code===3 ? 'La ubicación tardó demasiado' : 'No se pudo ubicar')),
-      { enableHighAccuracy:true, timeout:15000, maximumAge:60000 }
+    let mejor = null, id = null, reloj = null, listo = false;
+    const cerrar = ()=>{
+      listo = true;
+      if(id !== null) navigator.geolocation.clearWatch(id);
+      if(reloj !== null) clearTimeout(reloj);
+    };
+    const terminar = ()=>{
+      if(listo) return;
+      cerrar();
+      if(mejor) res(mejor);
+      else rej(new Error('La ubicación tardó demasiado'));
+    };
+    reloj = setTimeout(terminar, 15000);
+    id = navigator.geolocation.watchPosition(
+      p => {
+        if(!mejor || p.coords.accuracy < mejor.accuracy) mejor = p.coords;
+        if(mejor.accuracy <= PRECISION_BUENA) terminar();
+      },
+      e => {
+        if(listo) return;
+        if(mejor) return terminar();   // ya hay algo servible; el error posterior da igual
+        cerrar();
+        rej(new Error(e.code===1 ? 'Permiso de ubicación denegado' : e.code===3 ? 'La ubicación tardó demasiado' : 'No se pudo ubicar'));
+      },
+      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
     );
   });
 }
@@ -4340,20 +4568,44 @@ async function detectarLugar(silencioso){
     ((pendientesDe(a.lugar.categoria).length ? 0 : 1) - (pendientesDe(b.lugar.categoria).length ? 0 : 1))
     || (a.distancia - b.distancia))[0] || null;
 
+  const margen = Math.round(c.accuracy || 0);
+  ultimaPosicion = { lat:c.latitude, lon:c.longitude, margen };
+
+  // Si el margen de error tapa la cuadra entera, cualquier tienda "cerca" es una
+  // casualidad y no un dato. Antes esto no se miraba y la app anunciaba tiendas
+  // en las que no estabas.
+  if(margen > PRECISION_MAXIMA){
+    lugarActual = null;
+    estadoUbicacion = 'Ubicación imprecisa (±' + margen + ' m). Probá junto a una ventana o al aire libre.';
+    renderCompras();
+    if(!silencioso) alert(estadoUbicacion);
+    return;
+  }
+
   const guardadosCerca = [];
   lugares.forEach(l=>{
     const d = distanciaM(c.latitude, c.longitude, l.lat, l.lon);
     if(d <= (l.radio || 120)) guardadosCerca.push({ lugar:l, distancia:Math.round(d), guardado:true });
   });
-  let mejor = elegir(guardadosCerca);
+  let mejor = elegir(guardadosCerca), vecina = null;
   if(!mejor){
     try {
+      // Se piden las de 150 m para poder ofrecer el boton de guardar y decirte cual
+      // tenes al lado, pero solo cuenta como "estas aca" lo que cae dentro de
+      // RADIO_ESTOY: una tienda a 150 m no es donde estas parado. Y como estas no las
+      // confirmaste vos, ademas se exige un fix bueno.
       const cerca = await tiendasCerca(c.latitude, c.longitude, 150);
-      mejor = elegir(cerca.map(t=>({ lugar:t, distancia:t.distancia, guardado:false })));
+      if(margen <= PRECISION_BUENA){
+        mejor = elegir(cerca.filter(t => t.distancia <= RADIO_ESTOY)
+                            .map(t=>({ lugar:t, distancia:t.distancia, guardado:false })));
+      }
+      if(!mejor && cerca.length) vecina = cerca[0];
     } catch(e){ console.log('Overpass:', e.message); }
   }
-  ultimaPosicion = { lat:c.latitude, lon:c.longitude };
-  estadoUbicacion = mejor ? '' : 'No parece que estés en una tienda';
+  estadoUbicacion = mejor ? ''
+    : vecina ? 'No estás en una tienda. La más cercana es ' + vecina.nombre + ', a ' + vecina.distancia + ' m.'
+    : margen > PRECISION_BUENA ? 'No estás en ninguna tienda guardada (±' + margen + ' m)'
+    : 'No parece que estés en una tienda';
   const cambio = !lugarActual || !mejor || lugarActual.lugar.nombre !== mejor.lugar.nombre;
   lugarActual = mejor;
   renderCompras();
@@ -4399,7 +4651,7 @@ function bannerHTML(){
       <div style="font-size:22px;">${cat.emoji}</div>
       <div class="cmp-banner-txt">
         <div class="cmp-banner-tit">${escHtmlAttr(l.nombre)}</div>
-        <div class="cmp-banner-sub">${faltan.length ? 'Te faltan '+faltan.length+' cosa'+(faltan.length===1?'':'s')+' de acá' : 'No falta nada de acá'} · a ${lugarActual.distancia} m</div>
+        <div class="cmp-banner-sub">${faltan.length ? 'Te faltan '+faltan.length+' cosa'+(faltan.length===1?'':'s')+' de acá' : 'No falta nada de acá'} · a ${lugarActual.distancia} m${ultimaPosicion && ultimaPosicion.margen ? ' (±'+ultimaPosicion.margen+' m)' : ''}</div>
       </div>
       ${guardar}
       <button class="sub-btn" style="font-size:16px;" onclick="detectarLugar(false)" title="Volver a mirar">🔄</button>
@@ -4634,6 +4886,10 @@ async function guardarLugar(){
   const nombre = document.getElementById('lug-nombre').value.trim();
   if(!nombre){ alert('Falta el nombre.'); return; }
   if(!ultimaPosicion){ alert('No tengo tu ubicación.'); return; }
+  // Una tienda guardada con una posicion mala queda mal para siempre: dispara avisos
+  // desde donde no es, y no hay como notarlo despues.
+  if(ultimaPosicion.margen > PRECISION_BUENA &&
+     !confirm('Tu ubicación tiene ±' + ultimaPosicion.margen + ' m de error. La tienda puede quedar guardada en el lugar equivocado.\n\n¿Guardar igual?')) return;
   const fila = {
     nombre,
     categoria: document.getElementById('lug-categoria').value,
@@ -4660,10 +4916,13 @@ async function delLugar(id){
 loadCompras();
 loadLugares();
 loadEstudio();
+cargarUsoModulos();
+ordenarModulosPorUso();
 loadPuntosRepaso();
 restaurarEstudioTimer();
 loadTiempo();
 restaurarTiempoTimer();
+restaurarViajeTimer();
 restaurarGymTimer();
 
 // Mientras haya un cronómetro corriendo, la grilla se refresca sola para que el bloque en curso
@@ -4673,8 +4932,15 @@ setInterval(()=>{ if(hayCronoEnCurso()) refrescarGrid(); }, 30000);
 // Un PWA no puede vigilar la ubicacion en segundo plano, asi que el momento util
 // para mirar es cuando volves a la app: ahi se revisa si entraste a una tienda.
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible' && openMenus.has('compras')) detectarLugar(true);
+  if(document.visibilityState==='visible'){
+    reanudarContadoresModulos();
+    if(openMenus.has('compras')) detectarLugar(true);
+  } else {
+    pausarContadoresModulos();
+  }
 });
+// visibilitychange no siempre llega si el sistema mata la app de golpe.
+window.addEventListener('pagehide', pausarContadoresModulos);
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
