@@ -385,6 +385,10 @@
     .legend-chip { cursor: pointer; padding: 3px 7px 3px 3px; border-radius: 20px; border: 1.5px solid transparent; transition: all 0.15s; }
     .legend-chip:active { transform: scale(0.96); }
 
+    .cmp-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cmp-chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 7px 11px; font-size: 12px; color: rgba(255,255,255,0.55); font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .cmp-chip.on { background: rgba(0,150,136,0.22); border-color: rgba(0,150,136,0.55); color: #7FD8CE; font-weight: 600; }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -944,7 +948,7 @@
     <h2>✏️ Agregar a la lista</h2>
     <div class="form-row"><label>Qué</label><input type="text" id="cmp-nombre" placeholder="Ej: leche entera"></div>
     <div class="form-row"><label>Cantidad (opcional)</label><input type="text" id="cmp-cantidad" placeholder="Ej: 2 litros"></div>
-    <div class="form-row"><label>Dónde se compra</label><select id="cmp-categoria"></select></div>
+    <div class="form-row"><label>Dónde se consigue (podés marcar varias)</label><div class="cmp-cats" id="cmp-categoria"></div></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-green" style="background:#009688;" onclick="guardarCompraManual()">Guardar</button>
@@ -4322,6 +4326,20 @@ const CATEGORIAS_COMPRA = [
 const CUBRE_COMPRA = { supermercado: ['supermercado','panaderia','carniceria','verduleria'] };
 function catCompra(id){ return CATEGORIAS_COMPRA.find(c=>c.id===id) || CATEGORIAS_COMPRA[CATEGORIAS_COMPRA.length-1]; }
 function categoriasQueCubre(id){ return CUBRE_COMPRA[id] || [id]; }
+// Hay cosas que se consiguen en mas de un lado: el pan brioche en la panaderia y en el
+// super, el pegamento instantaneo en la ferreteria y en el super. Por eso un articulo
+// guarda una lista de tiendas y no una sola. 'categoria' sigue existiendo como la
+// principal y es lo que se usa si la lista todavia no esta cargada en la base.
+function categoriasDe(item){
+  const lista = Array.isArray(item.categorias) ? item.categorias.filter(Boolean) : [];
+  return lista.length ? lista : (item.categoria ? [item.categoria] : []);
+}
+function chipsCategoriasHTML(seleccionadas, alTocar){
+  return CATEGORIAS_COMPRA.map(c=>{
+    const puesta = seleccionadas.indexOf(c.id) !== -1;
+    return `<button type="button" class="cmp-chip${puesta?' on':''}" onclick="${alTocar(c.id)}">${c.emoji} ${c.nombre}</button>`;
+  }).join('');
+}
 
 let comprasItems = [];
 let lugares = [];
@@ -4353,7 +4371,14 @@ function errorTablaCompras(error, tabla){
 }
 async function agregarCompras(filas){
   if(!filas.length) return true;
-  const {data,error} = await sb.from('compras').insert(filas).select();
+  let {data,error} = await sb.from('compras').insert(filas).select();
+  // Si la columna 'categorias' todavia no existe, se reintenta sin ella: perder una nota
+  // de voz recien dictada por una migracion pendiente seria el peor momento para fallar.
+  if(error && /categorias/i.test((error.message||'') + (error.details||''))){
+    const sinLista = filas.map(f=>{ const g = Object.assign({}, f); delete g.categorias; return g; });
+    ({data,error} = await sb.from('compras').insert(sinLista).select());
+    if(!error) alert('Guardado, pero con una sola tienda por artículo.\n\nPara que un artículo pueda estar en varias, corré en Supabase:\n\nalter table compras add column if not exists categorias text[];');
+  }
   if(error){ alert(errorTablaCompras(error, 'compras')); console.log('compras insert:', error.code, error.message); return false; }
   comprasItems.push(...(data||[]));
   renderCompras();
@@ -4543,7 +4568,7 @@ async function detectarLugar(silencioso){
 let ultimaPosicion = null;
 function pendientesDe(categoriaLugar){
   const cubre = categoriasQueCubre(categoriaLugar);
-  return comprasItems.filter(i=>!i.comprado && cubre.includes(i.categoria));
+  return comprasItems.filter(i=>!i.comprado && categoriasDe(i).some(c=>cubre.includes(c)));
 }
 // Un aviso por tienda por día: entrar y salir del súper no debe llenar de notificaciones.
 async function avisarPendientes(lugar){
@@ -4685,7 +4710,7 @@ function renderComprasDesktop(){
     ? pendientes.slice(0,6).map(i=>`<div class="cmp-row" style="padding:7px 0;">
         <button class="cmp-check ${i.comprado?'on':''}" onclick="toggleComprado(${i.id})"></button>
         <span class="cmp-nom">${escHtmlAttr(i.nombre)}</span>
-        <span class="cmp-cant">${catCompra(i.categoria).emoji}</span></div>`).join('')
+        <span class="cmp-cant">${categoriasDe(i).map(c=>catCompra(c).emoji).join('')}</span></div>`).join('')
     : '<div class="desktop-empty">No falta nada.</div>';
 }
 
@@ -4782,11 +4807,18 @@ function renderPreviewVoz(){
   const cont = document.getElementById('voz-preview');
   cont.innerHTML = itemsInterpretados.map((x,n)=>`<div class="cmp-prev">
     <span style="flex:1;min-width:0;font-size:14px;color:#fff;">${escHtmlAttr(x.nombre)}${x.cantidad?` <span style="opacity:0.5;font-size:12px;">${escHtmlAttr(x.cantidad)}</span>`:''}</span>
-    <select onchange="itemsInterpretados[${n}].categoria=this.value;renderPreviewVoz();">
-      ${CATEGORIAS_COMPRA.map(c=>`<option value="${c.id}" ${c.id===x.categoria?'selected':''}>${c.emoji} ${c.nombre}</option>`).join('')}
-    </select>
     <button class="delete-btn" onclick="itemsInterpretados.splice(${n},1);renderPreviewVoz();" aria-label="Quitar">🗑</button>
+    <div class="cmp-cats" style="flex-basis:100%;margin-top:6px;">${chipsCategoriasHTML(categoriasDe(x), id=>`toggleCatVoz(${n},'${id}')`)}</div>
   </div>`).join('') || '<div class="cmp-vacio">No queda nada para agregar.</div>';
+}
+function toggleCatVoz(n, id){
+  const it = itemsInterpretados[n]; if(!it) return;
+  const lista = categoriasDe(it).slice();
+  const i = lista.indexOf(id);
+  if(i === -1) lista.push(id); else lista.splice(i, 1);
+  it.categorias = lista;
+  it.categoria = lista[0] || '';
+  renderPreviewVoz();
 }
 function volverADictar(){
   document.getElementById('voz-paso-revisar').style.display = 'none';
@@ -4794,8 +4826,11 @@ function volverADictar(){
 }
 async function guardarInterpretado(){
   if(!itemsInterpretados.length){ closeModals(); return; }
+  const sinTienda = itemsInterpretados.filter(x=>!categoriasDe(x).length).map(x=>x.nombre);
+  if(sinTienda.length){ alert('Falta marcar dónde se consigue: ' + sinTienda.join(', ')); return; }
   const ok = await agregarCompras(itemsInterpretados.map(x=>({
-    nombre:x.nombre, cantidad:x.cantidad||null, categoria:x.categoria, nota:x.nota||null
+    nombre:x.nombre, cantidad:x.cantidad||null,
+    categoria:categoriasDe(x)[0], categorias:categoriasDe(x), nota:x.nota||null
   })));
   if(ok) closeModals();
 }
@@ -4804,20 +4839,32 @@ async function guardarInterpretado(){
 function opcionesCategoriaHTML(sel){
   return CATEGORIAS_COMPRA.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${c.emoji} ${c.nombre}</option>`).join('');
 }
+let catsManual = [];
+function renderChipsCompraModal(){
+  const el = document.getElementById('cmp-categoria');
+  if(el) el.innerHTML = chipsCategoriasHTML(catsManual, id=>`toggleCatManual('${id}')`);
+}
+function toggleCatManual(id){
+  const i = catsManual.indexOf(id);
+  if(i === -1) catsManual.push(id); else catsManual.splice(i, 1);
+  renderChipsCompraModal();
+}
 function openCompraModal(){
   document.getElementById('cmp-nombre').value = '';
   document.getElementById('cmp-cantidad').value = '';
-  const sel = lugarActual ? lugarActual.lugar.categoria : 'supermercado';
-  document.getElementById('cmp-categoria').innerHTML = opcionesCategoriaHTML(sel);
+  catsManual = [ lugarActual ? lugarActual.lugar.categoria : 'supermercado' ];
+  renderChipsCompraModal();
   document.getElementById('modal-compra').classList.add('open');
 }
 async function guardarCompraManual(){
   const nombre = document.getElementById('cmp-nombre').value.trim();
   if(!nombre){ alert('Falta el nombre.'); return; }
+  if(!catsManual.length){ alert('Marcá al menos una tienda donde se consiga.'); return; }
   const ok = await agregarCompras([{
     nombre,
     cantidad: document.getElementById('cmp-cantidad').value.trim() || null,
-    categoria: document.getElementById('cmp-categoria').value,
+    categoria: catsManual[0],
+    categorias: catsManual.slice(),
     nota: null,
   }]);
   if(ok) closeModals();
