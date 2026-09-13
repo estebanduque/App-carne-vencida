@@ -155,6 +155,48 @@
   .tab-punto { width: 4px; height: 4px; border-radius: 50%; background: #E05A14;
                position: absolute; margin: -2px 0 0 20px; }
 
+  /* ---- Estudio ---- */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px; }
+  .chip {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 999px; padding: 7px 12px; font-size: 12px; color: rgba(255,255,255,0.6);
+    font-family: inherit; cursor: pointer; white-space: nowrap;
+  }
+  .barra { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px;
+           overflow: hidden; display: flex; margin-top: 7px; }
+  .barra > div { height: 100%; }
+  .bloque {
+    margin: 0 16px 8px; background: rgba(255,255,255,0.04);
+    border-radius: 14px; overflow: hidden;
+  }
+  .bloque-cab {
+    width: 100%; background: none; border: none; font-family: inherit; color: #fff;
+    padding: 13px 15px; display: flex; align-items: center; gap: 10px;
+    cursor: pointer; text-align: left;
+  }
+  .bloque-cab:active { background: rgba(255,255,255,0.04); }
+  .bloque-n { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+  .bloque-h { font-size: 11.5px; color: rgba(255,255,255,0.45); white-space: nowrap; }
+  .sub {
+    display: flex; align-items: center; gap: 9px; padding: 11px 15px;
+    border-top: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+  }
+  .sub:active { background: rgba(255,255,255,0.04); }
+  .sub-n { flex: 1; min-width: 0; font-size: 13px; }
+  .sub-h { font-size: 11.5px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+  .mini {
+    width: 29px; height: 29px; flex-shrink: 0; border: none; border-radius: 9px;
+    background: rgba(255,255,255,0.08); color: #fff; font-size: 12px;
+    font-family: inherit; cursor: pointer;
+  }
+  .mini:active { background: rgba(255,255,255,0.18); }
+  .ruleta {
+    margin: 0 16px; background: rgba(214,71,143,0.1); border: 1px solid rgba(214,71,143,0.28);
+    border-radius: 18px; padding: 16px; text-align: center;
+  }
+  .ruleta-pto { font-size: 16px; font-weight: 600; line-height: 1.4; margin: 10px 0 4px; }
+  .listo { color: #5DCAA5; }
+
   .nota {
     margin: 18px 16px 0; padding: 13px 15px; border-radius: 13px;
     background: rgba(224,90,20,0.1); border: 1px solid rgba(224,90,20,0.25);
@@ -186,7 +228,9 @@ const MODULOS = {
 // La barra de abajo sale de cuanto tiempo pasa abierto cada modulo: es exactamente
 // el dato que ya mide 'uso_modulos' en la app. Aca va fijo, pero en la version real
 // se ordenaria solo, igual que hoy se ordenan los menus.
-const BARRA = ['inicio', 'tiempo', 'compras', 'gym', 'mas'];
+// Estudio ocupa el lugar que tenia Gym porque es lo que mas estas usando ahora.
+// En la version real este orden no se escribe a mano: sale de uso_modulos.
+const BARRA = ['inicio', 'estudio', 'tiempo', 'compras', 'mas'];
 
 // ---- Datos de mentira, solo para que las pantallas tengan algo adentro ----
 const DATOS = {
@@ -227,6 +271,137 @@ const DATOS = {
     { dia:6, h0:10, h1:12, color:'92,107,192' },
   ],
 };
+
+// ---- Mi Estudio ----
+// Los cuatro primeros son los tuyos de verdad, con sus colores y metas semanales.
+// Los cuatro de abajo son inventados, en el mismo espiritu del CRFPA, para ver como
+// se comporta la pantalla cuando la lista crece: hoy son 4 temas, con 8 ya no entran
+// de un vistazo y eso es justamente lo que hay que mirar.
+// 'hecho' y 'meta' van en horas. Un subtema que paso el 90% de su meta entra al sorteo.
+const TEMAS_EST = [
+  { n:'Déontologie', color:'#EB5757', metaSem:10.5, hechoSem:9.1, bloques:[
+    { n:'1. Principes essentiels, serment et éthique', subs:[
+      { n:'Principes du serment (5 vertus)', hecho:7.8, meta:7.8, puntos:['Dignité et conscience','Indépendance','Probité et humanité'] },
+      { n:'Principes du RIN (13 devoirs)', hecho:8.4, meta:8.9, puntos:['Délicatesse et modération','Confraternité','Désintéressement'] },
+      { n:'Robe, vie privée & morale', hecho:3.1, meta:6.7, puntos:[] } ]},
+    { n:'2. Secret professionnel et confidentialité', subs:[
+      { n:'Portée générale & ordre public', hecho:5.6, meta:5.6, puntos:['Caractère absolu','Pas de levée par le client'] },
+      { n:'Correspondances entre avocats', hecho:6.9, meta:6.7, puntos:[] },
+      { n:'Exceptions, perquisitions & TRACFIN', hecho:2.0, meta:5.6, puntos:[] } ]},
+    { n:'3. Honoraires, CARPA et maniement de fonds', subs:[
+      { n:"Fixation & convention d'honoraires", hecho:6.7, meta:6.7, puntos:['Interdiction du pacte de quota litis','Honoraire de résultat complémentaire'] },
+      { n:'CARPA & maniement de fonds tiers', hecho:1.2, meta:5.6, puntos:[] } ]} ]},
+
+  { n:'Droit civil', color:'#F2C94C', metaSem:9, hechoSem:6.4, bloques:[
+    { n:'1. Obligations et contrats', subs:[
+      { n:'Formation du contrat', hecho:9.2, meta:9.0, puntos:['Offre et acceptation','Vices du consentement','Contenu licite et certain'] },
+      { n:'Inexécution et remèdes', hecho:7.4, meta:8.0, puntos:[] },
+      { n:'Responsabilité extracontractuelle', hecho:4.1, meta:8.5, puntos:[] } ]},
+    { n:'2. Régimes matrimoniaux et successions', subs:[
+      { n:'Communauté légale', hecho:5.5, meta:6.0, puntos:[] },
+      { n:'Libéralités et réserve héréditaire', hecho:1.0, meta:6.5, puntos:[] } ]} ]},
+
+  { n:'Droit commercial', color:'#4C8DFF', metaSem:12.5, hechoSem:11.8, bloques:[
+    { n:'1. Sociétés', subs:[
+      { n:'SARL et SAS : constitution', hecho:10.1, meta:9.5, puntos:['Apports et capital','Statuts et clauses','Dirigeants et pouvoirs'] },
+      { n:'Responsabilité des dirigeants', hecho:6.2, meta:7.0, puntos:[] } ]},
+    { n:'2. Entreprises en difficulté', subs:[
+      { n:'Sauvegarde et redressement', hecho:8.3, meta:8.5, puntos:['Période suspecte','Ouverture de la procédure'] },
+      { n:'Liquidation judiciaire', hecho:2.4, meta:7.0, puntos:[] } ]} ]},
+
+  { n:'Procédures', color:'#27AE60', metaSem:8, hechoSem:4.2, bloques:[
+    { n:'1. Procédure civile', subs:[
+      { n:'Compétence et saisine', hecho:7.1, meta:7.0, puntos:['Compétence matérielle','Compétence territoriale'] },
+      { n:'Voies de recours', hecho:3.3, meta:7.5, puntos:[] } ]},
+    { n:'2. Voies d\u2019exécution', subs:[
+      { n:'Saisies mobilières', hecho:1.5, meta:6.0, puntos:[] } ]} ]},
+
+  // ---- de acá para abajo, inventados ----
+  { n:'Droit du travail', color:'#BB6BD9', metaSem:7, hechoSem:5.9, bloques:[
+    { n:'1. Relation individuelle', subs:[
+      { n:'Formation et exécution du contrat', hecho:6.8, meta:7.0, puntos:['Période d\u2019essai','Clause de non-concurrence'] },
+      { n:'Rupture : licenciement et prise d\u2019acte', hecho:7.9, meta:8.0, puntos:['Cause réelle et sérieuse','Procédure de licenciement','Barème Macron'] },
+      { n:'Temps de travail et congés', hecho:2.2, meta:5.5, puntos:[] } ]},
+    { n:'2. Relations collectives', subs:[
+      { n:'Représentation du personnel (CSE)', hecho:3.4, meta:6.0, puntos:[] },
+      { n:'Négociation collective et grève', hecho:0.8, meta:5.5, puntos:[] } ]} ]},
+
+  { n:'Droit pénal', color:'#F2994A', metaSem:6, hechoSem:3.1, bloques:[
+    { n:'1. Droit pénal général', subs:[
+      { n:'Élément légal et principe de légalité', hecho:5.6, meta:5.5, puntos:['Interprétation stricte','Application dans le temps'] },
+      { n:'Élément moral : intention et faute', hecho:4.0, meta:6.0, puntos:[] },
+      { n:'Tentative et complicité', hecho:1.1, meta:5.0, puntos:[] } ]},
+    { n:'2. Procédure pénale', subs:[
+      { n:'Garde à vue et droits de la défense', hecho:6.1, meta:6.0, puntos:['Notification des droits','Assistance de l\u2019avocat','Nullités'] },
+      { n:'Instruction et détention provisoire', hecho:2.5, meta:6.5, puntos:[] } ]} ]},
+
+  { n:'Note de synthèse', color:'#56CCF2', metaSem:5, hechoSem:4.8, bloques:[
+    { n:'1. Méthode', subs:[
+      { n:'Lecture rapide et tri du dossier', hecho:5.2, meta:5.0, puntos:['Repérer les doublons','Hiérarchiser les sources'] },
+      { n:'Construction du plan en deux parties', hecho:5.8, meta:5.5, puntos:['Annonce de plan','Équilibre des parties'] },
+      { n:'Gestion du temps en épreuve', hecho:2.0, meta:4.0, puntos:[] } ]},
+    { n:'2. Entraînement', subs:[
+      { n:'Annales corrigées', hecho:9.5, meta:8.0, puntos:[] } ]} ]},
+
+  { n:'Grand oral', color:'#E88CC0', metaSem:6.5, hechoSem:2.3, bloques:[
+    { n:'1. Libertés et droits fondamentaux', subs:[
+      { n:'Sources et contrôle de conventionnalité', hecho:4.9, meta:6.0, puntos:[] },
+      { n:'Liberté d\u2019expression', hecho:5.5, meta:5.5, puntos:['Limites et abus','Presse et diffamation'] },
+      { n:'Vie privée et données personnelles', hecho:1.8, meta:5.5, puntos:[] } ]},
+    { n:'2. Exercice oral', subs:[
+      { n:'Exposé de 15 minutes', hecho:2.0, meta:5.0, puntos:[] },
+      { n:'Entretien avec le jury', hecho:0.5, meta:4.5, puntos:[] } ]} ]},
+];
+
+// La meta es 8 h por dia habil; la ventaja es lo estudiado menos esa meta.
+// Verde si vas adelantado, ambar si vas debiendo. Es tal cual la regla de tu app.
+const VENTAJA_SEM = 3.6, VENTAJA_GEN = -12.4;
+
+let estTema = null, estSub = null, estSorteado = null;
+const estBloques = new Set([0]);
+
+const horasTema  = t => t.bloques.reduce((a,b)=>a + b.subs.reduce((x,s)=>x+s.hecho,0), 0);
+const metaTema   = t => t.bloques.reduce((a,b)=>a + b.subs.reduce((x,s)=>x+s.meta,0), 0);
+const horasBloque= b => b.subs.reduce((a,s)=>a+s.hecho,0);
+const metaBloque = b => b.subs.reduce((a,s)=>a+s.meta,0);
+const hs = h => { const t = Math.round(h*60); const H = Math.floor(t/60), M = t%60;
+                  return H ? (M ? H+'h '+String(M).padStart(2,'0') : H+'h') : M+'min'; };
+const cumplido = s => s.meta > 0 && s.hecho / s.meta >= 0.9;
+
+// Hasta la meta la barra se llena con el color del tema; lo que sobra se pinta aparte,
+// para que el exceso se vea en vez de perderse en un 100% plano. Igual que en la app.
+function barra(hecho, meta, color){
+  if(!(meta > 0)) return '';
+  if(hecho <= meta) return `<div class="barra"><div style="width:${(hecho/meta*100).toFixed(1)}%;background:${color};"></div></div>`;
+  const pct = meta / hecho * 100;
+  return `<div class="barra"><div style="width:${pct.toFixed(1)}%;background:${color};"></div>
+    <div style="width:${(100-pct).toFixed(1)}%;background:#5DCAA5;"></div></div>`;
+}
+function exceso(hecho, meta){
+  return (meta > 0 && hecho > meta) ? ` <span class="listo">+${hs(hecho-meta)}</span>` : '';
+}
+// Solo entra al sorteo lo que paso el 90%. Si el subtema tiene puntos de repaso
+// cargados, se sortea el punto concreto; si no, el subtema entero.
+function sorteables(){
+  const out = [];
+  TEMAS_EST.forEach(t=>t.bloques.forEach(b=>b.subs.forEach(s=>{
+    if(!cumplido(s)) return;
+    if(s.puntos.length) s.puntos.forEach(p=>out.push({t,b,s,punto:p}));
+    else out.push({t,b,s,punto:null});
+  })));
+  return out;
+}
+function sortear(){
+  const c = sorteables();
+  if(!c.length) return;
+  const clave = x => x.t.n+'|'+x.s.n+'|'+(x.punto||'');
+  const pool = c.length > 1 && estSorteado ? c.filter(x=>clave(x)!==clave(estSorteado)) : c;
+  estSorteado = pool[Math.floor(Math.random()*pool.length)];
+  pintar();
+}
+function verTema(n){ estTema = TEMAS_EST.find(t=>t.n===n); estBloques.clear(); estBloques.add(0); ir('estudio/tema'); }
+function verSub(ti, bi, si){ estTema = TEMAS_EST[ti]; estSub = estTema.bloques[bi].subs[si]; ir('estudio/subtema'); }
+function toggleBloque(i){ estBloques.has(i) ? estBloques.delete(i) : estBloques.add(i); pintar(); }
 
 // ---- Piezas sueltas ----
 const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -280,6 +455,12 @@ const PANTALLAS = {
 
       <div class="seccion">Lo que te reclama atención</div>
       <div class="tarjetas">
+        <button class="tarjeta" onclick="ir('estudio')">
+          <div class="icono" style="${fondo(MODULOS.estudio.color)}">📚</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">Vas +3.6 h esta semana</div>
+            <div class="tarjeta-sub">pero −12.4 h en general · 9 listos para repasar</div></div>
+          <span class="pastilla" style="background:rgba(93,202,165,0.18);color:#5DCAA5;">al día</span>
+        </button>
         <button class="tarjeta" onclick="ir('carnes')">
           <div class="icono" style="${fondo(MODULOS.carnes.color)}">🥩</div>
           <div class="tarjeta-txt"><div class="tarjeta-tit">El pollo vence mañana</div>
@@ -444,7 +625,7 @@ const PANTALLAS = {
   },
 
   gym(){
-    return cabecera('Mi Gym', 'rutinas y ejercicios', 'inicio', '💪', MODULOS.gym.color) + `
+    return cabecera('Mi Gym', 'rutinas y ejercicios', 'mas', '💪', MODULOS.gym.color) + `
       <div class="cifras">
         <div class="cifra"><div class="cifra-num">0</div><div class="cifra-lbl">días sin ir</div></div>
         <div class="cifra"><div class="cifra-num" style="color:#E5883F;">3</div>
@@ -522,17 +703,242 @@ const PANTALLAS = {
   },
 
   estudio(){
-    const temas = [['Francés','#D6478F','12h 30','3 subtemas'],
-                   ['Historia','#8E24AA','6h 10','2 subtemas'],
-                   ['Programación','#1E88E5','21h 45','5 subtemas']];
-    return cabecera('Mi Estudio', 'temas y repasos', 'mas', '📚', MODULOS.estudio.color) + `
-      <div class="tarjetas">` + temas.map(([n,c,t,s])=>`
-        <button class="tarjeta" onclick="ir('estudio')">
-          <div class="icono" style="background:${c}33;">📖</div>
-          <div class="tarjeta-txt"><div class="tarjeta-tit">${n}</div>
-            <div class="tarjeta-sub">${t} · ${s}</div></div>
+    const totalH = TEMAS_EST.reduce((a,t)=>a+horasTema(t), 0);
+    const totalM = TEMAS_EST.reduce((a,t)=>a+metaTema(t), 0);
+    const listos = sorteables().length;
+    const vs = VENTAJA_SEM, vg = VENTAJA_GEN;
+    const col = v => v >= 0 ? '#5DCAA5' : '#FAC775';
+    const sig = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+    return cabecera('Mi Estudio', 'horas por tema', 'inicio', '📚', MODULOS.estudio.color) + `
+      <div class="cifras">
+        <div class="cifra"><div class="cifra-num" style="color:#F07AB0;">47.6</div>
+          <div class="cifra-lbl">h esta semana</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:${col(vs)};">${sig(vs)}</div>
+          <div class="cifra-lbl">ventaja esta semana</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:${col(vg)};">${sig(vg)}</div>
+          <div class="cifra-lbl">ventaja general</div></div>
+      </div>
+      <div style="text-align:center;font-size:13.5px;font-weight:600;color:#F07AB0;padding:14px 20px 0;">
+        ${hs(totalH)} de ${hs(totalM)} · ${Math.round(totalH/totalM*100)}% del plan
+      </div>
+
+      <div class="seccion">Cronómetro</div>
+      <div class="crono" style="background:rgba(214,71,143,0.1);border-color:rgba(214,71,143,0.28);">
+        <div class="crono-num">00:00:00</div>
+        <div class="crono-que">Elegí un tema para arrancar</div>
+        <div class="chips" style="padding:14px 0 0;justify-content:center;">
+          ${TEMAS_EST.slice(0,4).map(t=>`<button class="chip">${t.n}</button>`).join('')}
+          <button class="chip" onclick="ir('estudio/temas')">···</button>
+        </div>
+        <div class="crono-btns">
+          <button class="btn" style="background:#D6478F;">▶ Iniciar</button>
+          <button class="btn">■ Terminar</button>
+          <button class="btn" style="flex:0 0 46px;">↺</button>
+        </div>
+      </div>
+
+      <div class="seccion">Subtema al azar</div>
+      <button class="tarjeta" style="margin:0 16px;width:calc(100% - 32px);
+              background:rgba(214,71,143,0.1);border-color:rgba(214,71,143,0.28);"
+              onclick="ir('estudio/ruleta')">
+        <div class="icono" style="background:rgba(214,71,143,0.2);">🎲</div>
+        <div class="tarjeta-txt"><div class="tarjeta-tit">Sortear algo para repasar</div>
+          <div class="tarjeta-sub">${listos} cosas pasaron el 90% y están listas para evaluar</div></div>
+        <span class="tarjeta-flecha">›</span>
+      </button>
+
+      <div class="seccion">Por tema (${TEMAS_EST.length})</div>
+      <div class="tarjetas">` + TEMAS_EST.map(t=>{
+        const h = horasTema(t), m = metaTema(t);
+        const listosT = t.bloques.reduce((a,b)=>a + b.subs.filter(cumplido).length, 0);
+        const subsT = t.bloques.reduce((a,b)=>a + b.subs.length, 0);
+        return `<button class="tarjeta" onclick="verTema('${t.n}')">
+          <div class="icono" style="background:${t.color}33;color:${t.color};font-size:15px;font-weight:700;">
+            ${Math.round(h/m*100)}%</div>
+          <div class="tarjeta-txt">
+            <div class="tarjeta-tit">${t.n}</div>
+            <div class="tarjeta-sub">${hs(h)} de ${hs(m)} · ${listosT}/${subsT} listos ·
+              meta ${t.metaSem} h/sem</div>
+            ${barra(h, m, t.color)}
+          </div>
+          <span class="tarjeta-flecha">›</span>
+        </button>`;
+      }).join('') + `</div>
+      <div style="padding:16px;"><button class="btn" onclick="ir('estudio/registrar')">➕ Registrar a mano</button></div>
+      <div class="nota">Ocho temas no entran en una pantalla sin barrer. Con menús, además,
+        esto vive dentro de un acordeón que ya está dentro de otro. <b>Fijate si acá se te
+        hace más fácil llegar a un subtema concreto</b>, que es lo que hacés todo el día.</div>
+    `;
+  },
+
+  'estudio/temas'(){
+    return cabecera('Todos los temas', 'para el cronómetro', 'estudio') + `
+      <div class="tarjetas">` + TEMAS_EST.map(t=>`
+        <button class="tarjeta" onclick="verTema('${t.n}')">
+          <div class="icono" style="background:${t.color}33;"></div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">${t.n}</div>
+            <div class="tarjeta-sub">meta ${t.metaSem} h por semana · ${hs(t.hechoSem)} esta semana</div></div>
           <span class="tarjeta-flecha">›</span>
         </button>`).join('') + `</div>`;
+  },
+
+  'estudio/tema'(){
+    const t = estTema || TEMAS_EST[0];
+    const ti = TEMAS_EST.indexOf(t);
+    const h = horasTema(t), m = metaTema(t);
+    return cabecera(t.n, `${hs(h)} de ${hs(m)} · meta ${t.metaSem} h/sem`, 'estudio') + `
+      <div style="padding:0 16px 4px;">${barra(h, m, t.color)}</div>
+      <div class="seccion">Bloques</div>` +
+      t.bloques.map((b, bi)=>{
+        const abierto = estBloques.has(bi);
+        const bh = horasBloque(b), bm = metaBloque(b);
+        return `<div class="bloque">
+          <button class="bloque-cab" onclick="toggleBloque(${bi})">
+            <span class="bloque-n">${b.n}</span>
+            <span class="bloque-h">${hs(bh)} / ${hs(bm)}</span>
+            <span style="color:rgba(255,255,255,0.35);transform:rotate(${abierto?180:0}deg);">▾</span>
+          </button>
+          ${abierto ? b.subs.map((sb, si)=>`
+            <div class="sub" onclick="verSub(${ti},${bi},${si})">
+              <div class="sub-n">
+                ${sb.n}${cumplido(sb) ? ' <span class="listo">✓</span>' : ''}
+                ${barra(sb.hecho, sb.meta, t.color)}
+              </div>
+              <span class="sub-h">${hs(sb.hecho)} / ${hs(sb.meta)}${exceso(sb.hecho, sb.meta)}</span>
+              <button class="mini" onclick="event.stopPropagation();" title="Iniciar cronómetro">▶</button>
+              <button class="mini" onclick="event.stopPropagation();ir('estudio/registrar');" title="Registrar aquí">➕</button>
+            </div>`).join('') : ''}
+        </div>`;
+      }).join('') + `
+      <div class="nota">El ✓ marca lo que pasó el 90% y ya puede salir sorteado.
+        La barra verde al final de algunas es <b>el exceso sobre la meta</b>, no un error.</div>`;
+  },
+
+  'estudio/subtema'(){
+    const t = estTema || TEMAS_EST[0];
+    const sb = estSub || t.bloques[0].subs[0];
+    const pct = Math.round(sb.hecho / sb.meta * 100);
+    const ses = [['hoy','1h 20'],['11 de sep','45 min'],['8 de sep','2h 10'],['5 de sep','1h 05']];
+    return cabecera(sb.n, t.n, 'estudio/tema') + `
+      <div class="cifras">
+        <div class="cifra"><div class="cifra-num" style="color:${t.color};">${pct}%</div>
+          <div class="cifra-lbl">de la meta</div></div>
+        <div class="cifra"><div class="cifra-num">${hs(sb.hecho)}</div>
+          <div class="cifra-lbl">estudiado</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:rgba(255,255,255,0.5);">${hs(sb.meta)}</div>
+          <div class="cifra-lbl">meta</div></div>
+      </div>
+      <div style="padding:14px 16px 0;">${barra(sb.hecho, sb.meta, t.color)}</div>
+      <div style="display:flex;gap:9px;padding:16px;">
+        <button class="btn" style="background:${t.color};color:#fff;">▶ Estudiar esto</button>
+        <button class="btn" onclick="ir('estudio/registrar')">➕ Registrar</button>
+      </div>
+
+      <div class="seccion">✂️ Puntos de repaso (${sb.puntos.length})</div>
+      ${sb.puntos.length ? `<div class="filas">` + sb.puntos.map(pt=>`
+        <div class="fila"><span style="color:${t.color};">◆</span>
+          <div class="fila-txt">${pt}</div>
+          <button class="mini" title="Quitar">🗑</button></div>`).join('') + `</div>` : `
+        <div class="vacio">Sin puntos todavía.<br>Partir el subtema en trozos concretos
+          hace que el sorteo sea más específico.</div>`}
+      <div style="padding:14px 16px 0;">
+        <button class="btn" onclick="ir('estudio/puntos')">✂️ Editar los puntos</button>
+      </div>
+
+      <div class="seccion">Sesiones</div>
+      <div class="filas">` + ses.map(([f,d])=>`
+        <div class="fila"><span style="color:rgba(255,255,255,0.35);font-size:12px;">${f}</span>
+          <div class="fila-txt"></div>
+          <span style="color:rgba(255,255,255,0.6);font-size:13px;">${d}</span>
+          <button class="mini" title="Editar">✏️</button></div>`).join('') + `</div>
+      <div class="nota">Esto hoy es <b>un acordeón dentro de un acordeón dentro de otro</b>:
+        tema → subtema → sesiones. Acá cada nivel es una pantalla y el Atrás te devuelve
+        exactamente un paso.</div>`;
+  },
+
+  'estudio/puntos'(){
+    const t = estTema || TEMAS_EST[0];
+    const sb = estSub || t.bloques[0].subs[0];
+    return cabecera('✂️ Puntos de repaso', sb.n, 'estudio/subtema') + `
+      <div class="nota" style="margin-top:0;">Un punto por línea. Son los trozos concretos
+        que el sorteo puede pedirte, en vez del subtema entero.</div>
+      <div style="padding:16px;">
+        <textarea style="width:100%;min-height:170px;padding:13px;font-size:14px;line-height:1.6;
+          border:1px solid rgba(255,255,255,0.15);border-radius:12px;background:rgba(255,255,255,0.06);
+          color:#fff;font-family:inherit;resize:vertical;">${sb.puntos.join('\n')}</textarea>
+        <div style="display:flex;gap:9px;margin-top:12px;">
+          <button class="btn" onclick="ir('estudio/subtema', true)">Cancelar</button>
+          <button class="btn" style="background:#D6478F;" onclick="ir('estudio/subtema', true)">Guardar</button>
+        </div>
+      </div>`;
+  },
+
+  'estudio/ruleta'(){
+    const c = sorteables();
+    const x = estSorteado;
+    let cuerpo;
+    if(!c.length){
+      cuerpo = `<div class="vacio">Ningún subtema pasó el 90% de su meta todavía.</div>`;
+    } else if(!x){
+      cuerpo = `<div class="vacio">Tocá el dado: hay ${c.length} cosas listas para evaluar.</div>`;
+    } else {
+      const pct = Math.round(x.s.hecho / x.s.meta * 100);
+      cuerpo = `<div class="ruleta">
+        <div style="font-size:12px;font-weight:600;color:${x.t.color};">${x.t.n} · ${x.b.n}</div>
+        ${x.punto
+          ? `<div class="ruleta-pto">${x.punto}</div>
+             <div style="font-size:12px;color:rgba(255,255,255,0.4);">de ${x.s.n}</div>`
+          : `<div class="ruleta-pto">${x.s.n}</div>`}
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:8px;">
+          ${hs(x.s.hecho)} de ${hs(x.s.meta)} · ${pct}%</div>
+        <div class="crono-btns">
+          <button class="btn" style="background:${x.t.color};color:#fff;">▶ Repasar</button>
+          <button class="btn" onclick="sortear()">🎲 Otro</button>
+        </div>
+      </div>`;
+    }
+    return cabecera('Subtema al azar', `${c.length} listos para evaluar`, 'estudio') + `
+      <div style="padding:0 16px 16px;">
+        <button class="btn" style="background:#D6478F;" onclick="sortear()"${c.length?'':' disabled'}>
+          🎲 Sortear</button>
+      </div>
+      ${cuerpo}
+      <div class="nota">Solo entra lo que pasó el <b>90% de su meta</b>: no tiene sentido
+        autoevaluarte de algo que todavía no estudiaste. Si el subtema tiene puntos cargados,
+        te sortea un punto concreto; si no, el subtema entero.</div>`;
+  },
+
+  'estudio/registrar'(){
+    return cabecera('Registrar a mano', 'una sesión ya hecha', 'estudio') + `
+      <div style="padding:6px 16px 0;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:8px;">Tema</div>
+      </div>
+      <div class="chips">${TEMAS_EST.map((t,i)=>`<button class="chip"
+        style="${i===0?`background:${t.color}33;border-color:${t.color};color:#fff;`:''}">${t.n}</button>`).join('')}</div>
+      <div style="padding:18px 16px 0;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:8px;">Subtema</div>
+        <input placeholder="Ej: Garde à vue et droits de la défense"
+          style="width:100%;padding:12px 14px;font-size:14px;border:1px solid rgba(255,255,255,0.15);
+          border-radius:12px;background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;">
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <div style="flex:1;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:8px;">Horas</div>
+            <input type="number" placeholder="1" style="width:100%;padding:12px 14px;font-size:14px;
+              border:1px solid rgba(255,255,255,0.15);border-radius:12px;
+              background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;"></div>
+          <div style="flex:1;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:8px;">Minutos</div>
+            <input type="number" placeholder="30" style="width:100%;padding:12px 14px;font-size:14px;
+              border:1px solid rgba(255,255,255,0.15);border-radius:12px;
+              background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;"></div>
+        </div>
+        <div style="display:flex;gap:9px;margin-top:18px;">
+          <button class="btn" onclick="ir('estudio', true)">Cancelar</button>
+          <button class="btn" style="background:#D6478F;" onclick="ir('estudio', true)">Guardar</button>
+        </div>
+      </div>
+      <div class="nota">Acá va una diferencia de fondo: hoy esto es una <b>ventana emergente</b>.
+        Como pantalla, el Atrás del teléfono la cierra sola y no tapa lo que estabas viendo.</div>`;
   },
 
   ropa(){
@@ -545,7 +951,7 @@ const PANTALLAS = {
     return cabecera('Más', 'el resto de los módulos', 'inicio') + `
       <div class="tarjetas">
         ${tarjetaModulo('carnes', 'El pollo vence mañana')}
-        ${tarjetaModulo('estudio', '40h 25 en 3 temas')}
+        ${tarjetaModulo('gym', 'Fuiste hoy · 3 veces esta semana')}
         ${tarjetaModulo('lentes', 'Cambiá en 6 días')}
         ${tarjetaModulo('ropa')}
       </div>
@@ -578,12 +984,13 @@ function pintar(){
 function pintarTabs(ruta){
   const raiz = ruta.split('/')[0];
   // 'Más' se queda encendido mientras estés en cualquiera de los módulos que contiene.
-  const dentroDeMas = ['carnes','estudio','lentes','ropa'].includes(raiz);
+  const dentroDeMas = ['carnes','gym','lentes','ropa'].includes(raiz);
   document.getElementById('tabs').innerHTML = BARRA.map(t=>{
     const m = MODULOS[t];
     const ico = t === 'inicio' ? '🏠' : t === 'mas' ? '⋯' : m.ico;
     const lbl = t === 'inicio' ? 'Hoy' : t === 'mas' ? 'Más'
-              : t === 'tiempo' ? 'Tiempo' : t === 'compras' ? 'Compras' : 'Gym';
+              : t === 'tiempo' ? 'Tiempo' : t === 'compras' ? 'Compras'
+              : t === 'estudio' ? 'Estudio' : 'Gym';
     const on = (t === raiz) || (t === 'mas' && dentroDeMas);
     const aviso = t === 'compras' ? '<i class="tab-punto"></i>' : '';
     return `<button class="tab${on ? ' on' : ''}" onclick="ir('${t}')">
