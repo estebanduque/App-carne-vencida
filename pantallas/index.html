@@ -228,9 +228,87 @@ const MODULOS = {
 // La barra de abajo sale de cuanto tiempo pasa abierto cada modulo: es exactamente
 // el dato que ya mide 'uso_modulos' en la app. Aca va fijo, pero en la version real
 // se ordenaria solo, igual que hoy se ordenan los menus.
-// Estudio ocupa el lugar que tenia Gym porque es lo que mas estas usando ahora.
-// En la version real este orden no se escribe a mano: sale de uso_modulos.
-const BARRA = ['inicio', 'estudio', 'tiempo', 'compras', 'mas'];
+// Minutos que pasaste dentro de cada modulo. En la app de verdad esto es uso_modulos,
+// que ya lleva la cuenta sola: aca va inventado para poder mostrar el mecanismo.
+const USO = { compras: 420, gym: 265, carnes: 150, lentes: 40, ropa: 25 };
+const OTROS = ['compras', 'gym', 'carnes', 'lentes', 'ropa'];
+// Hoy, Tiempo y Estudio son fijos. El cuarto lugar se lo gana el mas usado de los
+// demas, y el resto cae en Mas. Nadie elige esto a mano: cambia solo con el uso.
+const POPULAR = OTROS.slice().sort((a, b) => USO[b] - USO[a])[0];
+const BARRA = ['inicio', 'tiempo', 'estudio', POPULAR, 'mas'];
+const EN_MAS = OTROS.filter(m => m !== POPULAR);
+const CORTO = { inicio:'Hoy', tiempo:'Tiempo', estudio:'Estudio', compras:'Compras',
+                gym:'Gym', carnes:'Carnes', lentes:'Lentes', ropa:'Ropa', mas:'Más' };
+// Un modulo que esta en la barra vuelve a Hoy; uno que vive en Mas, vuelve a Mas.
+const volverDe = m => BARRA.includes(m) ? 'inicio' : 'mas';
+
+// ---- El cronometro ----
+// Regla: no podes estar haciendo dos cosas a la vez, asi que arrancar algo nuevo
+// reemplaza lo que estaba corriendo. La unica excepcion es un viaje en tren, bus o
+// avion: el viaje te ocupa el cuerpo pero no la cabeza, y adentro seguis leyendo,
+// trabajando o estudiando. Por eso el viaje corre aparte y en paralelo.
+let crono = { modulo:'tiempo', etiqueta:'Trabajo › Oficina', color:'#757575', seg: 2467 };
+let viaje = null;
+const MEDIOS = ['Tren', 'Bus', 'Avión'];
+
+function arrancar(modulo, etiqueta, color){
+  crono = { modulo, etiqueta, color, seg: 0 };
+  ir('inicio');
+}
+function pararCrono(){ crono = null; pintar(); }
+// Arranca el subtema que la pantalla esta mostrando. Leer de la seleccion evita meter
+// texto libre dentro de un onclick, que es donde se rompen las comillas.
+function arrancarSub(){
+  if(!estTema || !estSub) return;
+  arrancar('estudio', estTema.n + ' › ' + estSub.n, estTema.color);
+}
+function arrancarViaje(medio){
+  // Tocar el medio que ya esta corriendo lo termina; tocar otro lo cambia.
+  viaje = (viaje && viaje.medio === medio) ? null
+        : { medio, etiqueta:'Transporte › ' + medio, color:'#00897B', seg: 0 };
+  pintar();
+}
+const hhmmss = t => [Math.floor(t/3600), Math.floor(t%3600/60), t%60]
+  .map(n => String(n).padStart(2, '0')).join(':');
+
+// El reloj de Hoy muestra lo que este corriendo, sea del modulo que sea. Si ademas
+// hay un viaje, aparece debajo: son las dos unicas cosas que pueden convivir.
+function relojHTML(){
+  if(!crono && !viaje){
+    return `<div class="crono" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);">
+      <div class="crono-que" style="margin:0;">Nada corriendo ahora</div>
+      <div class="crono-btns">
+        <button class="btn fuerte" onclick="ir('tiempo')">▶ Arrancar algo</button>
+        <button class="btn" onclick="ir('estudio')">📚 Estudiar</button>
+      </div></div>`;
+  }
+  const principal = crono ? `
+    <div class="crono" style="background:${crono.color}1F;border-color:${crono.color}66;">
+      <div class="crono-num" id="reloj">${hhmmss(crono.seg)}</div>
+      <div class="crono-que">${MODULOS[crono.modulo].ico} ${esc(crono.etiqueta)}</div>
+      <div class="crono-btns">
+        <button class="btn">⏸ Pausar</button>
+        <button class="btn" style="background:${crono.color};" onclick="pararCrono()">■ Terminar</button>
+      </div>
+    </div>` : `
+    <div class="crono" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);">
+      <div class="crono-que" style="margin:0;">Solo el viaje. No estás cronometrando nada más.</div>
+    </div>`;
+  const enViaje = viaje ? `
+    <div class="crono" style="margin-top:9px;background:rgba(0,137,123,0.12);
+         border-color:rgba(0,137,123,0.3);display:flex;align-items:center;gap:12px;text-align:left;">
+      <div style="font-size:21px;">🚆</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;"
+             id="reloj-viaje">${hhmmss(viaje.seg)}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">
+          ${esc(viaje.etiqueta)} · en paralelo</div>
+      </div>
+      <button class="btn" style="flex:0 0 auto;padding:9px 14px;"
+              onclick="arrancarViaje('${viaje.medio}')">■</button>
+    </div>` : '';
+  return principal + enViaje;
+}
 
 // ---- Datos de mentira, solo para que las pantallas tengan algo adentro ----
 const DATOS = {
@@ -444,14 +522,7 @@ const PANTALLAS = {
       </div>
 
       <div class="seccion">Andando ahora</div>
-      <div class="crono">
-        <div class="crono-num" id="reloj">00:41:07</div>
-        <div class="crono-que">Trabajo › Oficina</div>
-        <div class="crono-btns">
-          <button class="btn">⏸ Pausar</button>
-          <button class="btn fuerte" onclick="ir('tiempo')">■ Terminar</button>
-        </div>
-      </div>
+      ${relojHTML()}
 
       <div class="seccion">Lo que te reclama atención</div>
       <div class="tarjetas">
@@ -496,15 +567,20 @@ const PANTALLAS = {
           <div class="cifra-lbl">perdido / 7 días</div></div>
       </div>
       <div class="seccion">Cronómetro</div>
-      <div class="crono">
-        <div class="crono-num">00:41:07</div>
-        <div class="crono-que">Trabajo › Oficina</div>
-        <div class="crono-btns">
-          <button class="btn">⏸ Pausar</button>
-          <button class="btn fuerte">■ Terminar</button>
-          <button class="btn" style="flex:0 0 46px;">↺</button>
-        </div>
-      </div>
+      ${relojHTML()}
+      <div class="seccion">Arrancar otra cosa</div>
+      <div class="chips">${['Trabajo','Hogar','Ocio','Dormir','Cuidado personal'].map(c=>
+        `<button class="chip" onclick="arrancar('tiempo','${c} › General','#757575')">${c}</button>`).join('')}</div>
+      <div class="nota" style="margin-bottom:0;">Arrancar cualquiera de estas
+        <b>reemplaza lo que estuviera corriendo</b>: no podés estar en dos lados a la vez.</div>
+      <div class="seccion">🚆 Viaje — la excepción</div>
+      <div class="chips">${MEDIOS.map(m=>
+        `<button class="chip" style="${viaje && viaje.medio===m ?
+          'background:rgba(0,137,123,0.25);border-color:#00897B;color:#fff;' : ''}"
+          onclick="arrancarViaje('${m}')">${viaje && viaje.medio===m ? '■ ' : '▶ '}${m}</button>`).join('')}</div>
+      <div class="nota">Un viaje en tren, bus o avión <b>sí convive</b> con lo que estés haciendo:
+        te ocupa el cuerpo, no la cabeza. Arrancá uno y fijate cómo quedan los dos relojes
+        corriendo juntos en Hoy.</div>
       <div class="seccion">Esta semana</div>
       <div class="tarjetas">
         <button class="tarjeta" onclick="ir('tiempo/grilla')">
@@ -588,7 +664,7 @@ const PANTALLAS = {
         ${c.cant?`<span style="color:rgba(255,255,255,0.35);font-size:12px;"> ${esc(c.cant)}</span>`:''}</div></div>
       <span style="font-size:15px;">${c.donde.join('')}</span>
     </div>`;
-    return cabecera('Compras', null, 'inicio', '🛒', MODULOS.compras.color) + `
+    return cabecera('Compras', null, volverDe('compras'), '🛒', MODULOS.compras.color) + `
       <div class="tarjetas">
         <div class="tarjeta" style="background:rgba(0,150,136,0.13);border-color:rgba(0,150,136,0.3);">
           <div style="font-size:23px;">🥖</div>
@@ -625,7 +701,7 @@ const PANTALLAS = {
   },
 
   gym(){
-    return cabecera('Mi Gym', 'rutinas y ejercicios', 'mas', '💪', MODULOS.gym.color) + `
+    return cabecera('Mi Gym', 'rutinas y ejercicios', volverDe('gym'), '💪', MODULOS.gym.color) + `
       <div class="cifras">
         <div class="cifra"><div class="cifra-num">0</div><div class="cifra-lbl">días sin ir</div></div>
         <div class="cifra"><div class="cifra-num" style="color:#E5883F;">3</div>
@@ -665,7 +741,7 @@ const PANTALLAS = {
   carnes(){
     const color = { peligro:['rgba(226,75,74,0.2)','#F09595'], aviso:['rgba(239,159,39,0.2)','#FAC775'],
                     bien:['rgba(29,158,117,0.2)','#5DCAA5'] };
-    return cabecera('Mis Carnes', 'control de vencimiento', 'inicio', '🥩', MODULOS.carnes.color) + `
+    return cabecera('Mis Carnes', 'control de vencimiento', volverDe('carnes'), '🥩', MODULOS.carnes.color) + `
       <div class="filas">` + DATOS.carnes.map(c=>{
         const [bg,fg] = color[c.estado];
         return `<div class="fila"><span style="font-size:17px;">🥩</span>
@@ -678,7 +754,7 @@ const PANTALLAS = {
 
   lentes(){
     const usados = 24, total = 30, r = 62, circ = 2 * Math.PI * r;
-    return cabecera('Lentes', 'cuándo cambiarlos', 'mas', '👁️', MODULOS.lentes.color) + `
+    return cabecera('Lentes', 'cuándo cambiarlos', volverDe('lentes'), '👁️', MODULOS.lentes.color) + `
       <div style="display:flex;flex-direction:column;align-items:center;padding:20px 0 6px;">
         <div style="position:relative;width:150px;height:150px;">
           <svg width="150" height="150" viewBox="0 0 150 150" style="transform:rotate(-90deg);">
@@ -723,18 +799,16 @@ const PANTALLAS = {
       </div>
 
       <div class="seccion">Cronómetro</div>
-      <div class="crono" style="background:rgba(214,71,143,0.1);border-color:rgba(214,71,143,0.28);">
-        <div class="crono-num">00:00:00</div>
-        <div class="crono-que">Elegí un tema para arrancar</div>
-        <div class="chips" style="padding:14px 0 0;justify-content:center;">
-          ${TEMAS_EST.slice(0,4).map(t=>`<button class="chip">${t.n}</button>`).join('')}
-          <button class="chip" onclick="ir('estudio/temas')">···</button>
-        </div>
-        <div class="crono-btns">
-          <button class="btn" style="background:#D6478F;">▶ Iniciar</button>
-          <button class="btn">■ Terminar</button>
-          <button class="btn" style="flex:0 0 46px;">↺</button>
-        </div>
+      ${crono && crono.modulo === 'estudio' ? relojHTML() : `
+        <div class="crono" style="background:rgba(214,71,143,0.08);border-color:rgba(214,71,143,0.22);">
+          <div class="crono-que" style="margin:0;">${crono
+            ? 'Ahora corre <b>' + esc(crono.etiqueta) + '</b>. Arrancar un tema lo reemplaza.'
+            : 'Elegí un tema para arrancar'}</div>
+        </div>`}
+      <div class="chips" style="padding-top:12px;">
+        ${TEMAS_EST.slice(0,4).map(t=>`<button class="chip"
+          onclick="arrancar('estudio','${t.n} › General','${t.color}')">▶ ${t.n}</button>`).join('')}
+        <button class="chip" onclick="ir('estudio/temas')">···</button>
       </div>
 
       <div class="seccion">Subtema al azar</div>
@@ -830,7 +904,8 @@ const PANTALLAS = {
       </div>
       <div style="padding:14px 16px 0;">${barra(sb.hecho, sb.meta, t.color)}</div>
       <div style="display:flex;gap:9px;padding:16px;">
-        <button class="btn" style="background:${t.color};color:#fff;">▶ Estudiar esto</button>
+        <button class="btn" style="background:${t.color};color:#fff;"
+          onclick="arrancarSub()">▶ Estudiar esto</button>
         <button class="btn" onclick="ir('estudio/registrar')">➕ Registrar</button>
       </div>
 
@@ -942,22 +1017,22 @@ const PANTALLAS = {
   },
 
   ropa(){
-    return cabecera('Mi Ropa', 'qué ponerte', 'mas', '👖', MODULOS.ropa.color) +
+    return cabecera('Mi Ropa', 'qué ponerte', volverDe('ropa'), '👖', MODULOS.ropa.color) +
       `<div class="vacio">Pantalla de relleno.<br>El prototipo se concentra en la navegación,
         no en cada módulo.</div>`;
   },
 
   mas(){
+    const resumen = { carnes:'El pollo vence mañana', gym:'Fuiste hoy · 3 veces esta semana',
+                      lentes:'Cambiá en 6 días', compras:'5 cosas por comprar', ropa:null };
     return cabecera('Más', 'el resto de los módulos', 'inicio') + `
       <div class="tarjetas">
-        ${tarjetaModulo('carnes', 'El pollo vence mañana')}
-        ${tarjetaModulo('gym', 'Fuiste hoy · 3 veces esta semana')}
-        ${tarjetaModulo('lentes', 'Cambiá en 6 días')}
-        ${tarjetaModulo('ropa')}
+        ${EN_MAS.map(m=>tarjetaModulo(m, resumen[m])).join('')}
       </div>
-      <div class="nota">Los cuatro que menos usás viven acá. Cuáles van abajo y cuáles acá
-        <b>no lo decide un diseñador</b>: lo decide <code>uso_modulos</code>, que ya mide cuánto
-        tiempo pasás en cada uno.</div>
+      <div class="nota">Abajo quedaron Hoy, Tiempo y Estudio porque son fijos, y
+        <b>${MODULOS[POPULAR].nombre}</b> porque es el más usado del resto
+        (${USO[POPULAR]} min contra ${USO[EN_MAS[0]]} del siguiente). Nadie eligió eso a mano:
+        lo decide <code>uso_modulos</code>, y cambia solo si cambiás vos.</div>
     `;
   },
 };
@@ -984,13 +1059,10 @@ function pintar(){
 function pintarTabs(ruta){
   const raiz = ruta.split('/')[0];
   // 'Más' se queda encendido mientras estés en cualquiera de los módulos que contiene.
-  const dentroDeMas = ['carnes','gym','lentes','ropa'].includes(raiz);
+  const dentroDeMas = EN_MAS.includes(raiz);
   document.getElementById('tabs').innerHTML = BARRA.map(t=>{
-    const m = MODULOS[t];
-    const ico = t === 'inicio' ? '🏠' : t === 'mas' ? '⋯' : m.ico;
-    const lbl = t === 'inicio' ? 'Hoy' : t === 'mas' ? 'Más'
-              : t === 'tiempo' ? 'Tiempo' : t === 'compras' ? 'Compras'
-              : t === 'estudio' ? 'Estudio' : 'Gym';
+    const ico = t === 'inicio' ? '🏠' : t === 'mas' ? '⋯' : MODULOS[t].ico;
+    const lbl = CORTO[t];
     const on = (t === raiz) || (t === 'mas' && dentroDeMas);
     const aviso = t === 'compras' ? '<i class="tab-punto"></i>' : '';
     return `<button class="tab${on ? ' on' : ''}" onclick="ir('${t}')">
@@ -1001,17 +1073,20 @@ function pintarTabs(ruta){
 addEventListener('hashchange', pintar);
 pintar();
 
-// El reloj corriendo: sin esto la pantalla de inicio parece una foto, y lo que hay
-// que evaluar es justamente si se siente viva.
-let seg = 41 * 60 + 7;
+// Los relojes corriendo: sin esto la pantalla parece una foto, y lo que hay que
+// evaluar es justamente si se siente viva. Se tocan los nodos directo en vez de
+// redibujar la pantalla entera cada segundo.
 setInterval(()=>{
-  seg++;
-  const el = document.getElementById('reloj');
-  if (!el) return;
-  const h = String(Math.floor(seg / 3600)).padStart(2, '0');
-  const m = String(Math.floor(seg % 3600 / 60)).padStart(2, '0');
-  const s = String(seg % 60).padStart(2, '0');
-  el.textContent = `${h}:${m}:${s}`;
+  if (crono) {
+    crono.seg++;
+    const el = document.getElementById('reloj');
+    if (el) el.textContent = hhmmss(crono.seg);
+  }
+  if (viaje) {
+    viaje.seg++;
+    const el = document.getElementById('reloj-viaje');
+    if (el) el.textContent = hhmmss(viaje.seg);
+  }
 }, 1000);
 </script>
 </body>
