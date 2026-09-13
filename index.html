@@ -1689,7 +1689,10 @@ function cronosCorriendo(){
 // nada mas los digitos, para no rehacer el DOM debajo del dedo cada segundo.
 function firmaHoy(){
   const crudos = cronosCorriendo().map(c=>c.clave + (c.corre ? '1' : '0')).join(',');
-  return [items.length, comprasItems.filter(i=>!i.comprado).length, crudos,
+  // Congelar no cambia el total de carnes, así que la firma lleva también cuántas
+  // están congeladas; si no, la cifra de Hoy se quedaría vieja tras el toggle.
+  return [items.length, items.filter(esCongelado).length,
+          comprasItems.filter(i=>!i.comprado).length, crudos,
           getLentesData(), Math.round(minutosHoyTiempo())].join('|');
 }
 let ultimaFirmaHoy = null;
@@ -1698,7 +1701,20 @@ function renderHoy(){
   const cont = document.getElementById('pantalla-hoy'); if(!cont) return;
   ultimaFirmaHoy = firmaHoy();
 
-  const porVencer = items.filter(it => diasRestantesDe(it) <= 3).length;
+  // En el congelador el reloj está parado: esas carnes no están por vencer, por más
+  // que tengan pocos días guardados. Solo cuentan las que están fuera.
+  const frescas = items.filter(it => !esCongelado(it));
+  const porVencer = frescas.filter(it => diasRestantesDe(it) <= 3).length;
+  const congeladas = items.length - frescas.length;
+  // Sin nada por vencer pero con carne guardada, la cifra muestra el congelador:
+  // un 0 pelado haría parecer que no queda carne en casa.
+  const mostrarCongelador = !porVencer && congeladas > 0;
+  const carneNum = mostrarCongelador ? congeladas : porVencer;
+  const carneLbl = mostrarCongelador
+    ? (congeladas === 1 ? 'carne en el congelador' : 'carnes en el congelador')
+    : (porVencer === 1 ? 'carne por vencer' : 'carnes por vencer');
+  const carneColor = mostrarCongelador ? '#7BC8F0'
+                   : (porVencer ? '#F09595' : 'rgba(255,255,255,0.5)');
   const porComprar = comprasItems.filter(i => !i.comprado).length;
   const minHoy = minutosHoyTiempo();
   const corriendo = cronosCorriendo();
@@ -1720,7 +1736,7 @@ function renderHoy(){
   avisos.push({ m:'estudio', ico:'📚', tit:'Estudio: ' + fmtVentaja(vs) + ' h esta semana',
     sub:fmtVentaja(vg) + ' h en general', pastilla:vs >= 0 ? 'al día' : 'atrasado',
     color:colorVentaja(vs) });
-  const urgente = items.slice().sort((a,b)=>diasRestantesDe(a)-diasRestantesDe(b))[0];
+  const urgente = frescas.sort((a,b)=>diasRestantesDe(a)-diasRestantesDe(b))[0];
   if(urgente && diasRestantesDe(urgente) <= 3){
     const d = diasRestantesDe(urgente);
     avisos.push({ m:'carnes', ico:'🥩',
@@ -1742,8 +1758,8 @@ function renderHoy(){
 
   cont.innerHTML = `
     <div class="hoy-cifras">
-      <div class="hoy-cifra"><div class="hoy-num" style="color:${porVencer ? '#F09595' : 'rgba(255,255,255,0.5)'};">${porVencer}</div>
-        <div class="hoy-lbl">por vencer</div></div>
+      <div class="hoy-cifra"><div class="hoy-num" style="color:${carneColor};">${carneNum}</div>
+        <div class="hoy-lbl">${carneLbl}</div></div>
       <div class="hoy-cifra"><div class="hoy-num" style="color:${porComprar ? '#5FD3BE' : 'rgba(255,255,255,0.5)'};">${porComprar}</div>
         <div class="hoy-lbl">por comprar</div></div>
       <div class="hoy-cifra"><div class="hoy-num" style="color:#9FA8DA;">${fmtHoras(minHoy)}</div>
