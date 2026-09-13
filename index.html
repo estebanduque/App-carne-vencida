@@ -1380,6 +1380,28 @@ function renderGym(){
   }
 }
 
+// El icono de la tarjeta de cada dia es el del grupo que domino la sesion. Se agrupa por
+// icono y no por nombre a proposito: Biceps y Triceps comparten 💪, asi que un dia de dos
+// de cada uno es un dia de brazos, no un empate. Manda la cantidad de ejercicios y, si
+// dos grupos empatan, el volumen (series, o minutos en Cardio). Si el empate sigue no hay
+// un predominante honesto y queda el 📅 de siempre, igual que un dia sin grupo conocido.
+const GYM_ICONO_DIA = '📅';
+function iconoDiaGym(exs){
+  const porIcono = {};
+  (exs || []).forEach(e=>{
+    const icono = GYM_ICONS[e.grupo];
+    if(!icono) return;
+    if(!porIcono[icono]) porIcono[icono] = { cuenta:0, volumen:0 };
+    porIcono[icono].cuenta++;
+    porIcono[icono].volumen += e.grupo==='Cardio' ? (parseInt(e.tiempo)||0) : (parseInt(e.series)||0);
+  });
+  const iconos = Object.keys(porIcono);
+  if(!iconos.length) return GYM_ICONO_DIA;
+  iconos.sort((a,b)=> (porIcono[b].cuenta - porIcono[a].cuenta) || (porIcono[b].volumen - porIcono[a].volumen));
+  const primero = porIcono[iconos[0]], segundo = iconos[1] ? porIcono[iconos[1]] : null;
+  if(segundo && segundo.cuenta === primero.cuenta && segundo.volumen === primero.volumen) return GYM_ICONO_DIA;
+  return iconos[0];
+}
 function renderCardDia(fecha, exs){
   const isOpen=openGroups.has(fecha);
   const totalSeries=exs.filter(e=>e.grupo!=='Cardio').reduce((a,e)=>a+parseInt(e.series||0),0);
@@ -1392,7 +1414,7 @@ function renderCardDia(fecha, exs){
   const fechaLabel = fecha==='Sin fecha' ? 'Sin fecha' : new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
   return`<div class="group-card">
     <div class="group-header" onclick="toggleGrupo('${fecha}')">
-      <div class="group-icon-gym">📅</div>
+      <div class="group-icon-gym">${iconoDiaGym(exs)}</div>
       <div class="group-info">
         <div class="group-name">${fechaLabel}</div>
         <div class="group-sub">${subtext}</div>
@@ -4052,13 +4074,14 @@ function partirPorDia(inicio, fin, base){
 function bloquesEnCurso(){
   const ahora = new Date();
   const out = [];
-  const agregar = (segundos, label, sub, color)=>{
+  const agregar = (segundos, label, sub, color, categoria)=>{
     if(!(segundos > 0) || !label) return;
     const ini = new Date(ahora.getTime() - segundos*1000);
-    out.push(...partirPorDia(ini, ahora, { color, label, sub:sub||'', id:null, fuente:'curso', preciso:true, enCurso:true }));
+    out.push(...partirPorDia(ini, ahora, { color, label, sub:sub||'', categoria: categoria || label,
+                                           id:null, fuente:'curso', preciso:true, enCurso:true }));
   };
   agregar(segundosCronoTiempo(), tiempoTimer.categoria, leerSubcatCrono(), categoriaInfo(tiempoTimer.categoria).color);
-  agregar(segundosCrono(), estudioTimer.tema, leerSubtemaCrono(), ESTUDIO_EN_TIEMPO.color);
+  agregar(segundosCrono(), estudioTimer.tema, leerSubtemaCrono(), ESTUDIO_EN_TIEMPO.color, ESTUDIO_EN_TIEMPO.nombre);
   agregar(segundosCronoGym(), 'Deporte', 'Gym', categoriaInfo('Deporte').color);
   return out;
 }
@@ -4071,6 +4094,9 @@ function bloquesSemana(){
     const ini = new Date(fin.getTime() - min*60000);
     bloques.push(...partirPorDia(ini, fin, {
       color, label:(i.categoria||i.tema||''), sub:(i.subcategoria||i.subtema||''),
+      // Lo que muestra el bloque y con que se lo filtra son cosas distintas: una sesion
+      // de estudio se titula con el tema, pero pertenece a la categoria Estudio.
+      categoria: fuente==='estudio' ? ESTUDIO_EN_TIEMPO.nombre : (i.categoria||''),
       id:i.id, fuente, preciso:esHoraPrecisa(i.created_at),
     }));
   }
@@ -4183,7 +4209,7 @@ function renderGridSemana(containerId){
       const y = padTop + b.h0*hourH;
       const h = Math.max((b.h1-b.h0)*hourH, 2);
       const w = colW - 2;
-      const atenuado = filtroGridCategoria && filtroGridCategoria!==b.label;
+      const atenuado = filtroGridCategoria && filtroGridCategoria!==b.categoria;
       if(b.enCurso){
         // Todavía sin guardar: se dibuja translúcido y con borde punteado, y no se puede editar.
         const titulo = escHtmlAttr(b.label + (b.sub?' · '+b.sub:'') + ' (en curso)');
