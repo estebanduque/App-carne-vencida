@@ -202,6 +202,67 @@
   @media (max-width: 767px) {
     .desktop-only { display: none !important; }
     .mobile-only { display: block; }
+
+    /* ---- Navegacion por pantallas ----
+       El movil deja de ser una pagina larga con acordeones: se ve un modulo por vez y
+       la barra de abajo cambia entre ellos. El acordeon no se borra, se desactiva. Cada
+       modulo conserva su HTML y sus ids, asi que todas las funciones de render siguen
+       apuntando a donde apuntaban. */
+    .app { padding-bottom: 86px; }
+    /* En una pantalla de modulo mandan el encabezado del modulo y su contenido: la
+       cabecera de la app y el aviso de notificaciones solo tienen sentido en Hoy. */
+    body.en-modulo .main-header,
+    body.en-modulo .notif-banner { display: none; }
+    .mobile-only > [data-modulo] { display: none; margin: 0; }
+    .mobile-only > [data-modulo].activa { display: block; }
+    .mobile-only .menu-body { grid-template-rows: 1fr; background: none; border: none; border-radius: 0; }
+    .mobile-only .menu-toggle,
+    .mobile-only .menu-toggle.open { background: #0F1B2D; border: none; border-radius: 0;
+      padding: 14px 16px 10px; position: sticky; top: 0; z-index: 12; }
+    /* La flecha de volver sale del ::before del propio encabezado: no hizo falta tocar
+       el HTML de ningun modulo para tenerla. */
+    .mobile-only .menu-toggle::before { content: '←'; width: 34px; height: 34px; flex-shrink: 0;
+      border-radius: 11px; background: rgba(255,255,255,0.07); display: flex;
+      align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+    .mobile-only .menu-chevron { display: none; }
+    .mobile-only .menu-toggle .menu-icon { width: 40px; height: 40px; font-size: 22px; order: 3; }
+    .mobile-only .menu-title h2 { font-size: 20px; }
+    .mobile-only .menu-inner { padding-bottom: 10px; }
+
+    /* Barra de abajo */
+    .tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; margin: 0 auto;
+      max-width: 480px; background: rgba(18,32,52,0.94); backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255,255,255,0.08); display: grid;
+      grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom, 0); }
+    .tab { background: none; border: none; font-family: inherit; cursor: pointer;
+      padding: 9px 2px 11px; display: flex; flex-direction: column; align-items: center;
+      gap: 3px; color: rgba(255,255,255,0.4); }
+    .tab-ico { font-size: 20px; line-height: 1; filter: grayscale(1) opacity(0.6); }
+    .tab-lbl { font-size: 10px; font-weight: 500; }
+    .tab.on { color: #fff; }
+    .tab.on .tab-ico { filter: none; }
+
+    /* Pantalla Hoy */
+    .hoy-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 0 16px; }
+    .hoy-cifra { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 8px; text-align: center; }
+    .hoy-num { font-size: 23px; font-weight: 700; line-height: 1; }
+    .hoy-lbl { font-size: 10.5px; color: rgba(255,255,255,0.42); margin-top: 6px; line-height: 1.3; }
+    .hoy-tit { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.38);
+      padding: 18px 18px 8px; text-transform: uppercase; letter-spacing: 0.6px; }
+    .hoy-tarjetas { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+    .hoy-tarjeta { background: #1A2D45; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+      padding: 14px 16px; display: flex; align-items: center; gap: 13px; width: 100%;
+      text-align: left; font-family: inherit; color: #fff; cursor: pointer; }
+    .hoy-tarjeta:active { background: #21395a; }
+    .hoy-t-txt { flex: 1; min-width: 0; }
+    .hoy-t-tit { font-size: 15px; font-weight: 600; }
+    .hoy-t-sub { font-size: 12.5px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+    .hoy-crono { margin: 0 16px 9px; border-radius: 18px; padding: 16px; text-align: center; }
+    .hoy-crono-num { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+    .hoy-crono-que { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+    .hoy-pastilla { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+      flex-shrink: 0; white-space: nowrap; }
+    .hoy-vacio { text-align: center; color: rgba(255,255,255,0.32); font-size: 13px; padding: 22px 20px; }
   }
 
   .lentes-container { padding: 16px; }
@@ -404,6 +465,11 @@
   </div>
 
   <div class="mobile-only">
+  <!-- ===== PANTALLA HOY (la dibuja renderHoy) ===== -->
+  <div data-modulo="hoy" id="pantalla-hoy"></div>
+  <!-- ===== PANTALLA MÁS (la dibuja renderMas) ===== -->
+  <div data-modulo="mas" id="pantalla-mas"></div>
+
   <!-- ===== MENÚ CARNES ===== -->
   <div class="menu-section" data-modulo="carnes">
     <button class="menu-toggle" id="toggle-carnes" onclick="toggleMenu('carnes')">
@@ -693,6 +759,7 @@
       </div>
     </div>
   </div>
+  <nav class="tabs" id="tabs"></nav>
 </div>
 <div class="desktop-only" id="desktop-grid">
   <div class="desktop-grid" id="desktop-grid-inner">
@@ -1502,36 +1569,199 @@ function reanudarContadoresModulos(){
   const ahora = Date.now();
   for(const k in moduloAbiertoDesde) moduloAbiertoDesde[k] = ahora;
 }
-function ordenarModulosPorUso(){
-  const cont = document.querySelector('.mobile-only');
-  if(!cont) return;
-  const secciones = Array.from(cont.children).filter(el => el.dataset && el.dataset.modulo);
-  if(secciones.length < 2) return;
-  const orden = secciones.map((el, i) => ({ el, i, uso: usoModulos[el.dataset.modulo] || 0 }));
-  // Sin historial todos empatan en 0 y se respeta el orden original: nada salta de lugar
-  // hasta que haya un motivo medido.
-  orden.sort((a, b) => (b.uso - a.uso) || (a.i - b.i));
-  orden.forEach(x => cont.appendChild(x.el));
-  // La separacion entre tarjetas venia en el HTML de cada una menos la primera; al
-  // cambiar el orden hay que reponerla segun la posicion nueva.
-  orden.forEach((x, i) => { x.el.style.marginTop = i === 0 ? '0' : '12px'; });
+// Con pantallas ya no hay nada que reordenar en la pagina: lo que el uso decide ahora
+// es quien se gana el cuarto lugar de la barra de abajo. Ver barraTabs().
+function ordenarModulosPorUso(){ pintarTabs(); }
+
+// ---- Navegacion por pantallas (solo movil) ----
+// El escritorio tiene su propia maqueta y no pasa por aca. La direccion vive en el
+// hash, asi que el boton Atras de Android funciona solo, sin codigo extra.
+const MODULOS_APP = ['carnes','gym','ropa','lentes','estudio','tiempo','compras'];
+const TABS_FIJAS  = ['tiempo','estudio'];
+const ICONO_MOD  = { carnes:'🥩', gym:'💪', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒' };
+const NOMBRE_MOD = { carnes:'Mis Carnes', gym:'Mi Gym', ropa:'Mi Ropa', lentes:'Lentes de Contacto',
+                     estudio:'Mi Estudio', tiempo:'Mi Tiempo', compras:'Lista de Compras' };
+const SUB_MOD    = { carnes:'Control de vencimiento', gym:'Rutinas y ejercicios', ropa:'Qué ponerte',
+                     lentes:'Cuándo cambiarlos', estudio:'Horas por tema',
+                     tiempo:'En qué se te va el día', compras:'Dictada por voz' };
+const CORTO_MOD  = { hoy:'Hoy', mas:'Más', carnes:'Carnes', gym:'Gym', ropa:'Ropa',
+                     lentes:'Lentes', estudio:'Estudio', tiempo:'Tiempo', compras:'Compras' };
+let pantallaActual = 'hoy';
+
+// Hoy, Tiempo y Estudio son fijas. El cuarto lugar se lo gana el mas usado del resto,
+// con los mismos contadores que antes ordenaban los menus. Nadie lo elige a mano.
+function barraTabs(){
+  const otros = MODULOS_APP.filter(m => !TABS_FIJAS.includes(m));
+  otros.sort((a, b) => ((usoModulos[b] || 0) - (usoModulos[a] || 0))
+                    || (MODULOS_APP.indexOf(a) - MODULOS_APP.indexOf(b)));
+  return ['hoy', 'tiempo', 'estudio', otros[0], 'mas'];
+}
+function enMas(){ const b = barraTabs(); return MODULOS_APP.filter(m => !b.includes(m)); }
+function irA(m){ location.hash = '#/' + m; }
+
+function pintarPantallas(){
+  const pedido = (location.hash.replace('#/', '') || 'hoy');
+  const destino = (pedido === 'hoy' || pedido === 'mas' || MODULOS_APP.includes(pedido)) ? pedido : 'hoy';
+  if(pantallaActual !== destino){
+    // Los contadores de uso siguen contando lo mismo que antes: el rato que un modulo
+    // esta a la vista. Solo que ahora "a la vista" es la pantalla activa.
+    if(MODULOS_APP.includes(pantallaActual)){
+      openMenus.delete(pantallaActual);
+      cerrarContadorModulo(pantallaActual);
+    }
+    pantallaActual = destino;
+    if(MODULOS_APP.includes(destino)){
+      openMenus.add(destino);
+      abrirContadorModulo(destino);
+      // La ubicacion se pide al entrar al modulo, no al cargar la app: asi el permiso
+      // llega en un momento en que se entiende para que es.
+      if(destino === 'compras') detectarLugar(true);
+    }
+  }
+  document.querySelectorAll('.mobile-only > [data-modulo]').forEach(el=>{
+    el.classList.toggle('activa', el.dataset.modulo === destino);
+  });
+  document.body.classList.toggle('en-modulo', destino !== 'hoy');
+  if(destino === 'hoy') renderHoy();
+  if(destino === 'mas') renderMas();
+  pintarTabs();
+  window.scrollTo(0, 0);
 }
 
-function toggleMenu(menu){
-  const body=document.getElementById('body-'+menu);
-  const toggle=document.getElementById('toggle-'+menu);
-  const chevron=document.getElementById('chevron-'+menu);
-  const isOpen=openMenus.has(menu);
-  if(isOpen){openMenus.delete(menu);body.classList.remove('open');toggle.classList.remove('open');chevron.classList.remove('open');
-    cerrarContadorModulo(menu);}
-  else{
-    openMenus.add(menu);body.classList.add('open');toggle.classList.add('open');chevron.classList.add('open');
-    abrirContadorModulo(menu);
-    // La ubicacion se pide al abrir el modulo, no al cargar la app: asi el permiso
-    // llega en un momento en que se entiende para que es.
-    if(menu==='compras') detectarLugar(true);
-  }
+function pintarTabs(){
+  const cont = document.getElementById('tabs'); if(!cont) return;
+  const resto = enMas();
+  cont.innerHTML = barraTabs().map(t=>{
+    const ico = t === 'hoy' ? '🏠' : t === 'mas' ? '⋯' : ICONO_MOD[t];
+    const on = (t === pantallaActual) || (t === 'mas' && resto.includes(pantallaActual));
+    return `<button class="tab${on ? ' on' : ''}" onclick="irA('${t}')">
+      <span class="tab-ico">${ico}</span><span class="tab-lbl">${CORTO_MOD[t]}</span></button>`;
+  }).join('');
 }
+
+function renderMas(){
+  const cont = document.getElementById('pantalla-mas'); if(!cont) return;
+  cont.innerHTML = `<div style="padding:18px 18px 2px;">
+      <div style="font-size:22px;font-weight:700;">Más</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:2px;">el resto de los módulos</div>
+    </div>
+    <div class="hoy-tit">Módulos</div>
+    <div class="hoy-tarjetas">` + enMas().map(m=>`
+      <button class="hoy-tarjeta" onclick="irA('${m}')">
+        <div class="menu-icon ${m}" style="width:44px;height:44px;font-size:23px;">${ICONO_MOD[m]}</div>
+        <div class="hoy-t-txt"><div class="hoy-t-tit">${NOMBRE_MOD[m]}</div>
+          <div class="hoy-t-sub">${SUB_MOD[m]}</div></div>
+        <span style="color:rgba(255,255,255,0.28);font-size:19px;">›</span>
+      </button>`).join('') + `</div>`;
+}
+
+// Los encabezados de cada modulo siguen llamando a toggleMenu desde su onclick. En el
+// movil eso ahora significa "volver a Hoy"; si se llama para otro modulo, se navega ahi.
+function toggleMenu(menu){ irA(pantallaActual === menu ? 'hoy' : menu); }
+
+// ---- Pantalla Hoy ----
+// Lo que importa ahora mismo, sin abrir nada. Es la unica pantalla que no existia en
+// la version de menus: alli habia que ir desplegando modulo por modulo para enterarse.
+function cronosCorriendo(){
+  const out = [];
+  if(segundosCronoTiempo() > 0) out.push({ clave:'tiempo', seg:segundosCronoTiempo(), ico:'⏱️',
+    que:(tiempoTimer.categoria || 'Mi Tiempo') + (tiempoTimer.subcategoria ? ' › ' + tiempoTimer.subcategoria : ''),
+    color:categoriaInfo(tiempoTimer.categoria).color, corre:tiempoTimer.running });
+  if(segundosCrono() > 0) out.push({ clave:'estudio', seg:segundosCrono(), ico:'📚',
+    que:(estudioTimer.tema || 'Mi Estudio') + (estudioTimer.subtema ? ' › ' + estudioTimer.subtema : ''),
+    color:temaInfo(estudioTimer.tema).color, corre:estudioTimer.running });
+  if(segundosCronoGym() > 0) out.push({ clave:'gym', seg:segundosCronoGym(), ico:'💪',
+    que:'Deporte › Gym', color:'#E05A14', corre:gymTimer.running });
+  return out;
+}
+// Se redibuja entera solo cuando cambio algo de fondo; el resto del tiempo se tocan
+// nada mas los digitos, para no rehacer el DOM debajo del dedo cada segundo.
+function firmaHoy(){
+  const crudos = cronosCorriendo().map(c=>c.clave + (c.corre ? '1' : '0')).join(',');
+  return [items.length, comprasItems.filter(i=>!i.comprado).length, crudos,
+          getLentesData(), Math.round(minutosHoyTiempo())].join('|');
+}
+let ultimaFirmaHoy = null;
+
+function renderHoy(){
+  const cont = document.getElementById('pantalla-hoy'); if(!cont) return;
+  ultimaFirmaHoy = firmaHoy();
+
+  const porVencer = items.filter(it => diasRestantesDe(it) <= 3).length;
+  const porComprar = comprasItems.filter(i => !i.comprado).length;
+  const minHoy = minutosHoyTiempo();
+  const corriendo = cronosCorriendo();
+
+  const relojes = corriendo.length ? corriendo.map(c=>`
+    <div class="hoy-crono" style="background:${hexARgba(c.color, 0.14)};border:1px solid ${hexARgba(c.color, 0.35)};">
+      <div class="hoy-crono-num" data-crono="${c.clave}">${formatCrono(c.seg)}</div>
+      <div class="hoy-crono-que">${c.ico} ${escHtmlAttr(c.que)}${c.corre ? '' : ' · en pausa'}</div>
+      <button class="hoy-tarjeta" style="margin-top:12px;justify-content:center;background:${hexARgba(c.color, 0.22)};border-color:transparent;"
+        onclick="irA('${c.clave}')">Ir a ${CORTO_MOD[c.clave]}</button>
+    </div>`).join('') : `
+    <div class="hoy-crono" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);">
+      <div class="hoy-crono-que" style="margin:0;">Nada corriendo ahora</div>
+    </div>`;
+
+  // Solo se muestra lo que de verdad reclama algo: una tarjeta por cosa pendiente.
+  const avisos = [];
+  const vs = ventajaSemanalH(), vg = ventajaGeneralH();
+  avisos.push({ m:'estudio', ico:'📚', tit:'Estudio: ' + fmtVentaja(vs) + ' h esta semana',
+    sub:fmtVentaja(vg) + ' h en general', pastilla:vs >= 0 ? 'al día' : 'atrasado',
+    color:colorVentaja(vs) });
+  const urgente = items.slice().sort((a,b)=>diasRestantesDe(a)-diasRestantesDe(b))[0];
+  if(urgente && diasRestantesDe(urgente) <= 3){
+    const d = diasRestantesDe(urgente);
+    avisos.push({ m:'carnes', ico:'🥩',
+      tit:escHtmlAttr(urgente.tipo || 'Una carne') + (d < 0 ? ' venció' : d === 0 ? ' vence hoy' : ' vence en ' + d + ' d'),
+      sub:porVencer > 1 ? 'y ' + (porVencer - 1) + ' más por vencer' : 'es la más próxima',
+      pastilla:'urgente', color:'#E24B4A' });
+  }
+  if(porComprar) avisos.push({ m:'compras', ico:'🛒', tit:porComprar + ' cosa' + (porComprar === 1 ? '' : 's') + ' por comprar',
+    sub:lugarActual ? 'estás en ' + escHtmlAttr(lugarActual.lugar.nombre) : 'tocá para ver la lista', color:'#009688' });
+  const fLentes = getLentesData();
+  if(fLentes){
+    const usados = Math.round((new Date().setHours(0,0,0,0) - new Date(fLentes + 'T00:00:00')) / 86400000);
+    const quedan = LENTES_DIAS - usados;
+    if(quedan <= 7) avisos.push({ m:'lentes', ico:'👁️',
+      tit:quedan <= 0 ? 'Cambiá los lentes ya' : 'Cambiá los lentes en ' + quedan + ' d',
+      sub:'llevás ' + usados + ' de ' + LENTES_DIAS, pastilla:quedan <= 0 ? 'vencido' : null,
+      color:quedan <= 0 ? '#E24B4A' : '#EF9F27' });
+  }
+
+  cont.innerHTML = `
+    <div class="hoy-cifras">
+      <div class="hoy-cifra"><div class="hoy-num" style="color:${porVencer ? '#F09595' : 'rgba(255,255,255,0.5)'};">${porVencer}</div>
+        <div class="hoy-lbl">por vencer</div></div>
+      <div class="hoy-cifra"><div class="hoy-num" style="color:${porComprar ? '#5FD3BE' : 'rgba(255,255,255,0.5)'};">${porComprar}</div>
+        <div class="hoy-lbl">por comprar</div></div>
+      <div class="hoy-cifra"><div class="hoy-num" style="color:#9FA8DA;">${fmtHoras(minHoy)}</div>
+        <div class="hoy-lbl">registradas hoy</div></div>
+    </div>
+    <div class="hoy-tit">Andando ahora</div>
+    ${relojes}
+    <div class="hoy-tit">Lo que te reclama atención</div>
+    <div class="hoy-tarjetas">` + avisos.map(a=>`
+      <button class="hoy-tarjeta" onclick="irA('${a.m}')">
+        <div class="menu-icon ${a.m}" style="width:44px;height:44px;font-size:23px;">${a.ico}</div>
+        <div class="hoy-t-txt"><div class="hoy-t-tit">${a.tit}</div>
+          <div class="hoy-t-sub">${a.sub}</div></div>
+        ${a.pastilla
+          ? `<span class="hoy-pastilla" style="background:${hexARgba(a.color, 0.2)};color:${a.color};">${a.pastilla}</span>`
+          : `<span style="color:rgba(255,255,255,0.28);font-size:19px;">›</span>`}
+      </button>`).join('') + `</div>`;
+}
+
+// Un tic por segundo mientras Hoy este a la vista: si cambio algo de fondo se redibuja,
+// si no, se actualizan solo los digitos de los relojes.
+setInterval(()=>{
+  if(pantallaActual !== 'hoy') return;
+  if(firmaHoy() !== ultimaFirmaHoy){ renderHoy(); return; }
+  document.querySelectorAll('#pantalla-hoy [data-crono]').forEach(el=>{
+    const seg = { tiempo:segundosCronoTiempo, estudio:segundosCrono, gym:segundosCronoGym }[el.dataset.crono];
+    if(seg) el.textContent = formatCrono(seg());
+  });
+}, 1000);
 
 function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;}
 function openPhotoModal(){
@@ -4912,7 +5142,8 @@ loadCompras();
 loadLugares();
 loadEstudio();
 cargarUsoModulos();
-ordenarModulosPorUso();
+addEventListener('hashchange', pintarPantallas);
+pintarPantallas();
 loadPuntosRepaso();
 restaurarEstudioTimer();
 loadTiempo();
