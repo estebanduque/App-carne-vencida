@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi App · prototipo de pantallas</title>
+<!--
+  PROTOTIPO DESECHABLE. No es la app.
+
+  Sirve para contestar una sola pregunta: ¿se navega mejor con pantallas que con
+  menus desplegables? Por eso tiene navegacion y maquetacion de verdad, y datos
+  inventados: ni una linea habla con Supabase ni guarda nada.
+
+  A proposito NO registra service worker: el de la app cachea rutas fijas y meter
+  otro aca solo traeria confusion de cache.
+
+  Lo unico que hay que mirar de fondo: cuantos toques cuesta llegar a cada cosa,
+  si el boton Atras del telefono hace lo que esperas, y si la barra de abajo tiene
+  los modulos correctos. Todo lo demas es relleno.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0F1B2D; color: #fff; min-height: 100vh;
+    display: flex; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app { max-width: 480px; width: 100%; position: relative; min-height: 100vh; }
+
+  /* La cinta existe para que nunca confundas esto con la app de verdad. */
+  .cinta {
+    background: #E05A14; color: #fff; font-size: 11px; font-weight: 600;
+    text-align: center; padding: 6px 12px; letter-spacing: 0.3px;
+    position: sticky; top: 0; z-index: 30;
+  }
+
+  /* ---- Cabecera de pantalla ---- */
+  .cab {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 16px 10px; position: sticky; top: 27px; z-index: 20;
+    background: #0F1B2D;
+  }
+  .cab-volver {
+    width: 36px; height: 36px; flex-shrink: 0; border: none; border-radius: 12px;
+    background: rgba(255,255,255,0.07); color: #fff; font-size: 17px;
+    font-family: inherit; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .cab-volver:active { background: rgba(255,255,255,0.15); }
+  .cab-txt { flex: 1; min-width: 0; }
+  .cab h1 { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .cab p { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+  .cab-icono {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+
+  /* ---- Cuerpo y transicion entre pantallas ---- */
+  main { padding-bottom: 92px; }
+  .pantalla { animation: entra 0.26s cubic-bezier(0.22, 0.61, 0.36, 1); }
+  .pantalla.atras { animation-name: entraAtras; }
+  @keyframes entra      { from { opacity: 0; transform: translateX(22px); } }
+  @keyframes entraAtras { from { opacity: 0; transform: translateX(-22px); } }
+  @media (prefers-reduced-motion: reduce) { .pantalla { animation: none; } }
+
+  .seccion { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.38);
+             padding: 18px 18px 8px; text-transform: uppercase; letter-spacing: 0.6px; }
+
+  /* ---- Tarjetas ---- */
+  .tarjetas { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .tarjeta {
+    background: #1A2D45; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 13px;
+    width: 100%; text-align: left; font-family: inherit; color: #fff; cursor: pointer;
+  }
+  .tarjeta:active { background: #21395a; }
+  .tarjeta-txt { flex: 1; min-width: 0; }
+  .tarjeta-tit { font-size: 15px; font-weight: 600; }
+  .tarjeta-sub { font-size: 12.5px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+  .tarjeta-flecha { color: rgba(255,255,255,0.28); font-size: 19px; flex-shrink: 0; }
+  .icono {
+    width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 23px;
+  }
+  .pastilla {
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    flex-shrink: 0; white-space: nowrap;
+  }
+
+  /* ---- Numeros grandes ---- */
+  .cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 0 16px; }
+  .cifra { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 8px; text-align: center; }
+  .cifra-num { font-size: 23px; font-weight: 700; line-height: 1; }
+  .cifra-lbl { font-size: 10.5px; color: rgba(255,255,255,0.42); margin-top: 6px; line-height: 1.3; }
+
+  /* ---- Filas de lista ---- */
+  .filas { padding: 0 16px; display: flex; flex-direction: column; gap: 7px; }
+  .fila {
+    background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 11px; font-size: 14px;
+  }
+  .fila-txt { flex: 1; min-width: 0; }
+  .fila-sub { font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .marca {
+    width: 21px; height: 21px; border-radius: 7px; flex-shrink: 0; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.28); background: none;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; color: #0F1B2D;
+  }
+  .marca.ok { background: #009688; border-color: #009688; }
+
+  /* ---- Cronometro ---- */
+  .crono {
+    margin: 0 16px; background: rgba(92,107,192,0.13); border: 1px solid rgba(92,107,192,0.3);
+    border-radius: 18px; padding: 18px; text-align: center;
+  }
+  .crono-num { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+  .crono-que { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .crono-btns { display: flex; gap: 8px; margin-top: 14px; }
+  .btn {
+    flex: 1; border: none; border-radius: 12px; padding: 12px; font-size: 13.5px;
+    font-weight: 600; font-family: inherit; cursor: pointer;
+    background: rgba(255,255,255,0.08); color: #fff;
+  }
+  .btn:active { filter: brightness(1.25); }
+  .btn.fuerte { background: #5C6BC0; }
+  .btn.compras { background: #009688; }
+
+  /* ---- Grilla de la semana ---- */
+  .grilla { padding: 0 16px; }
+  .grilla svg { width: 100%; height: auto; display: block;
+                background: rgba(255,255,255,0.03); border-radius: 14px; }
+  .leyenda { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 16px 0; }
+  .leyenda span { font-size: 11px; color: rgba(255,255,255,0.55);
+                  display: flex; align-items: center; gap: 5px; }
+  .punto { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  /* ---- Barra de abajo ---- */
+  .tabs {
+    position: fixed; bottom: 0; width: 100%; max-width: 480px; z-index: 25;
+    background: rgba(18, 32, 52, 0.94); backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .tab {
+    background: none; border: none; font-family: inherit; cursor: pointer;
+    padding: 9px 2px 11px; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; color: rgba(255,255,255,0.4);
+  }
+  .tab-ico { font-size: 20px; line-height: 1; filter: grayscale(1) opacity(0.65); }
+  .tab-lbl { font-size: 10px; font-weight: 500; }
+  .tab.on { color: #fff; }
+  .tab.on .tab-ico { filter: none; }
+  .tab-punto { width: 4px; height: 4px; border-radius: 50%; background: #E05A14;
+               position: absolute; margin: -2px 0 0 20px; }
+
+  .nota {
+    margin: 18px 16px 0; padding: 13px 15px; border-radius: 13px;
+    background: rgba(224,90,20,0.1); border: 1px solid rgba(224,90,20,0.25);
+    font-size: 12.5px; color: rgba(255,255,255,0.62); line-height: 1.5;
+  }
+  .nota b { color: #F0A56A; font-weight: 600; }
+  .vacio { text-align: center; color: rgba(255,255,255,0.3); font-size: 13px; padding: 30px 20px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="cinta">PROTOTIPO · datos inventados · no guarda nada</div>
+  <main id="vista"></main>
+  <nav class="tabs" id="tabs"></nav>
+</div>
+
+<script>
+// ---- Los siete modulos, con el color que ya tienen en la app ----
+const MODULOS = {
+  carnes:  { ico:'🥩', nombre:'Mis Carnes',   sub:'Control de vencimiento', color:'29,158,117' },
+  gym:     { ico:'💪', nombre:'Mi Gym',        sub:'Rutinas y ejercicios',   color:'224,90,20' },
+  ropa:    { ico:'👖', nombre:'Mi Ropa',       sub:'Qué ponerte',            color:'83,74,183' },
+  lentes:  { ico:'👁️', nombre:'Lentes',        sub:'Cuándo cambiarlos',      color:'26,122,181' },
+  estudio: { ico:'📚', nombre:'Mi Estudio',    sub:'Temas y repasos',        color:'214,71,143' },
+  tiempo:  { ico:'⏱️', nombre:'Mi Tiempo',     sub:'En qué se te va el día', color:'92,107,192' },
+  compras: { ico:'🛒', nombre:'Lista de Compras', sub:'Te avisa en la tienda', color:'0,150,136' },
+};
+
+// La barra de abajo sale de cuanto tiempo pasa abierto cada modulo: es exactamente
+// el dato que ya mide 'uso_modulos' en la app. Aca va fijo, pero en la version real
+// se ordenaria solo, igual que hoy se ordenan los menus.
+const BARRA = ['inicio', 'tiempo', 'compras', 'gym', 'mas'];
+
+// ---- Datos de mentira, solo para que las pantallas tengan algo adentro ----
+const DATOS = {
+  compras: [
+    { n:'pan brioche', cant:'', donde:['🥖','🛒'], listo:false },
+    { n:'café',        cant:'500 g', donde:['🛒'], listo:false },
+    { n:'huevos',      cant:'docena', donde:['🛒'], listo:false },
+    { n:'pega loca',   cant:'', donde:['🔧','🛒'], listo:false },
+    { n:'detergente',  cant:'', donde:['🛒'], listo:true },
+  ],
+  tiendas: [
+    { n:'ab distribution',       cat:'🛒', radio:80, mudo:true },
+    { n:"Pharmacie de l'Opéra",  cat:'💊', radio:80, mudo:true },
+    { n:'Boulangerie Saint-Jean',cat:'🥖', radio:60, mudo:false },
+  ],
+  carnes: [
+    { n:'Pollo entero',   dias:1,  estado:'peligro' },
+    { n:'Bife de chorizo', dias:4, estado:'aviso' },
+    { n:'Salmón',         dias:9,  estado:'bien' },
+  ],
+  gym: [
+    { fecha:'hoy',        ico:'🦵', det:'5 ejercicios · 18 series' },
+    { fecha:'11 de sep',  ico:'🫁', det:'4 ejercicios · 14 series' },
+    { fecha:'9 de sep',   ico:'💪', det:'6 ejercicios · 20 series' },
+  ],
+  semana: [
+    { dia:0, h0:9,  h1:17, color:'117,117,117' },
+    { dia:0, h0:19, h1:20.5, color:'92,107,192' },
+    { dia:1, h0:9,  h1:17, color:'117,117,117' },
+    { dia:1, h0:18, h1:19.5, color:'224,90,20' },
+    { dia:2, h0:8.5,h1:16.5, color:'117,117,117' },
+    { dia:2, h0:20, h1:21.5, color:'214,71,143' },
+    { dia:3, h0:9,  h1:17, color:'117,117,117' },
+    { dia:4, h0:9,  h1:13, color:'117,117,117' },
+    { dia:4, h0:14, h1:16, color:'0,137,123' },
+    { dia:5, h0:11, h1:13, color:'29,158,117' },
+    { dia:5, h0:16, h1:18, color:'214,71,143' },
+    { dia:6, h0:10, h1:12, color:'92,107,192' },
+  ],
+};
+
+// ---- Piezas sueltas ----
+const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const fondo = c => `background: rgba(${c}, 0.2);`;
+
+function cabecera(titulo, sub, volverA, ico, color){
+  const btn = volverA !== null
+    ? `<button class="cab-volver" onclick="ir('${volverA}', true)" aria-label="Volver">←</button>` : '';
+  const icono = ico ? `<div class="cab-icono" style="${fondo(color)}">${ico}</div>` : '';
+  return `<div class="cab">${btn}<div class="cab-txt"><h1>${esc(titulo)}</h1>
+    ${sub ? `<p>${esc(sub)}</p>` : ''}</div>${icono}</div>`;
+}
+
+function tarjetaModulo(clave, extra){
+  const m = MODULOS[clave];
+  return `<button class="tarjeta" onclick="ir('${clave}')">
+    <div class="icono" style="${fondo(m.color)}">${m.ico}</div>
+    <div class="tarjeta-txt">
+      <div class="tarjeta-tit">${m.nombre}</div>
+      <div class="tarjeta-sub">${extra || m.sub}</div>
+    </div>
+    <span class="tarjeta-flecha">›</span>
+  </button>`;
+}
+
+// ---- Las pantallas ----
+const PANTALLAS = {
+
+  inicio(){
+    const faltan = DATOS.compras.filter(c=>!c.listo).length;
+    const urgente = DATOS.carnes.filter(c=>c.estado!=='bien').length;
+    return cabecera('👋 Hoy', 'sábado 13 de septiembre', null) + `
+      <div class="cifras">
+        <div class="cifra"><div class="cifra-num" style="color:#E24B4A;">${urgente}</div>
+          <div class="cifra-lbl">por vencer</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:#5FD3BE;">${faltan}</div>
+          <div class="cifra-lbl">por comprar</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:#9FA8DA;">6h 20</div>
+          <div class="cifra-lbl">registradas hoy</div></div>
+      </div>
+
+      <div class="seccion">Andando ahora</div>
+      <div class="crono">
+        <div class="crono-num" id="reloj">00:41:07</div>
+        <div class="crono-que">Trabajo › Oficina</div>
+        <div class="crono-btns">
+          <button class="btn">⏸ Pausar</button>
+          <button class="btn fuerte" onclick="ir('tiempo')">■ Terminar</button>
+        </div>
+      </div>
+
+      <div class="seccion">Lo que te reclama atención</div>
+      <div class="tarjetas">
+        <button class="tarjeta" onclick="ir('carnes')">
+          <div class="icono" style="${fondo(MODULOS.carnes.color)}">🥩</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">El pollo vence mañana</div>
+            <div class="tarjeta-sub">y el bife, en 4 días</div></div>
+          <span class="pastilla" style="background:rgba(226,75,74,0.2);color:#F09595;">urgente</span>
+        </button>
+        <button class="tarjeta" onclick="ir('compras')">
+          <div class="icono" style="${fondo(MODULOS.compras.color)}">🛒</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">${faltan} cosas por comprar</div>
+            <div class="tarjeta-sub">2 se consiguen en la panadería</div></div>
+          <span class="tarjeta-flecha">›</span>
+        </button>
+        <button class="tarjeta" onclick="ir('lentes')">
+          <div class="icono" style="${fondo(MODULOS.lentes.color)}">👁️</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">Cambiá los lentes en 6 días</div>
+            <div class="tarjeta-sub">llevás 24 de 30</div></div>
+          <span class="tarjeta-flecha">›</span>
+        </button>
+      </div>
+
+      <div class="nota">Esta pantalla es la apuesta fuerte del diseño: <b>lo que importa hoy,
+        sin abrir nada</b>. Con menús desplegables no existe — hay que ir abriendo uno por uno
+        para enterarte.</div>
+    `;
+  },
+
+  tiempo(){
+    return cabecera('Mi Tiempo', 'en qué se te va el día', 'inicio', '⏱️', MODULOS.tiempo.color) + `
+      <div class="cifras">
+        <div class="cifra"><div class="cifra-num">6h 20</div><div class="cifra-lbl">hoy</div></div>
+        <div class="cifra"><div class="cifra-num">38h</div><div class="cifra-lbl">esta semana</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:#C9840F;">2h 10</div>
+          <div class="cifra-lbl">perdido / 7 días</div></div>
+      </div>
+      <div class="seccion">Cronómetro</div>
+      <div class="crono">
+        <div class="crono-num">00:41:07</div>
+        <div class="crono-que">Trabajo › Oficina</div>
+        <div class="crono-btns">
+          <button class="btn">⏸ Pausar</button>
+          <button class="btn fuerte">■ Terminar</button>
+          <button class="btn" style="flex:0 0 46px;">↺</button>
+        </div>
+      </div>
+      <div class="seccion">Esta semana</div>
+      <div class="tarjetas">
+        <button class="tarjeta" onclick="ir('tiempo/grilla')">
+          <div class="icono" style="${fondo(MODULOS.tiempo.color)}">📊</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">Ver la grilla</div>
+            <div class="tarjeta-sub">los 7 días hora por hora</div></div>
+          <span class="tarjeta-flecha">›</span>
+        </button>
+        <button class="tarjeta" onclick="ir('tiempo/categorias')">
+          <div class="icono" style="${fondo(MODULOS.tiempo.color)}">📂</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">Por categoría</div>
+            <div class="tarjeta-sub">Trabajo 21h · Dormir 9h · Ocio 4h…</div></div>
+          <span class="tarjeta-flecha">›</span>
+        </button>
+      </div>
+      <div class="nota">Fijate el cambio: la grilla y las categorías dejan de ser acordeones
+        dentro de un acordeón. <b>Cada una es su propia pantalla</b>, y el botón Atrás del
+        teléfono te saca de ahí.</div>
+    `;
+  },
+
+  'tiempo/grilla'(){
+    const dias = ['L','M','X','J','V','S','D'];
+    const W = 340, H = 260, padI = 26, padT = 18;
+    const colW = (W - padI) / 7, horaH = (H - padT) / 24;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grilla de la semana">`;
+    for (let h = 0; h <= 24; h += 6) {
+      const y = padT + h * horaH;
+      svg += `<line x1="${padI}" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+      svg += `<text x="2" y="${y + 3}" fill="rgba(255,255,255,0.3)" font-size="8">${String(h).padStart(2,'0')}</text>`;
+    }
+    dias.forEach((d, i) => {
+      svg += `<text x="${padI + i * colW + colW/2}" y="11" fill="rgba(255,255,255,0.4)"
+               font-size="9" text-anchor="middle">${d}</text>`;
+    });
+    DATOS.semana.forEach(b => {
+      svg += `<rect x="${padI + b.dia * colW + 1}" y="${padT + b.h0 * horaH}"
+               width="${colW - 2}" height="${(b.h1 - b.h0) * horaH}"
+               fill="rgb(${b.color})" opacity="0.85" rx="1"/>`;
+    });
+    svg += '</svg>';
+    return cabecera('Esta semana', 'tocá un bloque para editarlo', 'tiempo') + `
+      <div class="grilla">${svg}</div>
+      <div class="leyenda">
+        <span><i class="punto" style="background:#757575;"></i>Trabajo</span>
+        <span><i class="punto" style="background:#5C6BC0;"></i>Ocio</span>
+        <span><i class="punto" style="background:#E05A14;"></i>Deporte</span>
+        <span><i class="punto" style="background:#D6478F;"></i>Estudio</span>
+        <span><i class="punto" style="background:#00897B;"></i>Transporte</span>
+        <span><i class="punto" style="background:#1D9E75;"></i>Hogar</span>
+      </div>
+      <div class="nota">A pantalla completa la grilla se lee de verdad. Hoy vive apretada
+        dentro de un módulo desplegado, que a su vez está dentro de una página larga.</div>
+    `;
+  },
+
+  'tiempo/categorias'(){
+    const cats = [
+      ['Trabajo','#757575','21h 00',55], ['Dormir','#212121','9h 30',25],
+      ['Ocio','#5C6BC0','4h 15',11], ['Estudio','#D6478F','2h 00',5],
+      ['Deporte','#E05A14','1h 30',4],
+    ];
+    return cabecera('Por categoría', 'esta semana', 'tiempo') + `
+      <div class="filas">` + cats.map(([n,c,t,p])=>`
+        <div class="fila">
+          <i class="punto" style="background:${c};width:11px;height:11px;"></i>
+          <div class="fila-txt"><div>${n}</div>
+            <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:6px;">
+              <div style="height:100%;width:${p}%;background:${c};border-radius:2px;"></div></div>
+          </div>
+          <span style="color:rgba(255,255,255,0.55);font-size:13px;">${t}</span>
+        </div>`).join('') + `</div>`;
+  },
+
+  compras(){
+    const pend = DATOS.compras.filter(c=>!c.listo);
+    const hechas = DATOS.compras.filter(c=>c.listo);
+    const fila = c => `<div class="fila">
+      <button class="marca${c.listo?' ok':''}" aria-label="Marcar">${c.listo?'✓':''}</button>
+      <div class="fila-txt"><div style="${c.listo?'opacity:0.4;text-decoration:line-through;':''}">${esc(c.n)}
+        ${c.cant?`<span style="color:rgba(255,255,255,0.35);font-size:12px;"> ${esc(c.cant)}</span>`:''}</div></div>
+      <span style="font-size:15px;">${c.donde.join('')}</span>
+    </div>`;
+    return cabecera('Compras', null, 'inicio', '🛒', MODULOS.compras.color) + `
+      <div class="tarjetas">
+        <div class="tarjeta" style="background:rgba(0,150,136,0.13);border-color:rgba(0,150,136,0.3);">
+          <div style="font-size:23px;">🥖</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">Boulangerie Saint-Jean</div>
+            <div class="tarjeta-sub">Te falta 1 cosa de acá · a 12 m (±8 m)</div></div>
+          <span class="pastilla" style="background:rgba(0,150,136,0.25);color:#7FD8CE;">estás acá</span>
+        </div>
+      </div>
+      <div class="seccion">Falta comprar (${pend.length})</div>
+      <div class="filas">${pend.map(fila).join('')}</div>
+      ${hechas.length ? `<div class="seccion">Ya comprado</div>
+        <div class="filas">${hechas.map(fila).join('')}</div>` : ''}
+      <div style="display:flex;gap:9px;padding:16px;">
+        <button class="btn compras">🎤 Nota de voz</button>
+        <button class="btn">✏️ Manual</button>
+      </div>
+      <div class="tarjetas">${tarjetaModulo('compras', 'Mis tiendas · 3 guardadas').replace("ir('compras')", "ir('compras/tiendas')")}</div>
+    `;
+  },
+
+  'compras/tiendas'(){
+    return cabecera('Mis tiendas', '3 guardadas', 'compras') + `
+      <div class="filas">` + DATOS.tiendas.map(t=>`
+        <div class="fila">
+          <span style="font-size:17px;">${t.cat}</span>
+          <div class="fila-txt"><div style="${t.mudo?'opacity:0.55;':''}">${esc(t.n)}</div>
+            <div class="fila-sub">radio ${t.radio} m${t.mudo?' · silenciada':''}</div></div>
+          <button class="marca" style="border:none;background:none;font-size:16px;color:#fff;"
+            aria-label="Silenciar">${t.mudo?'🔕':'🔔'}</button>
+        </div>`).join('') + `</div>
+      <div class="nota">Acá se ve bien la ventaja: <b>una lista larga necesita su pantalla</b>.
+        Hoy esto es un desplegable dentro del módulo de compras, que está dentro de la página.</div>
+    `;
+  },
+
+  gym(){
+    return cabecera('Mi Gym', 'rutinas y ejercicios', 'inicio', '💪', MODULOS.gym.color) + `
+      <div class="cifras">
+        <div class="cifra"><div class="cifra-num">0</div><div class="cifra-lbl">días sin ir</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:#E5883F;">3</div>
+          <div class="cifra-lbl">veces / 7 días</div></div>
+        <div class="cifra"><div class="cifra-num" style="color:#E5883F;">11</div>
+          <div class="cifra-lbl">veces / 30 días</div></div>
+      </div>
+      <div class="seccion">Últimas sesiones</div>
+      <div class="tarjetas">` + DATOS.gym.map(s=>`
+        <button class="tarjeta" onclick="ir('gym/dia')">
+          <div class="icono" style="${fondo(MODULOS.gym.color)}">${s.ico}</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">${s.fecha}</div>
+            <div class="tarjeta-sub">${s.det}</div></div>
+          <span class="tarjeta-flecha">›</span>
+        </button>`).join('') + `</div>
+      <div class="nota">El icono de cada día es el del <b>ejercicio predominante</b> — eso ya
+        está andando en tu app de verdad.</div>
+    `;
+  },
+
+  'gym/dia'(){
+    const ex = [
+      ['🦵','Prensa 45°','4 series × 12 reps','120 kg'],
+      ['🦵','Sentadilla búlgara','3 × 10','20 kg'],
+      ['🦵','Extensión de cuádriceps','4 × 15','45 kg'],
+      ['🎯','Plancha','3 × 60 s',''],
+      ['🏃','Cinta','12 min',''],
+    ];
+    return cabecera('Hoy', 'sábado 13 de septiembre', 'gym') + `
+      <div class="filas">` + ex.map(([i,n,d,p])=>`
+        <div class="fila"><span style="font-size:17px;">${i}</span>
+          <div class="fila-txt"><div>${n}</div><div class="fila-sub">${d}</div></div>
+          ${p?`<span class="pastilla" style="background:rgba(224,90,20,0.2);color:#E5883F;">${p}</span>`:''}
+        </div>`).join('') + `</div>`;
+  },
+
+  carnes(){
+    const color = { peligro:['rgba(226,75,74,0.2)','#F09595'], aviso:['rgba(239,159,39,0.2)','#FAC775'],
+                    bien:['rgba(29,158,117,0.2)','#5DCAA5'] };
+    return cabecera('Mis Carnes', 'control de vencimiento', 'inicio', '🥩', MODULOS.carnes.color) + `
+      <div class="filas">` + DATOS.carnes.map(c=>{
+        const [bg,fg] = color[c.estado];
+        return `<div class="fila"><span style="font-size:17px;">🥩</span>
+          <div class="fila-txt"><div>${esc(c.n)}</div>
+            <div class="fila-sub">vence en ${c.dias} día${c.dias===1?'':'s'}</div></div>
+          <span class="pastilla" style="background:${bg};color:${fg};">${c.dias} d</span>
+        </div>`; }).join('') + `</div>
+      <div style="padding:16px;"><button class="btn" style="background:#1D9E75;">📷 Escanear etiqueta</button></div>`;
+  },
+
+  lentes(){
+    const usados = 24, total = 30, r = 62, circ = 2 * Math.PI * r;
+    return cabecera('Lentes', 'cuándo cambiarlos', 'mas', '👁️', MODULOS.lentes.color) + `
+      <div style="display:flex;flex-direction:column;align-items:center;padding:20px 0 6px;">
+        <div style="position:relative;width:150px;height:150px;">
+          <svg width="150" height="150" viewBox="0 0 150 150" style="transform:rotate(-90deg);">
+            <circle cx="75" cy="75" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="11"/>
+            <circle cx="75" cy="75" r="${r}" fill="none" stroke="#1A7AB5" stroke-width="11"
+              stroke-linecap="round" stroke-dasharray="${circ}"
+              stroke-dashoffset="${circ - circ * usados / total}"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;">
+            <span style="font-size:42px;font-weight:700;line-height:1;">${usados}</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:3px;">días usados</span>
+          </div>
+        </div>
+        <div class="pastilla" style="background:rgba(239,159,39,0.2);color:#FAC775;margin-top:10px;padding:6px 16px;">
+          Te quedan ${total - usados} días</div>
+      </div>
+      <div style="display:flex;gap:9px;padding:18px 16px 0;">
+        <button class="btn">✅ Estrené un par</button>
+        <button class="btn" style="background:rgba(226,75,74,0.16);color:#F09595;">🗑️ Ya me deshice</button>
+      </div>`;
+  },
+
+  estudio(){
+    const temas = [['Francés','#D6478F','12h 30','3 subtemas'],
+                   ['Historia','#8E24AA','6h 10','2 subtemas'],
+                   ['Programación','#1E88E5','21h 45','5 subtemas']];
+    return cabecera('Mi Estudio', 'temas y repasos', 'mas', '📚', MODULOS.estudio.color) + `
+      <div class="tarjetas">` + temas.map(([n,c,t,s])=>`
+        <button class="tarjeta" onclick="ir('estudio')">
+          <div class="icono" style="background:${c}33;">📖</div>
+          <div class="tarjeta-txt"><div class="tarjeta-tit">${n}</div>
+            <div class="tarjeta-sub">${t} · ${s}</div></div>
+          <span class="tarjeta-flecha">›</span>
+        </button>`).join('') + `</div>`;
+  },
+
+  ropa(){
+    return cabecera('Mi Ropa', 'qué ponerte', 'mas', '👖', MODULOS.ropa.color) +
+      `<div class="vacio">Pantalla de relleno.<br>El prototipo se concentra en la navegación,
+        no en cada módulo.</div>`;
+  },
+
+  mas(){
+    return cabecera('Más', 'el resto de los módulos', 'inicio') + `
+      <div class="tarjetas">
+        ${tarjetaModulo('carnes', 'El pollo vence mañana')}
+        ${tarjetaModulo('estudio', '40h 25 en 3 temas')}
+        ${tarjetaModulo('lentes', 'Cambiá en 6 días')}
+        ${tarjetaModulo('ropa')}
+      </div>
+      <div class="nota">Los cuatro que menos usás viven acá. Cuáles van abajo y cuáles acá
+        <b>no lo decide un diseñador</b>: lo decide <code>uso_modulos</code>, que ya mide cuánto
+        tiempo pasás en cada uno.</div>
+    `;
+  },
+};
+
+// ---- Navegacion: el hash es la pantalla, y el boton Atras sale gratis ----
+let anterior = '';
+function ir(ruta, atras){
+  if (atras) yendoAtras = true;
+  location.hash = '#/' + ruta;
+}
+let yendoAtras = false;
+
+function pintar(){
+  const ruta = (location.hash.replace(/^#\//, '') || 'inicio');
+  const dibujo = PANTALLAS[ruta] || PANTALLAS.inicio;
+  const vista = document.getElementById('vista');
+  vista.innerHTML = `<div class="pantalla${yendoAtras ? ' atras' : ''}">${dibujo()}</div>`;
+  yendoAtras = false;
+  anterior = ruta;
+  window.scrollTo(0, 0);
+  pintarTabs(ruta);
+}
+
+function pintarTabs(ruta){
+  const raiz = ruta.split('/')[0];
+  // 'Más' se queda encendido mientras estés en cualquiera de los módulos que contiene.
+  const dentroDeMas = ['carnes','estudio','lentes','ropa'].includes(raiz);
+  document.getElementById('tabs').innerHTML = BARRA.map(t=>{
+    const m = MODULOS[t];
+    const ico = t === 'inicio' ? '🏠' : t === 'mas' ? '⋯' : m.ico;
+    const lbl = t === 'inicio' ? 'Hoy' : t === 'mas' ? 'Más'
+              : t === 'tiempo' ? 'Tiempo' : t === 'compras' ? 'Compras' : 'Gym';
+    const on = (t === raiz) || (t === 'mas' && dentroDeMas);
+    const aviso = t === 'compras' ? '<i class="tab-punto"></i>' : '';
+    return `<button class="tab${on ? ' on' : ''}" onclick="ir('${t}')">
+      <span class="tab-ico">${ico}</span>${aviso}<span class="tab-lbl">${lbl}</span></button>`;
+  }).join('');
+}
+
+addEventListener('hashchange', pintar);
+pintar();
+
+// El reloj corriendo: sin esto la pantalla de inicio parece una foto, y lo que hay
+// que evaluar es justamente si se siente viva.
+let seg = 41 * 60 + 7;
+setInterval(()=>{
+  seg++;
+  const el = document.getElementById('reloj');
+  if (!el) return;
+  const h = String(Math.floor(seg / 3600)).padStart(2, '0');
+  const m = String(Math.floor(seg % 3600 / 60)).padStart(2, '0');
+  const s = String(seg % 60).padStart(2, '0');
+  el.textContent = `${h}:${m}:${s}`;
+}, 1000);
+</script>
+</body>
+</html>
