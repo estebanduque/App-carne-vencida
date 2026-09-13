@@ -4547,6 +4547,10 @@ function pendientesDe(categoriaLugar){
 }
 // Un aviso por tienda por día: entrar y salir del súper no debe llenar de notificaciones.
 async function avisarPendientes(lugar){
+  // Silenciar no es borrar: la tienda de al lado de casa o del trabajo se sigue
+  // reconociendo y la franja te muestra que te falta si entras, pero no te suena el
+  // telefono todos los dias por estar cerca.
+  if(lugar.silenciada) return;
   const faltan = pendientesDe(lugar.categoria);
   if(!faltan.length) return;
   if(!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -4580,7 +4584,7 @@ function bannerHTML(){
       <div style="font-size:22px;">${cat.emoji}</div>
       <div class="cmp-banner-txt">
         <div class="cmp-banner-tit">${escHtmlAttr(l.nombre)}</div>
-        <div class="cmp-banner-sub">${faltan.length ? 'Te faltan '+faltan.length+' cosa'+(faltan.length===1?'':'s')+' de acá' : 'No falta nada de acá'} · a ${lugarActual.distancia} m${ultimaPosicion && ultimaPosicion.margen ? ' (±'+ultimaPosicion.margen+' m)' : ''}</div>
+        <div class="cmp-banner-sub">${faltan.length ? 'Te faltan '+faltan.length+' cosa'+(faltan.length===1?'':'s')+' de acá' : 'No falta nada de acá'}${l.silenciada ? ' · 🔕' : ''} · a ${lugarActual.distancia} m${ultimaPosicion && ultimaPosicion.margen ? ' (±'+ultimaPosicion.margen+' m)' : ''}</div>
       </div>
       ${guardar}
       <button class="sub-btn" style="font-size:16px;" onclick="detectarLugar(false)" title="Volver a mirar">🔄</button>
@@ -4645,11 +4649,26 @@ function lugaresHTML(){
     const cat = catCompra(l.categoria);
     return `<div class="cmp-lugar-row">
       <span>${cat.emoji}</span>
-      <span style="flex:1;min-width:0;" ${attrsNombreLargo(l.nombre)}>${escHtmlAttr(l.nombre)}</span>
+      <span style="flex:1;min-width:0;${l.silenciada?'opacity:0.5;':''}" ${attrsNombreLargo(l.nombre)}>${escHtmlAttr(l.nombre)}</span>
       <span style="font-size:11px;color:rgba(255,255,255,0.35);">${l.radio} m</span>
+      <button class="delete-btn" onclick="toggleSilencioLugar(${l.id})" title="${l.silenciada?'Silenciada: no te avisa. Tocá para reactivar':'Te avisa al llegar. Tocá para silenciar'}" aria-label="${l.silenciada?'Reactivar avisos':'Silenciar avisos'}">${l.silenciada?'🔕':'🔔'}</button>
       <button class="delete-btn" onclick="delLugar(${l.id})" aria-label="Eliminar">🗑</button>
     </div>`;
   }).join('') + `</div>`;
+}
+async function toggleSilencioLugar(id){
+  const l = lugares.find(x=>x.id===id); if(!l) return;
+  const nuevo = !l.silenciada;
+  const {data,error} = await sb.from('lugares').update({ silenciada:nuevo }).eq('id',id).select();
+  if(error){
+    const falta = /silenciada|column/i.test(error.message || '') || error.code === '42703';
+    alert(falta
+      ? 'Falta la columna "silenciada" en la tabla lugares. Corré esto en Supabase → SQL Editor:\n\nalter table lugares add column if not exists silenciada boolean not null default false;'
+      : 'No se pudo cambiar el silencio. Intentá de nuevo.');
+    return;
+  }
+  if(data && data[0]) Object.assign(l, data[0]); else l.silenciada = nuevo;
+  renderCompras();
 }
 function toggleLugares(){ mostrarLugares = !mostrarLugares; renderCompras(); }
 function renderComprasDesktop(){
