@@ -341,10 +341,15 @@
   .crono-reset { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); padding: 13px 15px; }
   .tema-chips { display: flex; gap: 6px; flex-wrap: wrap; }
   .tema-chip { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 9px 6px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.15s; }
+  .tema-chip-ico { flex: 0 1 auto; min-width: 46px; padding: 8px 10px; }
+  .tema-chip-icono { display: inline-flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; }
   .tema-area { margin: 0 16px 10px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
   .tema-head { padding: 13px 14px; display: flex; align-items: center; gap: 11px; cursor: pointer; user-select: none; }
   .tema-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .tema-icono { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; line-height: 1; color: #fff; }
+  .tema-icono-spacer { flex: 1; min-width: 0; }
   .tema-name { flex: 1; font-size: 15px; font-weight: 600; color: #fff; }
+  .legend-icono { display: inline-flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1; }
   .tema-total { font-size: 14px; font-weight: 700; }
   .tema-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s ease; background: rgba(0,0,0,0.12); }
   .tema-body.open { grid-template-rows: 1fr; }
@@ -3011,7 +3016,12 @@ function chipsHTML(activo, onclickName, lista, claro){
   return (lista || TEMAS).map(t=>{
     const act = t.nombre === activo;
     const style = act ? (claro ? `background:${t.color};border-color:${t.color};color:${colorTextoSobre(t.color)};` : `background:${t.bg};border-color:${t.color};color:#fff;`) : '';
-    return `<button type="button" class="tema-chip" style="${style}" onclick="${onclickName}('${t.nombre}')">${t.nombre}</button>`;
+    const nombreEsc = escHtmlAttr(t.nombre);
+    const contenido = t.icono
+      ? `<span class="tema-chip-icono" aria-hidden="true">${t.icono}</span>`
+      : t.nombre;
+    const extraAttrs = t.icono ? ` title="${nombreEsc}" aria-label="${nombreEsc}"` : '';
+    return `<button type="button" class="tema-chip${t.icono ? ' tema-chip-ico' : ''}" style="${style}"${extraAttrs} onclick="${onclickName}('${t.nombre}')">${contenido}</button>`;
   }).join('');
 }
 function renderCronoChips(){
@@ -3562,14 +3572,14 @@ function renderEstudioDesktop(){
 // ===================== MI TIEMPO (por categorías) =====================
 // Paleta: 3 primarios (rojo/azul/amarillo), 3 secundarios (naranja/verde/violeta) y 3 terciarios de uso común (verde azulado/ámbar/magenta)
 const CATEGORIAS_TIEMPO = [
-  { nombre:'Hogar' }, { nombre:'Ocio' }, { nombre:'Deporte' }, { nombre:'Dormir' },
-  { nombre:'Cuidado personal' }, { nombre:'Transporte' }, { nombre:'Trabajo' },
-  { nombre:'Proyecto personal' }, { nombre:'Otro' },
+  { nombre:'Hogar', icono:'🏠' }, { nombre:'Ocio', icono:'🎮' }, { nombre:'Deporte', icono:'🏋️' }, { nombre:'Dormir', icono:'😴' },
+  { nombre:'Cuidado personal', icono:'🚿' }, { nombre:'Transporte', icono:'🚗' }, { nombre:'Trabajo', icono:'💼' },
+  { nombre:'Proyecto personal', icono:'💡' }, { nombre:'Otro', icono:'📦' },
 ].map(c=>Object.assign(c, { color:'#9E9E9E', bg:'rgba(158,158,158,0.15)', bd:'rgba(158,158,158,0.35)' }));
 
 // Colores fijos, no dependen del ranking de tiempo.
 const COLORES_FIJOS_TIEMPO = { 'Dormir':'#212121', 'Trabajo':'#757575' };
-const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', color:'#E53935', bg:'rgba(229,57,53,0.15)', bd:'rgba(229,57,53,0.35)' }; // rojo, fijo
+const ESTUDIO_EN_TIEMPO = { nombre:'Estudio', icono:'📚', color:'#E53935', bg:'rgba(229,57,53,0.15)', bd:'rgba(229,57,53,0.35)' }; // rojo, fijo
 // El resto de las categorías toma color según cuánto tiempo acumula: las 2 con más tiempo
 // reciben los primarios que quedan libres (azul y amarillo, porque el rojo es de Estudio),
 // las 3 siguientes los secundarios y de ahí en adelante los terciarios.
@@ -3974,8 +3984,9 @@ function renderEstudioBlockHTML(){
 
   return `<div class="tema-area" data-cat="Estudio" style="border-color:${c.bd};">
     <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('Estudio')">
-      <div class="tema-dot" style="background:${c.color};"></div>
-      <div class="tema-name">Estudio</div>
+      ${c.icono
+        ? `<div class="tema-icono" style="background:${c.color};" title="${escHtmlAttr(c.nombre)}" aria-label="${escHtmlAttr(c.nombre)}">${c.icono}</div><div class="tema-icono-spacer"></div>`
+        : `<div class="tema-dot" style="background:${c.color};"></div><div class="tema-name">Estudio</div>`}
       <div class="tema-total" style="color:${colorSobreClaro(c.color)};">${fmtHoras(st.total)}</div>
       <span class="chevron ${isOpen?'open':''}">▾</span>
     </div>
@@ -4256,8 +4267,9 @@ function renderCategoriaBlockHTML(c){
 
     return `<div class="tema-area" data-cat="${c.nombre}" style="border-color:${c.bd};">
       <div class="tema-head" style="background:${c.bg};" onclick="toggleCategoria('${c.nombre}')">
-        <div class="tema-dot" style="background:${c.color};"></div>
-        <div class="tema-name">${c.nombre}</div>
+        ${c.icono
+          ? `<div class="tema-icono" style="background:${c.color};" title="${escHtmlAttr(c.nombre)}" aria-label="${escHtmlAttr(c.nombre)}">${c.icono}</div><div class="tema-icono-spacer"></div>`
+          : `<div class="tema-dot" style="background:${c.color};"></div><div class="tema-name">${c.nombre}</div>`}
         <div class="tema-total" style="color:${colorSobreClaro(c.color)};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
@@ -4472,9 +4484,13 @@ function renderLegendSemana(containerId){
   cont.innerHTML = lista.map(c=>{
     const activo = filtroGridCategoria===c.nombre;
     const atenuado = filtroGridCategoria && !activo;
-    return `<div class="legend-chip" style="display:flex;align-items:center;gap:5px;${activo?'border-color:'+c.color+';background:'+c.bg+';':''}opacity:${atenuado?0.4:1};" onclick="toggleFiltroGrid('${escAttrJs(c.nombre)}')">
+    const nombreEsc = escHtmlAttr(c.nombre);
+    const etiqueta = c.icono
+      ? `<span class="legend-icono" aria-hidden="true">${c.icono}</span>`
+      : `<span style="font-size:10px;color:rgba(36,40,80,0.6);">${c.nombre}</span>`;
+    return `<div class="legend-chip" title="${nombreEsc}" aria-label="${nombreEsc}" style="display:flex;align-items:center;gap:5px;${activo?'border-color:'+c.color+';background:'+c.bg+';':''}opacity:${atenuado?0.4:1};" onclick="toggleFiltroGrid('${escAttrJs(c.nombre)}')">
       <span style="width:9px;height:9px;border-radius:50%;background:${c.color};display:inline-block;flex-shrink:0;"></span>
-      <span style="font-size:10px;color:rgba(36,40,80,0.6);">${c.nombre}</span>
+      ${etiqueta}
     </div>`;
   }).join('');
 }
