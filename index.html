@@ -343,6 +343,9 @@
   .tema-chip { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 9px 6px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.15s; }
   .tema-chip-ico { flex: 0 1 auto; min-width: 46px; padding: 8px 10px; }
   .tema-chip-icono { display: inline-flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; }
+  .tema-chip-cuadrado { flex: 1 1 0; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6px 4px; white-space: normal; text-overflow: clip; }
+  .tema-chip-simbolo { font-size: 17px; line-height: 1; letter-spacing: -2px; }
+  .tema-chip-nombre { font-size: 10px; font-weight: 600; line-height: 1.2; text-align: center; }
   .tema-area { margin: 0 16px 10px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
   .tema-head { padding: 13px 14px; display: flex; align-items: center; gap: 11px; cursor: pointer; user-select: none; }
   .tema-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
@@ -2459,11 +2462,13 @@ function closeGymDayModal() {
 }
 
 // ===================== MI ESTUDIO (por temas) =====================
+// El símbolo combina dos emojis: el primero identifica la materia y el segundo el soporte
+// (código, contrato, expediente, reglamento) para que se distingan de un vistazo.
 const TEMAS = [
-  { nombre:'Droit civil',      color:'#F2C94C', bg:'rgba(242,201,76,0.15)',  bd:'rgba(242,201,76,0.35)', metaSem:9    },
-  { nombre:'Droit commercial', color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)', metaSem:12.5 },
-  { nombre:'Procédures',       color:'#27AE60', bg:'rgba(39,174,96,0.15)',   bd:'rgba(39,174,96,0.35)',  metaSem:8    },
-  { nombre:'Déontologie',      color:'#EB5757', bg:'rgba(235,87,87,0.15)',   bd:'rgba(235,87,87,0.35)',  metaSem:10.5 },
+  { nombre:'Droit civil',      simbolo:'👥📜', color:'#F2C94C', bg:'rgba(242,201,76,0.15)',  bd:'rgba(242,201,76,0.35)', metaSem:9    },
+  { nombre:'Droit commercial', simbolo:'🏢💼', color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)', metaSem:12.5 },
+  { nombre:'Procédures',       simbolo:'⚖️📋', color:'#27AE60', bg:'rgba(39,174,96,0.15)',   bd:'rgba(39,174,96,0.35)',  metaSem:8    },
+  { nombre:'Déontologie',      simbolo:'🤝📖', color:'#EB5757', bg:'rgba(235,87,87,0.15)',   bd:'rgba(235,87,87,0.35)',  metaSem:10.5 },
 ];
 function temaInfo(nombre){ return TEMAS.find(t=>t.nombre===nombre) || { nombre:nombre||'—', color:'#F07AB0', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' }; }
 
@@ -3017,11 +3022,17 @@ function chipsHTML(activo, onclickName, lista, claro){
     const act = t.nombre === activo;
     const style = act ? (claro ? `background:${t.color};border-color:${t.color};color:${colorTextoSobre(t.color)};` : `background:${t.bg};border-color:${t.color};color:#fff;`) : '';
     const nombreEsc = escHtmlAttr(t.nombre);
-    const contenido = t.icono
-      ? `<span class="tema-chip-icono" aria-hidden="true">${t.icono}</span>`
-      : t.nombre;
-    const extraAttrs = t.icono ? ` title="${nombreEsc}" aria-label="${nombreEsc}"` : '';
-    return `<button type="button" class="tema-chip${t.icono ? ' tema-chip-ico' : ''}" style="${style}"${extraAttrs} onclick="${onclickName}('${t.nombre}')">${contenido}</button>`;
+    let clase = '', contenido = t.nombre, extraAttrs = '';
+    if(t.simbolo){
+      clase = ' tema-chip-cuadrado';
+      contenido = `<span class="tema-chip-simbolo" aria-hidden="true">${t.simbolo}</span><span class="tema-chip-nombre">${t.nombre}</span>`;
+      extraAttrs = ` title="${nombreEsc}"`;
+    } else if(t.icono){
+      clase = ' tema-chip-ico';
+      contenido = `<span class="tema-chip-icono" aria-hidden="true">${t.icono}</span>`;
+      extraAttrs = ` title="${nombreEsc}" aria-label="${nombreEsc}"`;
+    }
+    return `<button type="button" class="tema-chip${clase}" style="${style}"${extraAttrs} onclick="${onclickName}('${t.nombre}')">${contenido}</button>`;
   }).join('');
 }
 function renderCronoChips(){
