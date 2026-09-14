@@ -495,6 +495,22 @@
     .tar-toggle-hechos:active { background: rgba(255,255,255,0.08); }
     .btn-save-amber { background: #F59E0B; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #1a1200; font-weight: 700; font-family: inherit; }
     .btn-save-amber:active { background: #C47F09; }
+    .tar-overdue { margin: 0 16px 12px; background: rgba(226,75,74,0.14); border: 1px solid rgba(226,75,74,0.45); border-radius: 14px; padding: 12px 14px; }
+    .tar-overdue-tit { font-size: 13px; font-weight: 700; color: #F09595; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .tar-overdue-lst { font-size: 12px; color: rgba(240,149,149,0.85); line-height: 1.4; }
+    .tar-recur-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 20px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); margin-left: 6px; }
+    .tar-prev-row { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .tar-prev-row:last-child { border-bottom: none; }
+    .tar-prev-top { display: flex; align-items: flex-start; gap: 8px; }
+    .tar-prev-txt { flex: 1; min-width: 0; }
+    .tar-prev-txt input { width: 100%; padding: 8px 10px; font-size: 14px; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgba(255,255,255,0.06); color: #fff; font-family: inherit; }
+    .tar-prev-urg { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+    .tar-prev-urg button { flex: 1 1 calc(25% - 4px); min-width: 68px; padding: 6px 4px; border: 1.5px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55); font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .tar-prev-urg button.on { color: #fff; }
+    .tar-prev-urg button[data-u="1"].on { background: rgba(226,75,74,0.28); border-color: rgba(226,75,74,0.6); }
+    .tar-prev-urg button[data-u="2"].on { background: rgba(229,136,63,0.28); border-color: rgba(229,136,63,0.6); }
+    .tar-prev-urg button[data-u="3"].on { background: rgba(250,199,117,0.24); border-color: rgba(250,199,117,0.55); }
+    .tar-prev-urg button[data-u="4"].on { background: rgba(123,200,240,0.24); border-color: rgba(123,200,240,0.5); }
 
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
@@ -822,9 +838,11 @@
           <div class="stat"><div class="stat-num" style="color:#F5B37A;" id="stat-tar-pend">0</div><div class="stat-label">Pendientes</div></div>
           <div class="stat"><div class="stat-num red" id="stat-tar-urg">0</div><div class="stat-label">Urgentes</div></div>
         </div>
+        <div id="tar-overdue-banner"></div>
         <div id="tar-lista"></div>
-        <div class="tar-add-row">
-          <button class="tar-add-full" onclick="openTareaModal()">+ Nueva tarea</button>
+        <div class="add-row">
+          <button class="add-btn primary" style="background:#F59E0B;border-color:#F59E0B;color:#1a1200;font-weight:700;" onclick="openVozTarModal()">🎤 Nota de voz</button>
+          <button class="add-btn" onclick="openTareaModal()">✏️ Manual</button>
         </div>
         <button id="tar-toggle-hechos-btn" class="tar-toggle-hechos" onclick="toggleTareasHechas()" style="display:none;"></button>
         <div id="tar-hechas-lista" style="display:none;"></div>
@@ -1035,8 +1053,12 @@
           <div class="desktop-stat"><div class="desktop-stat-num" style="color:#F5B37A;" id="d-stat-tar-pend">0</div><div class="desktop-stat-lbl">Pendientes</div></div>
           <div class="desktop-stat"><div class="desktop-stat-num" style="color:#F09595;" id="d-stat-tar-urg">0</div><div class="desktop-stat-lbl">Urgentes</div></div>
         </div>
+        <div id="d-tar-overdue-banner"></div>
         <div id="d-tar-lista" style="max-height:420px;overflow-y:auto;"></div>
-        <button class="desktop-add-btn" onclick="openTareaModal()">+ Nueva tarea</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <button class="desktop-add-btn" style="background:#F59E0B;border-color:#F59E0B;color:#1a1200;font-weight:700;margin:0;" onclick="openVozTarModal()">🎤 Nota de voz</button>
+          <button class="desktop-add-btn" style="margin:0;" onclick="openTareaModal()">✏️ Manual</button>
+        </div>
       </div>
     </div>
 </div>
@@ -1287,6 +1309,34 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-amber" onclick="saveTarea()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nota de voz para tareas -->
+<div class="modal-overlay" id="modal-voz-tar">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🎤 Dictar tareas</h2>
+    <div id="voz-tar-paso-dictar">
+      <button class="cmp-mic" id="voz-tar-mic" style="background:#F59E0B;" onclick="alternarDictadoTar()">🎤</button>
+      <p id="voz-tar-estado" style="text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Tocá el micrófono y decí las tareas. Podés indicar la urgencia: "urgente", "importante", "sin apuro"…</p>
+      <div class="form-row">
+        <label>Lo que escuché <span style="opacity:0.55;font-weight:400;">(podés corregirlo)</span></label>
+        <textarea id="voz-tar-texto" rows="4" placeholder="Ej: recordar llamar urgente al médico y sacar el pasaporte, sin apuro empezar a leer el libro" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid rgba(255,255,255,0.15);border-radius:9px;background:rgba(255,255,255,0.07);color:#fff;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+        <button class="btn-save-amber" onclick="interpretarNotaTar()">Interpretar</button>
+      </div>
+    </div>
+    <div id="voz-tar-paso-revisar" style="display:none;">
+      <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Revisá cada tarea y ajustá la urgencia antes de guardar.</p>
+      <div id="voz-tar-preview"></div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="volverADictarTar()">Atrás</button>
+        <button class="btn-save-amber" onclick="guardarInterpretadoTar()">Agregar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5292,8 +5342,23 @@ async function delLugar(id){
 const TAREAS_KEY = 'tareas_lista';
 const TAREAS_SEEDED_KEY = 'tareas_seeded_v1';
 const TAREAS_MOSTRAR_HECHAS_KEY = 'tareas_mostrar_hechas';
+const TAREAS_RECUR_KEY = 'tareas_recurrentes';
+const TAREAS_RECUR_SEEDED_KEY = 'tareas_recur_seeded_v1';
+const TAREAS_NOTIF_CACHE_KEY = 'tareas_notif_cache';
 const URGENCIA_LBL = { 1:'🔴 Urgente', 2:'🟠 Alta', 3:'🟡 Media', 4:'🔵 Baja' };
 const URGENCIA_COLOR = { 1:'#E24B4A', 2:'#E5883F', 3:'#FAC775', 4:'#7BC8F0' };
+const DIA_MS = 86400000;
+
+// Plantillas recurrentes que se auto-generan. Al vencer el intervalo se crea una nueva
+// tarea pendiente; si al cumplirse otro intervalo sigue sin hacerse, se notifica.
+const TAREAS_RECUR_SEMILLA = [
+  { key:'limpieza-cuarto',    texto:'Limpieza del cuarto',    urgencia:3, intervaloDias:15, ico:'🧹' },
+  { key:'limpieza-cocina',    texto:'Limpieza de la cocina',  urgencia:3, intervaloDias:15, ico:'🧽' },
+  { key:'limpieza-sala',      texto:'Limpieza de la sala',    urgencia:3, intervaloDias:15, ico:'🧹' },
+  { key:'limpieza-bano',      texto:'Limpieza del baño',      urgencia:3, intervaloDias:15, ico:'🚿' },
+  { key:'limpieza-recibidor', texto:'Limpieza del recibidor', urgencia:3, intervaloDias:15, ico:'🧹' },
+  { key:'regar-plantas',      texto:'Regar las plantas',      urgencia:2, intervaloDias:4,  ico:'🪴' },
+];
 const TAREAS_SEMILLA = [
   {texto:'Registrarse Concurso de Méritos Procuraduría (plazo 18 sep)', urgencia:1},
   {texto:'Ir a la alcaldía de Guarne a obtener nueva factura de impuestos', urgencia:1},
@@ -5341,10 +5406,14 @@ function guardarTareas(){
 function tareaCardHtml(t){
   const cls = 'tar-card urg-' + t.urgencia + (t.hecho ? ' hecho' : '');
   const txtCls = 'tar-texto' + (t.hecho ? ' hecho' : '');
+  const plantilla = t.templateKey ? TAREAS_RECUR_SEMILLA.find(p => p.key === t.templateKey) : null;
+  const recurBadge = plantilla
+    ? `<span class="tar-recur-badge" title="Tarea que se regenera sola">${plantilla.ico} cada ${plantilla.intervaloDias}d</span>`
+    : '';
   return `<div class="${cls}">
     <button class="tar-check${t.hecho ? ' on' : ''}" onclick="toggleTarea(${t.id})" aria-label="Marcar">${t.hecho ? '✓' : ''}</button>
     <div class="tar-body">
-      <div class="${txtCls}">${escHtmlAttr(t.texto)}</div>
+      <div class="${txtCls}">${escHtmlAttr(t.texto)}${recurBadge}</div>
       <div class="tar-meta">
         <span class="tar-badge urg-${t.urgencia}">${URGENCIA_LBL[t.urgencia]}</span>
       </div>
@@ -5366,6 +5435,8 @@ function renderTareas(){
   setTxt('stat-tar-urg', urg);
   setTxt('d-stat-tar-pend', pendientes.length);
   setTxt('d-stat-tar-urg', urg);
+
+  if(typeof renderOverdueBanner === 'function') renderOverdueBanner();
 
   const grupos = [1,2,3,4].map(u => {
     const items = pendientes.filter(t => t.urgencia === u)
@@ -5465,13 +5536,283 @@ function saveTarea(){
   renderTareas();
 }
 
+// ===== Tareas por voz =====
+// Reconocimiento del navegador para dictado; la urgencia se detecta con palabras clave
+// en el mismo texto ("urgente", "importante", "cuando pueda", ...). No hace falta un
+// servicio remoto: cada frase se transforma en una tarea con urgencia sugerida, que el
+// usuario ajusta antes de guardar.
+let reconocedorTar = null, grabandoTar = false, tareasInterpretadas = [];
+function openVozTarModal(){
+  tareasInterpretadas = [];
+  document.getElementById('voz-tar-paso-dictar').style.display = '';
+  document.getElementById('voz-tar-paso-revisar').style.display = 'none';
+  document.getElementById('voz-tar-texto').value = '';
+  const mic = document.getElementById('voz-tar-mic');
+  const est = document.getElementById('voz-tar-estado');
+  if(!soportaDictado()){
+    mic.style.display = 'none';
+    est.textContent = 'Este navegador no dicta. Escribí las tareas y las agrupamos igual.';
+  } else {
+    mic.style.display = '';
+    mic.classList.remove('grabando');
+    est.textContent = 'Tocá el micrófono y decí las tareas. Podés decir "urgente", "importante", "sin apuro" para marcar la urgencia.';
+  }
+  document.getElementById('modal-voz-tar').classList.add('open');
+}
+function alternarDictadoTar(){
+  if(grabandoTar){ if(reconocedorTar) reconocedorTar.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  if(reconocedorTar){ try{ reconocedorTar.abort(); }catch(e){} reconocedorTar = null; }
+  const caja = document.getElementById('voz-tar-texto');
+  const est = document.getElementById('voz-tar-estado');
+  const mic = document.getElementById('voz-tar-mic');
+  const base = caja.value ? caja.value.trim() + ' ' : '';
+  reconocedorTar = new SR();
+  reconocedorTar.lang = 'es-MX';
+  reconocedorTar.continuous = true;
+  reconocedorTar.interimResults = true;
+  reconocedorTar.onstart = ()=>{ mic.classList.add('grabando'); est.textContent = 'Escuchando… tocá de nuevo para parar'; if(navigator.vibrate) navigator.vibrate(20); };
+  let firme = base;
+  reconocedorTar.onresult = (ev)=>{
+    let provisorio = '';
+    for(let k=ev.resultIndex; k<ev.results.length; k++){
+      const r = ev.results[k];
+      if(r.isFinal) firme += r[0].transcript + ' ';
+      else provisorio += r[0].transcript;
+    }
+    caja.value = (firme + provisorio).replace(/\s+/g,' ').trim();
+  };
+  reconocedorTar.onerror = (ev)=>{
+    est.textContent = ev.error==='not-allowed' ? 'No diste permiso al micrófono' :
+                      ev.error==='no-speech'   ? 'No se escuchó nada' : 'Error de dictado: '+ev.error;
+  };
+  reconocedorTar.onend = ()=>{ grabandoTar = false; mic.classList.remove('grabando'); if(!/Error|permiso|escuchó/.test(document.getElementById('voz-tar-estado').textContent)) est.textContent = 'Listo. Revisá el texto y tocá Interpretar.'; };
+  grabandoTar = true;
+  try { reconocedorTar.start(); }
+  catch(e){ grabandoTar = false; mic.classList.remove('grabando'); est.textContent = 'No se pudo abrir el micrófono'; }
+}
+
+// Divide el texto en tareas y detecta la urgencia por palabras clave. No pretende ser
+// exhaustivo: se abre el editor para que el usuario ajuste antes de guardar.
+function detectarUrgenciaFrase(frase){
+  const s = frase.toLowerCase();
+  if(/\b(urgent[eí]?simo|urgente|inmediato|inmediatamente|ya mismo|cuanto antes|para hoy|no puede esperar|imperioso)\b/.test(s)) return 1;
+  if(/\b(importante|prioritari[oa]|alta prioridad|priorida[dt]? alta|apurad[oa]|apremiante|pronto|esta semana|no olvidar)\b/.test(s)) return 2;
+  if(/\b(sin apuro|sin prisa|cuando pueda|cuando tenga tiempo|alg[uú]n d[ií]a|a futuro|de a poco|con calma|no urge|baja prioridad)\b/.test(s)) return 4;
+  return 3;
+}
+function limpiarFrase(frase){
+  return frase
+    .replace(/\b(urgent[eí]?simo|urgente|inmediato|inmediatamente|ya mismo|cuanto antes|para hoy|no puede esperar|imperioso|importante|prioritari[oa]|alta prioridad|priorida[dt]? alta|apurad[oa]|apremiante|pronto|esta semana|no olvidar|sin apuro|sin prisa|cuando pueda|cuando tenga tiempo|alg[uú]n d[ií]a|a futuro|de a poco|con calma|no urge|baja prioridad|es muy|es|muy)\b/gi, ' ')
+    .replace(/^[\s,;:.\-—y]+/, '')
+    .replace(/[\s,;:.\-—]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function partirFrases(texto){
+  // Cortes fuertes primero (punto/coma con conector). Después "y" solo si separa cláusulas.
+  const bruto = texto
+    .replace(/\b(luego|despu[eé]s|adem[aá]s|tambi[eé]n|otra|otra cosa|por otro lado)\b/gi, ',')
+    .split(/[.;\n]|(?:,\s*(?:y|e)\s+)|(?:\s+y\s+(?=\w))|,/)
+    .map(x => x.trim())
+    .filter(x => x.length >= 3);
+  return bruto;
+}
+function interpretarNotaTar(){
+  if(grabandoTar && reconocedorTar) reconocedorTar.stop();
+  const texto = document.getElementById('voz-tar-texto').value.trim();
+  if(!texto){ alert('No hay nada que interpretar.'); return; }
+  const frases = partirFrases(texto);
+  if(!frases.length){
+    // Sin cortes claros: se toma todo como una sola tarea.
+    tareasInterpretadas = [{ texto: limpiarFrase(texto) || texto.trim(), urgencia: detectarUrgenciaFrase(texto) }];
+  } else {
+    tareasInterpretadas = frases.map(f => ({
+      texto: limpiarFrase(f) || f.trim(),
+      urgencia: detectarUrgenciaFrase(f),
+    })).filter(x => x.texto.length >= 2);
+  }
+  if(!tareasInterpretadas.length){
+    alert('No entendí ninguna tarea. Probá diciéndolo de otra forma.');
+    return;
+  }
+  renderPreviewVozTar();
+  document.getElementById('voz-tar-paso-dictar').style.display = 'none';
+  document.getElementById('voz-tar-paso-revisar').style.display = '';
+}
+function renderPreviewVozTar(){
+  const cont = document.getElementById('voz-tar-preview');
+  cont.innerHTML = tareasInterpretadas.map((t, n) => `
+    <div class="tar-prev-row">
+      <div class="tar-prev-top">
+        <div class="tar-prev-txt">
+          <input type="text" value="${escHtmlAttr(t.texto)}" oninput="tareasInterpretadas[${n}].texto=this.value">
+        </div>
+        <button class="delete-btn" onclick="tareasInterpretadas.splice(${n},1);renderPreviewVozTar();" aria-label="Quitar">🗑</button>
+      </div>
+      <div class="tar-prev-urg">
+        ${[1,2,3,4].map(u => `<button data-u="${u}" class="${t.urgencia===u?'on':''}" onclick="tareasInterpretadas[${n}].urgencia=${u};renderPreviewVozTar();">${URGENCIA_LBL[u]}</button>`).join('')}
+      </div>
+    </div>
+  `).join('') || '<div class="tar-vacio">No queda ninguna tarea para agregar.</div>';
+}
+function volverADictarTar(){
+  document.getElementById('voz-tar-paso-revisar').style.display = 'none';
+  document.getElementById('voz-tar-paso-dictar').style.display = '';
+}
+function guardarInterpretadoTar(){
+  const validas = tareasInterpretadas.filter(t => t.texto && t.texto.trim().length >= 2);
+  if(!validas.length){ closeModals(); return; }
+  const base = Date.now();
+  validas.forEach((t, i) => {
+    tareas.push({
+      id: base + i,
+      texto: t.texto.trim(),
+      urgencia: t.urgencia || 3,
+      hecho: false,
+      created: base + i,
+    });
+  });
+  guardarTareas();
+  closeModals();
+  renderTareas();
+}
+
+// ===== Tareas recurrentes (limpieza cada 15 días, plantas cada 4) =====
+let tareasRecur = [];
+function cargarTareasRecur(){
+  try{
+    const raw = localStorage.getItem(TAREAS_RECUR_KEY);
+    tareasRecur = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(tareasRecur)) tareasRecur = [];
+  }catch(e){ tareasRecur = []; }
+  if(!localStorage.getItem(TAREAS_RECUR_SEEDED_KEY)){
+    // La primera vez la ultimaGeneracion se pone a 0 para que la próxima corrida
+    // cree una tarea de cada plantilla enseguida. Así el usuario ve el módulo activo
+    // desde el primer día sin esperar 15 días.
+    tareasRecur = TAREAS_RECUR_SEMILLA.map(p => ({ ...p, ultimaGeneracion: 0, activa: true }));
+    localStorage.setItem(TAREAS_RECUR_SEEDED_KEY, '1');
+    guardarTareasRecur();
+  } else {
+    // Si aparecieron plantillas nuevas en el código, se agregan; las existentes se
+    // dejan como están (respeta si el usuario las apagó o cambió).
+    const claves = new Set(tareasRecur.map(x => x.key));
+    let cambio = false;
+    for(const p of TAREAS_RECUR_SEMILLA){
+      if(!claves.has(p.key)){
+        tareasRecur.push({ ...p, ultimaGeneracion: 0, activa: true });
+        cambio = true;
+      }
+    }
+    if(cambio) guardarTareasRecur();
+  }
+}
+function guardarTareasRecur(){
+  try{ localStorage.setItem(TAREAS_RECUR_KEY, JSON.stringify(tareasRecur)); }catch(e){}
+}
+function ultimaTareaDePlantilla(key){
+  const list = tareas.filter(t => t.templateKey === key).sort((a,b) => (b.created||0) - (a.created||0));
+  return list[0] || null;
+}
+// Regenera las plantillas cuyo intervalo se cumplió. Devuelve la cantidad creada.
+function regenerarTareasRecurrentes(){
+  const ahora = Date.now();
+  let creadas = 0;
+  for(const p of tareasRecur){
+    if(!p.activa) continue;
+    const ultima = ultimaTareaDePlantilla(p.key);
+    // Se regenera solo si no hay pendiente y pasó el intervalo desde la última creación.
+    const hayPendiente = ultima && !ultima.hecho;
+    if(hayPendiente) continue;
+    const desde = Math.max(p.ultimaGeneracion || 0, ultima ? (ultima.created || 0) : 0);
+    const dias = (ahora - desde) / DIA_MS;
+    if(dias >= p.intervaloDias || !desde){
+      tareas.push({
+        id: ahora + creadas,
+        texto: p.texto,
+        urgencia: p.urgencia,
+        hecho: false,
+        created: ahora + creadas,
+        templateKey: p.key,
+      });
+      p.ultimaGeneracion = ahora + creadas;
+      creadas++;
+    }
+  }
+  if(creadas){ guardarTareas(); guardarTareasRecur(); }
+  return creadas;
+}
+// Devuelve las tareas recurrentes pendientes que ya pasaron el plazo (edad ≥ intervalo).
+function tareasRecurrentesAtrasadas(){
+  const ahora = Date.now();
+  return tareas.filter(t => {
+    if(t.hecho || !t.templateKey) return false;
+    const p = tareasRecur.find(x => x.key === t.templateKey);
+    if(!p) return false;
+    const edad = (ahora - (t.created || 0)) / DIA_MS;
+    return edad >= p.intervaloDias;
+  }).map(t => {
+    const p = tareasRecur.find(x => x.key === t.templateKey);
+    return { tarea: t, plantilla: p, diasAtraso: Math.floor((ahora - t.created) / DIA_MS) - p.intervaloDias };
+  });
+}
+function renderOverdueBanner(){
+  const atrasadas = tareasRecurrentesAtrasadas();
+  const html = atrasadas.length
+    ? `<div class="tar-overdue">
+        <div class="tar-overdue-tit">⚠️ ${atrasadas.length} tarea${atrasadas.length===1?'':'s'} recurrente${atrasadas.length===1?'':'s'} atrasada${atrasadas.length===1?'':'s'}</div>
+        <div class="tar-overdue-lst">${atrasadas.map(a => `${a.plantilla.ico} ${escHtmlAttr(a.tarea.texto)} · ${a.diasAtraso>0 ? '+'+a.diasAtraso+'d' : 'hoy vence'}`).join('<br>')}</div>
+      </div>`
+    : '';
+  const m = document.getElementById('tar-overdue-banner');
+  const d = document.getElementById('d-tar-overdue-banner');
+  if(m) m.innerHTML = html;
+  if(d) d.innerHTML = html;
+}
+function cargarNotifCache(){
+  try{ return JSON.parse(localStorage.getItem(TAREAS_NOTIF_CACHE_KEY) || '{}') || {}; }catch(e){ return {}; }
+}
+function guardarNotifCache(c){
+  try{ localStorage.setItem(TAREAS_NOTIF_CACHE_KEY, JSON.stringify(c)); }catch(e){}
+}
+// Notifica una vez al día por tarea recurrente atrasada, para no spamear.
+async function notificarTareasAtrasadas(){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const hoyStr = fechaLocal(new Date());
+  const cache = cargarNotifCache();
+  const atrasadas = tareasRecurrentesAtrasadas();
+  for(const a of atrasadas){
+    const clave = a.tarea.id + '_' + hoyStr;
+    if(cache[clave]) continue;
+    const cuerpo = a.diasAtraso > 0
+      ? 'Lleva ' + a.diasAtraso + ' día' + (a.diasAtraso===1?'':'s') + ' atrasada desde que se regeneró.'
+      : 'Se cumplió el plazo de esta tarea recurrente.';
+    await notificar(a.plantilla.ico + ' ' + a.tarea.texto, cuerpo);
+    cache[clave] = 1;
+  }
+  // Limpieza: solo se guardan claves del día para no crecer sin fin.
+  const limpio = {};
+  for(const k in cache){ if(k.endsWith('_' + hoyStr)) limpio[k] = cache[k]; }
+  guardarNotifCache(limpio);
+}
+// Punto de entrada que llama la app: regenera, refresca la UI y notifica si hace falta.
+function revisarTareasRecurrentes(){
+  regenerarTareasRecurrentes();
+  renderTareas();
+  notificarTareasAtrasadas();
+}
+
 // ---- Inicialización (aquí las variables ya existen) ----
 loadCompras();
 loadLugares();
 loadEstudio();
 cargarUsoModulos();
 cargarTareas();
-renderTareas();
+cargarTareasRecur();
+revisarTareasRecurrentes();
+// Revisa cada hora mientras la app esté abierta, y en cada vuelta a la app (visibilitychange).
+setInterval(revisarTareasRecurrentes, 60 * 60 * 1000);
 addEventListener('hashchange', pintarPantallas);
 pintarPantallas();
 loadPuntosRepaso();
@@ -5490,6 +5831,7 @@ document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState==='visible'){
     reanudarContadoresModulos();
     if(openMenus.has('compras')) detectarLugar(true);
+    revisarTareasRecurrentes();
   } else {
     pausarContadoresModulos();
   }
