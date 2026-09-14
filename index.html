@@ -1846,7 +1846,9 @@ function firmaHoy(){
   // están congeladas; si no, la cifra de Hoy se quedaría vieja tras el toggle.
   return [items.length, items.filter(esCongelado).length,
           comprasItems.filter(i=>!i.comprado).length, crudos,
-          getLentesData(), Math.round(minutosHoyTiempo())].join('|');
+          getLentesData(), Math.round(minutosHoyTiempo()),
+          tareas.filter(t=>!t.hecho).length,
+          tareas.filter(t=>!t.hecho && t.urgencia === 1).length].join('|');
 }
 let ultimaFirmaHoy = null;
 
@@ -1885,6 +1887,27 @@ function renderHoy(){
 
   // Solo se muestra lo que de verdad reclama algo: una tarjeta por cosa pendiente.
   const avisos = [];
+
+  // Tareas. Es lo unico de esta pantalla que puede tener una fecha encima, asi que
+  // cuando hay urgentes o recurrentes vencidas se va arriba de todo.
+  const tarPend = tareas.filter(t => !t.hecho);
+  const tarUrg = tarPend.filter(t => t.urgencia === 1);
+  if(tarPend.length){
+    const atrasadas = tareasRecurrentesAtrasadas();
+    const prioritario = !!(tarUrg.length || atrasadas.length);
+    avisos.push({ m:'tareas', ico:'📋', prioritario,
+      tit: tarUrg.length
+        ? tarUrg.length + ' tarea' + (tarUrg.length === 1 ? '' : 's') + ' urgente' + (tarUrg.length === 1 ? '' : 's')
+        : atrasadas.length
+          ? atrasadas.length + ' recurrente' + (atrasadas.length === 1 ? '' : 's') + ' atrasada' + (atrasadas.length === 1 ? '' : 's')
+          : tarPend.length + ' tarea' + (tarPend.length === 1 ? '' : 's') + ' pendiente' + (tarPend.length === 1 ? '' : 's'),
+      sub: tarUrg.length ? escHtmlAttr(tarUrg[0].texto)
+         : atrasadas.length ? escHtmlAttr(atrasadas[0].tarea.texto) + ' · ' + atrasadas[0].diasAtraso + ' d de atraso'
+         : 'ninguna urgente',
+      pastilla: tarUrg.length ? 'urgente' : atrasadas.length ? 'atrasada' : null,
+      color: tarUrg.length ? '#E24B4A' : atrasadas.length ? '#E5883F' : '#E0B87A' });
+  }
+
   const vs = ventajaSemanalH(), vg = ventajaGeneralH();
   avisos.push({ m:'estudio', ico:'📚', tit:'Estudio: ' + fmtVentaja(vs) + ' h esta semana',
     sub:fmtVentaja(vg) + ' h en general', pastilla:vs >= 0 ? 'al día' : 'atrasado',
@@ -1909,6 +1932,10 @@ function renderHoy(){
       color:quedan <= 0 ? '#E24B4A' : '#EF9F27' });
   }
 
+  // Lo que tiene fecha encima sube. El resto conserva el orden en que se armo, que
+  // ya esta pensado; por eso se compara solo esa marca y no se reordena todo.
+  avisos.sort((a, b) => (b.prioritario ? 1 : 0) - (a.prioritario ? 1 : 0));
+
   cont.innerHTML = `
     <div class="hoy-cifras">
       <div class="hoy-cifra"><div class="hoy-num" style="color:${carneColor};">${carneNum}</div>
@@ -1918,6 +1945,12 @@ function renderHoy(){
       <div class="hoy-cifra"><div class="hoy-num" style="color:#9FA8DA;">${fmtHoras(minHoy)}</div>
         <div class="hoy-lbl">registradas hoy</div></div>
     </div>
+    ${tarPend.length ? `<div class="hoy-cifras" style="margin-top:9px;">
+      <div class="hoy-cifra" style="grid-column:span 3;cursor:pointer;" onclick="irA('tareas')">
+        <div class="hoy-num" style="color:${tarUrg.length ? '#F09595' : '#E0B87A'};">${tarPend.length}</div>
+        <div class="hoy-lbl">tareas pendientes${tarUrg.length ? ' · ' + tarUrg.length + ' urgente' + (tarUrg.length === 1 ? '' : 's') : ''}</div>
+      </div>
+    </div>` : ''}
     <div class="hoy-tit">Andando ahora</div>
     ${relojes}
     <div class="hoy-tit">Lo que te reclama atención</div>
@@ -5336,9 +5369,12 @@ async function delLugar(id){
   renderCompras();
 }
 
-// ===== TAREAS (to-do list, persistencia local) =====
-// Se guarda en localStorage: no necesita servidor y sobrevive al cierre de la app.
-// La primera vez que se abre la app se siembran las tareas iniciales que trajo el usuario.
+// ===== TAREAS (to-do list) =====
+// Viven en Supabase, como el resto de la app. Antes vivian solo en localStorage, o sea
+// en un unico navegador: lo escrito en el telefono no llegaba a la computadora y se
+// perdia al borrar los datos del sitio.
+// localStorage queda como respaldo: si la tabla no responde, la lista sigue a mano en
+// el dispositivo en vez de aparecer vacia.
 const TAREAS_KEY = 'tareas_lista';
 const TAREAS_SEEDED_KEY = 'tareas_seeded_v1';
 const TAREAS_MOSTRAR_HECHAS_KEY = 'tareas_mostrar_hechas';
@@ -5381,26 +5417,113 @@ let tareas = [];
 let tareaEditId = null;
 let tareasMostrarHechas = false;
 
-function cargarTareas(){
+// Hasta que la carga inicial termine no se sincroniza nada: si se subiera la lista
+// vacia de arranque, el borrado de sobrantes se llevaria puestas las tareas de verdad.
+let tareasListas = false;
+const TAREAS_EN_SUPABASE_KEY = 'tareas_en_supabase_v1';
+const TAREAS_AVISO_KEY = 'tareas_aviso_tabla';
+
+function tareasDeLocal(){
   try{
     const raw = localStorage.getItem(TAREAS_KEY);
-    tareas = raw ? JSON.parse(raw) : [];
-    if(!Array.isArray(tareas)) tareas = [];
-  }catch(e){ tareas = []; }
-  // Sembrado inicial: solo se hace una vez, marcado con una llave aparte para que
-  // el usuario pueda borrar todas las tareas sin que vuelvan a aparecer.
-  if(!localStorage.getItem(TAREAS_SEEDED_KEY)){
-    const base = Date.now();
-    TAREAS_SEMILLA.forEach((t, i) => {
-      tareas.push({ id:base + i, texto:t.texto, urgencia:t.urgencia, hecho:false, created:base + i });
-    });
-    localStorage.setItem(TAREAS_SEEDED_KEY, '1');
-    guardarTareas();
-  }
-  try{ tareasMostrarHechas = localStorage.getItem(TAREAS_MOSTRAR_HECHAS_KEY) === '1'; }catch(e){}
+    const l = raw ? JSON.parse(raw) : [];
+    return Array.isArray(l) ? l : [];
+  }catch(e){ return []; }
 }
-function guardarTareas(){
+function filaDeTarea(t){
+  return { id:t.id, texto:t.texto, urgencia:t.urgencia, hecho:!!t.hecho,
+           created:t.created || t.id, template_key:t.templateKey || null };
+}
+function tareaDeFila(f){
+  const t = { id:Number(f.id), texto:f.texto, urgencia:Number(f.urgencia) || 3,
+              hecho:!!f.hecho, created:Number(f.created || f.id) };
+  if(f.template_key) t.templateKey = f.template_key;
+  return t;
+}
+
+async function cargarTareas(){
+  // Preferencia de pantalla: es de este dispositivo, no del dato. Se queda local.
+  try{ tareasMostrarHechas = localStorage.getItem(TAREAS_MOSTRAR_HECHAS_KEY) === '1'; }catch(e){}
+
+  const {data, error} = await sb.from('tareas').select('*').order('created');
+  if(error){
+    // Sin tabla o sin permisos: se sigue con lo que haya en el dispositivo, que es
+    // mejor que una lista en blanco, y se avisa una sola vez con el SQL exacto.
+    tareas = tareasDeLocal();
+    renderTareas();
+    // Una vez al dia y no en cada apertura: el aviso es para que corras el SQL, no
+    // para castigarte con una ventana cada vez que abris la app.
+    const hoyStr = fechaLocal(new Date());
+    if(localStorage.getItem(TAREAS_AVISO_KEY) !== hoyStr){
+      localStorage.setItem(TAREAS_AVISO_KEY, hoyStr);
+      alert(errorTablaTareas(error));
+    }
+    return;
+  }
+
+  if(data && data.length){
+    tareas = data.map(tareaDeFila);
+    localStorage.setItem(TAREAS_EN_SUPABASE_KEY, '1');
+    tareasListas = true;
+    guardarTareasLocal();
+    renderTareas();
+    return;
+  }
+
+  // Tabla vacia. Puede ser la primera vez, o que tus tareas sigan solo en este
+  // telefono: lo que haya en localStorage se sube en vez de perderse.
+  const locales = tareasDeLocal();
+  if(locales.length){
+    tareas = locales;
+  } else if(!localStorage.getItem(TAREAS_SEEDED_KEY) && !localStorage.getItem(TAREAS_EN_SUPABASE_KEY)){
+    // Sembrado inicial: una sola vez. La segunda llave evita que vuelvan a aparecer
+    // si algun dia las borras todas a proposito desde otro dispositivo.
+    const base = Date.now();
+    tareas = TAREAS_SEMILLA.map((t, i) =>
+      ({ id:base + i, texto:t.texto, urgencia:t.urgencia, hecho:false, created:base + i }));
+    localStorage.setItem(TAREAS_SEEDED_KEY, '1');
+  } else {
+    tareas = [];
+  }
+  localStorage.setItem(TAREAS_EN_SUPABASE_KEY, '1');
+  tareasListas = true;
+  guardarTareas();
+  renderTareas();
+}
+
+function errorTablaTareas(error){
+  const msg = error.message || '';
+  if(error.code === '42P01' || error.code === 'PGRST205' || /does not exist|could not find the table/i.test(msg))
+    return 'Falta crear la tabla tareas: corré supabase/setup-tareas.sql en el SQL Editor.\n\nMientras tanto las tareas siguen guardándose solo en este dispositivo.';
+  if(error.code === '42501' || /row-level security/i.test(msg))
+    return 'La tabla tareas no tiene permisos (RLS). Corré la última línea de supabase/setup-tareas.sql.';
+  return 'No se pudieron sincronizar las tareas: ' + msg;
+}
+
+function guardarTareasLocal(){
   try{ localStorage.setItem(TAREAS_KEY, JSON.stringify(tareas)); }catch(e){}
+}
+
+// Todas las funciones del modulo ya llamaban a guardarTareas() despues de cambiar algo,
+// asi que alcanza con que esta ademas empuje a la base. Se sube la lista entera: con dos
+// docenas de filas comparar de a una no compensa, y un reemplazo completo no deja
+// estados a medias si algo falla en el medio.
+function guardarTareas(){
+  guardarTareasLocal();
+  if(!tareasListas) return;
+  sincronizarTareas();
+}
+async function sincronizarTareas(){
+  const filas = tareas.map(filaDeTarea);
+  if(filas.length){
+    const {error} = await sb.from('tareas').upsert(filas);
+    if(error){ console.log('tareas upsert:', error.code, error.message); return; }
+    // Lo que ya no esta en la lista se borro: hay que borrarlo tambien alla.
+    const ids = tareas.map(t => t.id).join(',');
+    await sb.from('tareas').delete().not('id', 'in', '(' + ids + ')');
+  } else {
+    await sb.from('tareas').delete().neq('id', 0);
+  }
 }
 
 function tareaCardHtml(t){
@@ -5808,9 +5931,10 @@ loadCompras();
 loadLugares();
 loadEstudio();
 cargarUsoModulos();
-cargarTareas();
+// Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
+// pendiente' seria mentira y se crearia una limpieza duplicada en cada dispositivo.
 cargarTareasRecur();
-revisarTareasRecurrentes();
+cargarTareas().then(revisarTareasRecurrentes);
 // Revisa cada hora mientras la app esté abierta, y en cada vuelta a la app (visibilitychange).
 setInterval(revisarTareasRecurrentes, 60 * 60 * 1000);
 addEventListener('hashchange', pintarPantallas);
