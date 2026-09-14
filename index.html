@@ -461,6 +461,41 @@
     .cmp-chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 7px 11px; font-size: 12px; color: rgba(255,255,255,0.55); font-family: inherit; cursor: pointer; white-space: nowrap; }
     .cmp-chip.on { background: rgba(0,150,136,0.22); border-color: rgba(0,150,136,0.55); color: #7FD8CE; font-weight: 600; }
 
+    /* ===== TAREAS (to-do list) ===== */
+    .menu-icon.tareas { background: rgba(245,158,11,0.2); }
+    .tar-grupo { margin: 0 16px 12px; }
+    .tar-grupo-tit { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 2px 8px; }
+    .tar-grupo-tit .tar-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .tar-grupo-tit .tar-cnt { margin-left: auto; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: none; letter-spacing: 0; }
+    .tar-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 11px 12px; display: flex; align-items: flex-start; gap: 11px; margin-bottom: 8px; }
+    .tar-card.urg-1 { border-color: rgba(226,75,74,0.45); background: rgba(226,75,74,0.09); }
+    .tar-card.urg-2 { border-color: rgba(229,136,63,0.45); background: rgba(229,136,63,0.08); }
+    .tar-card.urg-3 { border-color: rgba(250,199,117,0.35); background: rgba(250,199,117,0.06); }
+    .tar-card.urg-4 { border-color: rgba(123,200,240,0.35); background: rgba(123,200,240,0.06); }
+    .tar-card.hecho { opacity: 0.55; }
+    .tar-check { width: 22px; height: 22px; border-radius: 50%; border: 1.8px solid rgba(255,255,255,0.35); background: none; cursor: pointer; flex-shrink: 0; font-size: 13px; line-height: 1; color: #fff; padding: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; font-family: inherit; }
+    .tar-check.on { background: #1D9E75; border-color: #1D9E75; }
+    .tar-body { flex: 1; min-width: 0; }
+    .tar-texto { font-size: 14px; line-height: 1.35; color: #fff; word-wrap: break-word; }
+    .tar-texto.hecho { text-decoration: line-through; color: rgba(255,255,255,0.4); }
+    .tar-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .tar-badge { font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+    .tar-badge.urg-1 { background: rgba(226,75,74,0.22); color: #F09595; }
+    .tar-badge.urg-2 { background: rgba(229,136,63,0.22); color: #F5B37A; }
+    .tar-badge.urg-3 { background: rgba(250,199,117,0.22); color: #FAC775; }
+    .tar-badge.urg-4 { background: rgba(123,200,240,0.22); color: #8FCBF2; }
+    .tar-acciones { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .tar-acciones button { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.35); font-size: 15px; padding: 4px 6px; font-family: inherit; }
+    .tar-acciones button:active { color: #fff; }
+    .tar-vacio { text-align: center; padding: 22px 16px; color: rgba(255,255,255,0.35); font-size: 13px; }
+    .tar-add-row { padding: 8px 16px 4px; }
+    .tar-add-full { display: flex; align-items: center; justify-content: center; gap: 8px; background: #F59E0B; border: none; border-radius: 14px; padding: 14px; cursor: pointer; font-size: 14px; color: #1a1200; font-weight: 700; font-family: inherit; width: 100%; }
+    .tar-add-full:active { background: #C47F09; }
+    .tar-toggle-hechos { margin: 12px 16px 4px; width: calc(100% - 32px); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px; font-size: 12px; color: rgba(255,255,255,0.55); font-family: inherit; cursor: pointer; }
+    .tar-toggle-hechos:active { background: rgba(255,255,255,0.08); }
+    .btn-save-amber { background: #F59E0B; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: #1a1200; font-weight: 700; font-family: inherit; }
+    .btn-save-amber:active { background: #C47F09; }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -770,6 +805,33 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== MENÚ TAREAS ===== -->
+  <div class="menu-section" data-modulo="tareas" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-tareas" onclick="toggleMenu('tareas')">
+      <div class="menu-icon tareas">📋</div>
+      <div class="menu-title">
+        <h2>Mis Tareas</h2>
+        <p>Lista de pendientes por urgencia</p>
+      </div>
+      <span class="menu-chevron" id="chevron-tareas">▾</span>
+    </button>
+    <div class="menu-body" id="body-tareas">
+      <div class="menu-inner">
+        <div class="stats">
+          <div class="stat"><div class="stat-num" style="color:#F5B37A;" id="stat-tar-pend">0</div><div class="stat-label">Pendientes</div></div>
+          <div class="stat"><div class="stat-num red" id="stat-tar-urg">0</div><div class="stat-label">Urgentes</div></div>
+        </div>
+        <div id="tar-lista"></div>
+        <div class="tar-add-row">
+          <button class="tar-add-full" onclick="openTareaModal()">+ Nueva tarea</button>
+        </div>
+        <button id="tar-toggle-hechos-btn" class="tar-toggle-hechos" onclick="toggleTareasHechas()" style="display:none;"></button>
+        <div id="tar-hechas-lista" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
   <nav class="tabs" id="tabs"></nav>
 </div>
 <div class="desktop-only" id="desktop-grid">
@@ -959,6 +1021,22 @@
         <div id="d-cmp-resumen"></div>
         <div id="d-cmp-lista"></div>
         <button class="desktop-add-btn" onclick="openVozModal()">🎤 Dictar la lista</button>
+      </div>
+    </div>
+
+    <!-- Tareas -->
+    <div class="desktop-card">
+      <div class="desktop-card-header">
+        <div class="desktop-card-icon" style="background:rgba(245,158,11,0.2);">📋</div>
+        <div><div class="desktop-card-title">Mis Tareas</div><div class="desktop-card-sub">Lista de pendientes</div></div>
+      </div>
+      <div class="desktop-card-body">
+        <div class="desktop-stats">
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#F5B37A;" id="d-stat-tar-pend">0</div><div class="desktop-stat-lbl">Pendientes</div></div>
+          <div class="desktop-stat"><div class="desktop-stat-num" style="color:#F09595;" id="d-stat-tar-urg">0</div><div class="desktop-stat-lbl">Urgentes</div></div>
+        </div>
+        <div id="d-tar-lista" style="max-height:420px;overflow-y:auto;"></div>
+        <button class="desktop-add-btn" onclick="openTareaModal()">+ Nueva tarea</button>
       </div>
     </div>
 </div>
@@ -1188,6 +1266,30 @@
 
 <!-- Popover de la grilla semanal de Mi Tiempo -->
 <div id="grid-popover" class="grid-popover" style="display:none;"></div>
+
+<!-- Modal tarea -->
+<div class="modal-overlay" id="modal-tarea">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-tarea-tit">📋 Nueva tarea</h2>
+    <input type="hidden" id="tar-edit-id">
+    <div class="form-row"><label>Tarea</label>
+      <input type="text" id="tar-texto" placeholder="Ej: Llamar al doctor, pagar factura…">
+    </div>
+    <div class="form-row"><label>Urgencia</label>
+      <select id="tar-urgencia">
+        <option value="1">🔴 Urgente</option>
+        <option value="2">🟠 Alta</option>
+        <option value="3" selected>🟡 Media</option>
+        <option value="4">🔵 Baja</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-amber" onclick="saveTarea()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ===== CONFIGURACIÓN SUPABASE =====
@@ -1587,16 +1689,17 @@ function ordenarModulosPorUso(){ pintarTabs(); }
 // ---- Navegacion por pantallas (solo movil) ----
 // El escritorio tiene su propia maqueta y no pasa por aca. La direccion vive en el
 // hash, asi que el boton Atras de Android funciona solo, sin codigo extra.
-const MODULOS_APP = ['carnes','gym','ropa','lentes','estudio','tiempo','compras'];
+const MODULOS_APP = ['carnes','gym','ropa','lentes','estudio','tiempo','compras','tareas'];
 const TABS_FIJAS  = ['tiempo','estudio'];
-const ICONO_MOD  = { carnes:'🥩', gym:'💪', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒' };
+const ICONO_MOD  = { carnes:'🥩', gym:'💪', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒', tareas:'📋' };
 const NOMBRE_MOD = { carnes:'Mis Carnes', gym:'Mi Gym', ropa:'Mi Ropa', lentes:'Lentes de Contacto',
-                     estudio:'Mi Estudio', tiempo:'Mi Tiempo', compras:'Lista de Compras' };
+                     estudio:'Mi Estudio', tiempo:'Mi Tiempo', compras:'Lista de Compras', tareas:'Mis Tareas' };
 const SUB_MOD    = { carnes:'Control de vencimiento', gym:'Rutinas y ejercicios', ropa:'Qué ponerte',
                      lentes:'Cuándo cambiarlos', estudio:'Horas por tema',
-                     tiempo:'En qué se te va el día', compras:'Dictada por voz' };
+                     tiempo:'En qué se te va el día', compras:'Dictada por voz',
+                     tareas:'Pendientes por urgencia' };
 const CORTO_MOD  = { hoy:'Hoy', mas:'Más', carnes:'Carnes', gym:'Gym', ropa:'Ropa',
-                     lentes:'Lentes', estudio:'Estudio', tiempo:'Tiempo', compras:'Compras' };
+                     lentes:'Lentes', estudio:'Estudio', tiempo:'Tiempo', compras:'Compras', tareas:'Tareas' };
 let pantallaActual = 'hoy';
 
 // Hoy, Tiempo y Estudio son fijas. El cuarto lugar se lo gana el mas usado del resto,
@@ -1790,7 +1893,7 @@ setInterval(()=>{
   });
 }, 1000);
 
-function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;}
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;tareaEditId=null;}
 function openPhotoModal(){
   document.getElementById('modal-photo').classList.add('open');
   document.getElementById('photo-preview').style.display='none';
@@ -5183,11 +5286,192 @@ async function delLugar(id){
   renderCompras();
 }
 
+// ===== TAREAS (to-do list, persistencia local) =====
+// Se guarda en localStorage: no necesita servidor y sobrevive al cierre de la app.
+// La primera vez que se abre la app se siembran las tareas iniciales que trajo el usuario.
+const TAREAS_KEY = 'tareas_lista';
+const TAREAS_SEEDED_KEY = 'tareas_seeded_v1';
+const TAREAS_MOSTRAR_HECHAS_KEY = 'tareas_mostrar_hechas';
+const URGENCIA_LBL = { 1:'🔴 Urgente', 2:'🟠 Alta', 3:'🟡 Media', 4:'🔵 Baja' };
+const URGENCIA_COLOR = { 1:'#E24B4A', 2:'#E5883F', 3:'#FAC775', 4:'#7BC8F0' };
+const TAREAS_SEMILLA = [
+  {texto:'Registrarse Concurso de Méritos Procuraduría (plazo 18 sep)', urgencia:1},
+  {texto:'Ir a la alcaldía de Guarne a obtener nueva factura de impuestos', urgencia:1},
+  {texto:'Gestionar diploma UVSQ / Paris-Saclay', urgencia:2},
+  {texto:'Seguimiento visa francesa Valentina', urgencia:2},
+  {texto:'Pagar impuestos prediales Guarne ($2.300.000)', urgencia:2},
+  {texto:'Declaración de renta — verificar tratamiento fiscal transferencias Pedro', urgencia:2},
+  {texto:'Responder llamada perdida Valentina', urgencia:3},
+  {texto:'Coordinar almuerzo con Cristhian antes del viernes', urgencia:3},
+  {texto:'Verificar paquete llegado a casa en Colombia', urgencia:3},
+  {texto:'Revisar historial grupo HEDAC 2026 — tareas pendientes examen nov', urgencia:3},
+  {texto:'Renovar/actualizar obligaciones micro-entreprise PME', urgencia:3},
+  {texto:'Avanzar sistema automatizado búsqueda empleo IP/PI Francia', urgencia:4},
+  {texto:'Continuar proyecto blockchain Python', urgencia:4},
+  {texto:'Continuar investigación IA en juzgados (Colombia-Francia-UE)', urgencia:4},
+  {texto:'Continuar compendio Ley 1712 / tabla conformidad', urgencia:4},
+  {texto:'Avanzar PWA App-carne-vencida (módulos Mi Hogar / Mi Estudio)', urgencia:4},
+];
+let tareas = [];
+let tareaEditId = null;
+let tareasMostrarHechas = false;
+
+function cargarTareas(){
+  try{
+    const raw = localStorage.getItem(TAREAS_KEY);
+    tareas = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(tareas)) tareas = [];
+  }catch(e){ tareas = []; }
+  // Sembrado inicial: solo se hace una vez, marcado con una llave aparte para que
+  // el usuario pueda borrar todas las tareas sin que vuelvan a aparecer.
+  if(!localStorage.getItem(TAREAS_SEEDED_KEY)){
+    const base = Date.now();
+    TAREAS_SEMILLA.forEach((t, i) => {
+      tareas.push({ id:base + i, texto:t.texto, urgencia:t.urgencia, hecho:false, created:base + i });
+    });
+    localStorage.setItem(TAREAS_SEEDED_KEY, '1');
+    guardarTareas();
+  }
+  try{ tareasMostrarHechas = localStorage.getItem(TAREAS_MOSTRAR_HECHAS_KEY) === '1'; }catch(e){}
+}
+function guardarTareas(){
+  try{ localStorage.setItem(TAREAS_KEY, JSON.stringify(tareas)); }catch(e){}
+}
+
+function tareaCardHtml(t){
+  const cls = 'tar-card urg-' + t.urgencia + (t.hecho ? ' hecho' : '');
+  const txtCls = 'tar-texto' + (t.hecho ? ' hecho' : '');
+  return `<div class="${cls}">
+    <button class="tar-check${t.hecho ? ' on' : ''}" onclick="toggleTarea(${t.id})" aria-label="Marcar">${t.hecho ? '✓' : ''}</button>
+    <div class="tar-body">
+      <div class="${txtCls}">${escHtmlAttr(t.texto)}</div>
+      <div class="tar-meta">
+        <span class="tar-badge urg-${t.urgencia}">${URGENCIA_LBL[t.urgencia]}</span>
+      </div>
+    </div>
+    <div class="tar-acciones">
+      <button onclick="openTareaModal(${t.id})" aria-label="Editar">✏️</button>
+      <button onclick="deleteTarea(${t.id})" aria-label="Eliminar">🗑</button>
+    </div>
+  </div>`;
+}
+
+function renderTareas(){
+  const pendientes = tareas.filter(t => !t.hecho);
+  const hechas = tareas.filter(t => t.hecho);
+  const urg = pendientes.filter(t => t.urgencia === 1).length;
+
+  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt('stat-tar-pend', pendientes.length);
+  setTxt('stat-tar-urg', urg);
+  setTxt('d-stat-tar-pend', pendientes.length);
+  setTxt('d-stat-tar-urg', urg);
+
+  const grupos = [1,2,3,4].map(u => {
+    const items = pendientes.filter(t => t.urgencia === u)
+      .sort((a,b) => (a.created||0) - (b.created||0));
+    if(!items.length) return '';
+    return `<div class="tar-grupo">
+      <div class="tar-grupo-tit">
+        <span class="tar-dot" style="background:${URGENCIA_COLOR[u]};"></span>
+        <span style="color:${URGENCIA_COLOR[u]};">${URGENCIA_LBL[u]}</span>
+        <span class="tar-cnt">${items.length}</span>
+      </div>
+      ${items.map(tareaCardHtml).join('')}
+    </div>`;
+  }).join('');
+
+  const lista = document.getElementById('tar-lista');
+  if(lista){
+    lista.innerHTML = pendientes.length
+      ? grupos
+      : '<div class="tar-vacio">🎉 No hay tareas pendientes.</div>';
+  }
+  const dLista = document.getElementById('d-tar-lista');
+  if(dLista){
+    dLista.innerHTML = pendientes.length
+      ? grupos
+      : '<div class="desktop-empty">🎉 No hay tareas pendientes.</div>';
+  }
+
+  const btn = document.getElementById('tar-toggle-hechos-btn');
+  const listaHechas = document.getElementById('tar-hechas-lista');
+  if(btn && listaHechas){
+    if(hechas.length){
+      btn.style.display = 'block';
+      btn.textContent = (tareasMostrarHechas ? '▴ Ocultar' : '▾ Ver') + ' completadas (' + hechas.length + ')';
+      if(tareasMostrarHechas){
+        listaHechas.style.display = 'block';
+        listaHechas.innerHTML = '<div class="tar-grupo">' +
+          hechas.sort((a,b) => (b.created||0) - (a.created||0)).map(tareaCardHtml).join('') + '</div>';
+      } else {
+        listaHechas.style.display = 'none';
+        listaHechas.innerHTML = '';
+      }
+    } else {
+      btn.style.display = 'none';
+      listaHechas.style.display = 'none';
+      listaHechas.innerHTML = '';
+    }
+  }
+}
+
+function toggleTareasHechas(){
+  tareasMostrarHechas = !tareasMostrarHechas;
+  try{ localStorage.setItem(TAREAS_MOSTRAR_HECHAS_KEY, tareasMostrarHechas ? '1' : '0'); }catch(e){}
+  renderTareas();
+}
+
+function toggleTarea(id){
+  const t = tareas.find(x => x.id === id);
+  if(!t) return;
+  t.hecho = !t.hecho;
+  guardarTareas();
+  renderTareas();
+}
+
+function deleteTarea(id){
+  const t = tareas.find(x => x.id === id);
+  if(!t) return;
+  if(!confirm('¿Eliminar "' + t.texto + '"?')) return;
+  tareas = tareas.filter(x => x.id !== id);
+  guardarTareas();
+  renderTareas();
+}
+
+function openTareaModal(id){
+  tareaEditId = (typeof id === 'number') ? id : null;
+  const t = tareaEditId ? tareas.find(x => x.id === tareaEditId) : null;
+  document.getElementById('modal-tarea-tit').textContent = t ? '✏️ Editar tarea' : '📋 Nueva tarea';
+  document.getElementById('tar-texto').value = t ? t.texto : '';
+  document.getElementById('tar-urgencia').value = t ? String(t.urgencia) : '3';
+  document.getElementById('tar-edit-id').value = tareaEditId || '';
+  document.getElementById('modal-tarea').classList.add('open');
+  setTimeout(() => { const inp = document.getElementById('tar-texto'); if(inp) inp.focus(); }, 60);
+}
+
+function saveTarea(){
+  const texto = (document.getElementById('tar-texto').value || '').trim();
+  const urgencia = parseInt(document.getElementById('tar-urgencia').value, 10) || 3;
+  if(!texto){ alert('Escribí el texto de la tarea.'); return; }
+  if(tareaEditId){
+    const t = tareas.find(x => x.id === tareaEditId);
+    if(t){ t.texto = texto; t.urgencia = urgencia; }
+  } else {
+    tareas.push({ id: Date.now(), texto, urgencia, hecho:false, created: Date.now() });
+  }
+  guardarTareas();
+  closeModals();
+  renderTareas();
+}
+
 // ---- Inicialización (aquí las variables ya existen) ----
 loadCompras();
 loadLugares();
 loadEstudio();
 cargarUsoModulos();
+cargarTareas();
+renderTareas();
 addEventListener('hashchange', pintarPantallas);
 pintarPantallas();
 loadPuntosRepaso();
