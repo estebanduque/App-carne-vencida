@@ -1994,10 +1994,159 @@ async function updateGymItem(id, item){
 }
 
 // ---- Cronómetro de Gym (se registra directo en Mi Tiempo → Deporte) ----
+// ===== El cronometro vive en la base =====
+// Antes vivia solo en el navegador: si el telefono se quedaba sin bateria o se
+// cerraba la app, el tiempo corriendo se perdia, y desde la computadora no se veia.
+// Ahora hay UNA fila en 'cronometro' con el unico reloj que puede estar andando.
+// localStorage queda de respaldo para cuando no haya red.
+//
+// El tiempo no se guarda como un numero que haya que ir refrescando, sino como
+// 'base' (lo acumulado antes de la ultima pausa) mas 'arranque' (cuando volvio a
+// correr). Asi el reloj avanza solo sin que nadie escriba, y todos los dispositivos
+// calculan lo mismo.
+let cronoListo = false;          // hasta que la carga inicial termine no se escribe nada
+let avisadoSinCronometro = false;
+
+// Cual de los tres tiene algo: el activo es el que se guarda.
+// Cuenta como activo el que esta corriendo AUNQUE marque cero: al arrancar todavia
+// no paso ni un segundo, y si se pidiera tiempo acumulado la fila se borraria justo
+// en el momento de empezar, que es cuando mas importa que quede guardada.
+function activo(t){ return t.running || segundosDe(t) > 0; }
+function cronoActivo(){
+  if(activo(tiempoTimer)) return { tipo:'tiempo', t:tiempoTimer,
+    e1:tiempoTimer.categoria || '', e2:tiempoTimer.subcategoria || '' };
+  if(activo(estudioTimer)) return { tipo:'estudio', t:estudioTimer,
+    e1:estudioTimer.tema || '', e2:estudioTimer.subtema || '' };
+  if(activo(gymTimer)) return { tipo:'gym', t:gymTimer, e1:'', e2:'' };
+  return null;
+}
+async function sincronizarCronometro(){
+  if(!cronoListo) return;
+  const a = cronoActivo();
+  if(!a){
+    // Nada corriendo: la fila se borra en vez de quedar en cero, para que otro
+    // dispositivo no crea que hay un reloj en pausa esperandolo.
+    await sb.from('cronometro').delete().eq('id', 1);
+    return;
+  }
+  const fila = {
+    id: 1, tipo: a.tipo, etiqueta1: a.e1, etiqueta2: a.e2,
+    // 'base' es lo acumulado; si esta corriendo, el resto lo marca 'arranque'.
+    base: a.t.running ? (a.t.base || 0) : segundosDe(a.t),
+    arranque: a.t.running && a.t.startTs ? new Date(a.t.startTs).toISOString() : null,
+    updated_at: new Date().toISOString(),
+  };
+  const {error} = await sb.from('cronometro').upsert(fila);
+  if(error){
+    console.log('cronometro:', error.code, error.message);
+    const msg = error.message || '';
+    if(!avisadoSinCronometro &&
+       (error.code === '42P01' || error.code === 'PGRST205' || /does not exist|could not find the table/i.test(msg))){
+      avisadoSinCronometro = true;
+      alert('El cronómetro se está guardando solo en este dispositivo.\n\nPara que sobreviva y se vea desde la computadora, corré supabase/setup-cronometro.sql en el SQL Editor.');
+    }
+  }
+}
+function segundosDe(t){
+  let x = t.base || 0;
+  if(t.running && t.startTs) x += Math.floor((Date.now() - t.startTs) / 1000);
+  return x;
+}
+// Lo que haya en la base manda sobre lo que haya en el navegador: es lo que hace que
+// el reloj siga corriendo aunque lo hayas arrancado en el otro dispositivo.
+async function cargarCronometro(){
+  const {data, error} = await sb.from('cronometro').select('*').eq('id', 1).maybeSingle();
+  cronoListo = true;
+  if(error){ console.log('cronometro no disponible:', error.message); return; }
+  if(!data){
+    // La base dice que no hay nada corriendo. Se apagan los tres por si el navegador
+    // tenia uno viejo: terminarlo en otro dispositivo tiene que apagarlo aca tambien.
+    pararTodosLosCronometros();
+    return;
+  }
+  const base = parseInt(data.base) || 0;
+  const startTs = data.arranque ? new Date(data.arranque).getTime() : null;
+  pararTodosLosCronometros(data.tipo);
+  if(data.tipo === 'tiempo'){
+    tiempoTimer = { running:!!startTs, base, startTs,
+      categoria:data.etiqueta1 || '', subcategoria:data.etiqueta2 || '' };
+    guardarTimerTiempoLS(); renderCronoChipsTiempo();
+    if(tiempoTimer.running) iniciarIntervalTiempo();
+    pintarCronoTiempo();
+  } else if(data.tipo === 'estudio'){
+    estudioTimer = { running:!!startTs, base, startTs,
+      tema:data.etiqueta1 || '', subtema:data.etiqueta2 || '' };
+    guardarTimerLS(); renderCronoChips();
+    if(estudioTimer.running) iniciarInterval();
+    pintarCrono();
+  } else if(data.tipo === 'gym'){
+    gymTimer = { running:!!startTs, base, startTs };
+    guardarTimerGymLS();
+    if(gymTimer.running) iniciarIntervalGym();
+    pintarCronoGym();
+  }
+  refrescarGrid();
+}
+// Deja en cero los que no sean 'salvo'. No guarda nada: quien llama decide antes
+// si habia tiempo que valiera la pena conservar.
+function pararTodosLosCronometros(salvo){
+  if(salvo !== 'tiempo' && segundosCronoTiempo() > 0){
+    pararIntervalTiempo();
+    tiempoTimer = { running:false, base:0, startTs:null,
+      categoria:tiempoTimer.categoria, subcategoria:'' };
+    guardarTimerTiempoLS(); pintarCronoTiempo();
+  }
+  if(salvo !== 'estudio' && segundosCrono() > 0){
+    pararInterval();
+    estudioTimer = { running:false, base:0, startTs:null, tema:estudioTimer.tema, subtema:'' };
+    guardarTimerLS(); pintarCrono();
+  }
+  if(salvo !== 'gym' && segundosCronoGym() > 0){
+    pararIntervalGym();
+    gymTimer = { running:false, base:0, startTs:null };
+    guardarTimerGymLS(); pintarCronoGym();
+  }
+}
+// Antes de arrancar uno, se cierra el que estuviera andando. Lo que paso del minuto
+// se guarda como sesion en vez de tirarse: perder media hora por tocar el boton
+// equivocado seria el peor comportamiento posible.
+async function liberarParaNuevoCrono(cual){
+  const a = cronoActivo();
+  if(!a || a.tipo === cual) return true;
+  const min = Math.round(segundosDe(a.t) / 60);
+  const nombre = a.tipo === 'tiempo' ? (a.e1 || 'Mi Tiempo') + (a.e2 ? ' › ' + a.e2 : '')
+               : a.tipo === 'estudio' ? (a.e1 || 'Mi Estudio') + (a.e2 ? ' › ' + a.e2 : '')
+               : 'Deporte › Gym';
+  if(min >= 1){
+    const guardar = confirm('Tenés ' + fmtHoras(min) + ' corriendo en ' + nombre +
+      '.\n\nAceptar: lo guardo y arranco el nuevo.\nCancelar: no arranco nada.');
+    if(!guardar) return false;
+    const created_at = new Date().toISOString();
+    if(a.tipo === 'tiempo'){
+      const {start, end} = ventanaDe(created_at, min);
+      if(!admiteSolapamiento(a.e1, a.e2) && !(await liberarConflictosParaCrono(start, end, null))) return false;
+      await saveTiempoItem({ categoria:a.e1, subcategoria:a.e2 || 'General', minutos:min, created_at });
+    } else if(a.tipo === 'estudio'){
+      const {start, end} = ventanaDe(created_at, min);
+      if(!(await liberarConflictosParaCrono(start, end, null))) return false;
+      await saveEstudioItem({ tema:a.e1, subtema:a.e2 || 'General', minutos:min, created_at });
+    } else {
+      const {start, end} = ventanaDe(created_at, min);
+      if(!(await liberarConflictosParaCrono(start, end, null))) return false;
+      await saveTiempoItem({ categoria:'Deporte', subcategoria:'Gym', minutos:min, created_at });
+    }
+  }
+  pararTodosLosCronometros(cual);
+  return true;
+}
+
 const GYM_TIMER_KEY = 'gym_timer';
 let gymTimer = { running:false, base:0, startTs:null };
 let gymInterval = null;
-function guardarTimerGymLS(){ try{ localStorage.setItem(GYM_TIMER_KEY, JSON.stringify(gymTimer)); }catch(e){} }
+function guardarTimerGymLS(){
+  try{ localStorage.setItem(GYM_TIMER_KEY, JSON.stringify(gymTimer)); }catch(e){}
+  sincronizarCronometro();
+}
 function segundosCronoGym(){
   let s = gymTimer.base || 0;
   if(gymTimer.running && gymTimer.startTs){ s += Math.floor((Date.now() - gymTimer.startTs)/1000); }
@@ -2011,8 +2160,9 @@ function pintarCronoGym(){
 }
 function iniciarIntervalGym(){ if(!gymInterval){ gymInterval = setInterval(pintarCronoGym, 1000); } }
 function pararIntervalGym(){ if(gymInterval){ clearInterval(gymInterval); gymInterval = null; } }
-function gymStartPause(){
+async function gymStartPause(){
   if(!gymTimer.running){
+    if(!(await liberarParaNuevoCrono('gym'))) return;
     gymTimer.running = true; gymTimer.startTs = Date.now(); iniciarIntervalGym();
     feedbackInicioCronoIds(['gym-crono-start-btn','d-gym-crono-start-btn']);
   } else {
@@ -2983,7 +3133,10 @@ const ESTUDIO_TIMER_KEY = 'estudio_timer';
 let estudioTimer = { running:false, base:0, startTs:null, tema:'', subtema:'' };
 let estudioInterval = null;
 
-function guardarTimerLS(){ try{ localStorage.setItem(ESTUDIO_TIMER_KEY, JSON.stringify(estudioTimer)); }catch(e){} }
+function guardarTimerLS(){
+  try{ localStorage.setItem(ESTUDIO_TIMER_KEY, JSON.stringify(estudioTimer)); }catch(e){}
+  sincronizarCronometro();
+}
 function segundosCrono(){
   let s = estudioTimer.base || 0;
   if(estudioTimer.running && estudioTimer.startTs){ s += Math.floor((Date.now() - estudioTimer.startTs)/1000); }
@@ -3010,9 +3163,10 @@ function seleccionarTemaCrono(nombre){
   renderCronoChips();
   actualizarDatalist('subtemas-list', nombre);
 }
-function estudioStartPause(){
+async function estudioStartPause(){
   if(!estudioTimer.running){
     if(!estudioTimer.tema){ alert('Elige un tema antes de iniciar el cronómetro.'); return; }
+    if(!(await liberarParaNuevoCrono('estudio'))) return;
     estudioTimer.subtema = leerSubtemaCrono();
     estudioTimer.running = true; estudioTimer.startTs = Date.now(); iniciarInterval();
     feedbackInicioCronoIds(['crono-start-btn','d-crono-start-btn']);
@@ -3024,6 +3178,7 @@ function estudioStartPause(){
   guardarTimerLS(); pintarCrono(); refrescarGrid();
 }
 async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
+  if(!(await liberarParaNuevoCrono('estudio'))) return;
   const sub = subtema==='General' ? '' : (subtema||'');
   const segActual = segundosCrono();
   if(segActual > 0){
@@ -3781,7 +3936,10 @@ const TIEMPO_TIMER_KEY = 'tiempo_timer';
 let tiempoTimer = { running:false, base:0, startTs:null, categoria:'', subcategoria:'' };
 let tiempoInterval = null;
 
-function guardarTimerTiempoLS(){ try{ localStorage.setItem(TIEMPO_TIMER_KEY, JSON.stringify(tiempoTimer)); }catch(e){} }
+function guardarTimerTiempoLS(){
+  try{ localStorage.setItem(TIEMPO_TIMER_KEY, JSON.stringify(tiempoTimer)); }catch(e){}
+  sincronizarCronometro();
+}
 function segundosCronoTiempo(){
   let s = tiempoTimer.base || 0;
   if(tiempoTimer.running && tiempoTimer.startTs){ s += Math.floor((Date.now() - tiempoTimer.startTs)/1000); }
@@ -3804,9 +3962,10 @@ function seleccionarCategoriaCrono(nombre){
   renderCronoChipsTiempo();
   actualizarDatalistTiempo('subcats-list', nombre);
 }
-function tiempoStartPause(){
+async function tiempoStartPause(){
   if(!tiempoTimer.running){
     if(!tiempoTimer.categoria){ alert('Elige una categoría antes de iniciar el cronómetro.'); return; }
+    if(!(await liberarParaNuevoCrono('tiempo'))) return;
     tiempoTimer.subcategoria = leerSubcatCrono();
     tiempoTimer.running = true; tiempoTimer.startTs = Date.now(); iniciarIntervalTiempo();
     feedbackInicioCronoIds(['tiempo-crono-start-btn','d-tiempo-crono-start-btn']);
@@ -3818,6 +3977,7 @@ function tiempoStartPause(){
   guardarTimerTiempoLS(); pintarCronoTiempo(); refrescarGrid();
 }
 async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
+  if(!(await liberarParaNuevoCrono('tiempo'))) return;
   const sc = subcategoria==='General' ? '' : subcategoria;
   const segActual = segundosCronoTiempo();
   if(segActual > 0){
@@ -5854,6 +6014,9 @@ restaurarEstudioTimer();
 loadTiempo();
 restaurarTiempoTimer();
 restaurarGymTimer();
+// Despues de los tres restaurados desde el navegador: lo que diga la base pisa a
+// todos, porque puede haber un reloj arrancado en el otro dispositivo.
+cargarCronometro();
 
 // Mientras haya un cronómetro corriendo, la grilla se refresca sola para que el bloque en curso
 // vaya creciendo. Cada 30s alcanza: a este zoom un minuto mide menos de un píxel.
