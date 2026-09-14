@@ -5463,8 +5463,29 @@ async function cargarTareas(){
 
   if(data && data.length){
     tareas = data.map(tareaDeFila);
+    const yaSincronizado = localStorage.getItem(TAREAS_EN_SUPABASE_KEY);
     localStorage.setItem(TAREAS_EN_SUPABASE_KEY, '1');
     tareasListas = true;
+
+    // La PRIMERA vez que este dispositivo se sincroniza, lo que tenga guardado y no
+    // este en la base se sube en vez de desaparecer. Pasa cuando la tabla se lleno
+    // desde otro dispositivo antes de que este llegara a subir lo suyo.
+    // Solo la primera vez: despues, una tarea borrada desde otro lado volveria a
+    // aparecer una y otra vez desde el cache viejo de este.
+    if(!yaSincronizado){
+      const ids = new Set(tareas.map(t => t.id));
+      // Se compara tambien por texto, no solo por id: la misma tarea sembrada en dos
+      // dispositivos tiene ids distintos (Date.now() de cada uno) y se duplicaria.
+      const textos = new Set(tareas.map(t => (t.texto || '').trim().toLowerCase()));
+      const propias = tareasDeLocal().filter(t =>
+        !ids.has(t.id) && !textos.has((t.texto || '').trim().toLowerCase()));
+      if(propias.length){
+        tareas = tareas.concat(propias);
+        guardarTareas();
+        renderTareas();
+        return;
+      }
+    }
     guardarTareasLocal();
     renderTareas();
     return;
