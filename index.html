@@ -416,6 +416,12 @@
   #desktop-card-tiempo .desktop-add-btn:hover { background:rgba(36,40,80,0.09); }
 
     /* Sorteo de tema entre los que ya superaron el 90% de su meta */
+    /* El titulo de una seccion que se pliega: se ve igual que los otros, pero es un
+       boton con la flecha a la derecha. */
+    .inner-title.plegable { width: 100%; background: none; border: none; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      text-align: left; }
+    .inner-title.plegable:active { color: rgba(255,255,255,0.7); }
     .ruleta-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 12px 14px; margin: 0 16px 14px; }
     .ruleta-btn { width: 100%; background: rgba(214,71,143,0.18); border: 1px solid rgba(214,71,143,0.35); border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; color: #F07AB0; font-family: inherit; cursor: pointer; }
     .ruleta-btn:active { background: rgba(214,71,143,0.3); }
@@ -742,7 +748,9 @@
             <button class="crono-btn crono-reset" onclick="estudioReset()" title="Reiniciar">↺</button>
           </div>
         </div>
-        <p class="inner-title">Subtema al azar</p>
+        <button class="inner-title plegable" onclick="toggleRuleta()" aria-controls="est-ruleta">
+          <span>Subtema al azar</span><span id="est-ruleta-chev">▾</span>
+        </button>
         <div class="ruleta-box" id="est-ruleta"></div>
         <p class="inner-title">Por tema</p>
         <div id="est-temas-list"></div>
@@ -3456,7 +3464,29 @@ function sortearTema(){
   const campo = document.getElementById('ruleta-nota');
   if(campo) campo.focus();
 }
+// Si la ruleta queda plegada, se recuerda: es una seccion que no todos los dias
+// se usa, y volver a cerrarla en cada visita seria una molestia diaria.
+const RULETA_ABIERTA_KEY = 'estudio_ruleta_abierta';
+let ruletaAbierta = true;
+try{ ruletaAbierta = localStorage.getItem(RULETA_ABIERTA_KEY) !== '0'; }catch(e){}
+function toggleRuleta(){
+  ruletaAbierta = !ruletaAbierta;
+  try{ localStorage.setItem(RULETA_ABIERTA_KEY, ruletaAbierta ? '1' : '0'); }catch(e){}
+  renderRuleta();
+}
+
 function renderRuleta(){
+  const chev = document.getElementById('est-ruleta-chev');
+  if(chev) chev.textContent = ruletaAbierta ? '▾' : '▸';
+  if(!ruletaAbierta){
+    // Plegada no se dibuja nada: ademas de ocupar menos, evita que el sorteo se
+    // recalcule cada vez que cambian las horas de estudio.
+    const caja = document.getElementById('est-ruleta');
+    if(caja){ caja.innerHTML = ''; caja.style.display = 'none'; }
+    return;
+  }
+  const caja = document.getElementById('est-ruleta');
+  if(caja) caja.style.display = '';
   const candidatos = itemsSorteables();
   // El sorteado se guarda entre dibujados; sus pesos y su nota pueden haber cambiado
   // (por ejemplo, justo despues de calificarlo). Se refresca contra la lista nueva.
@@ -3503,9 +3533,7 @@ function renderRuleta(){
   } else if(listos && candidatos.length===listos){
     html += `<div class="ruleta-vacio">${listos} subtema${listos>1?'s':''} listo${listos>1?'s':''}. Con el ✂️ de cada uno podés partirlo en puntos concretos para que el sorteo sea más específico.</div>`;
   }
-  ['est-ruleta','d-est-ruleta'].forEach(id=>{
-    const el = document.getElementById(id); if(el) el.innerHTML = html;
-  });
+  if(caja) caja.innerHTML = html;
 }
 function renderTemasEn(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
