@@ -1,4 +1,5 @@
-// Envía las notificaciones push de vencimiento de carnes.
+// Envía las notificaciones push diarias: vencimiento de carnes y recordatorios de
+// tareas pospuestas con el botón "3 días hábiles".
 // Se ejecuta una vez por día desde un cron de Supabase (ver supabase/cron.sql).
 //
 // Variables de entorno necesarias (Project Settings -> Edge Functions -> Secrets):
@@ -49,7 +50,20 @@ Deno.serve(async (req: Request) => {
     // viejos) no quede fuera por las reglas de comparacion con null de SQL.
     const carnes = (filas ?? []).filter((c) => c.ubicacion !== "Congelador");
 
-    if (!esPrueba && carnes.length === 0) {
+    // Tareas cuyo recordatorio ya llego. Se piden aparte porque el push es uno solo al
+    // dia: si hay carne venciendo y ademas un recordatorio, van en el mismo aviso.
+    const { data: tareasCrudas, error: errTareas } = await supabase
+      .from("tareas")
+      .select("id, texto, recordar")
+      .eq("hecho", false)
+      .not("recordar", "is", null)
+      .lte("recordar", hoy);
+    // Si la columna 'recordar' todavia no existe, esto no debe tumbar el aviso de
+    // carnes, que es el que ya venia funcionando.
+    const recordatorios: { id: number; texto: string }[] = errTareas ? [] : ((tareasCrudas ?? []) as any);
+    if (errTareas) console.log("recordatorios no disponibles:", errTareas.message);
+
+    if (!esPrueba && carnes.length === 0 && recordatorios.length === 0) {
       return Response.json({ ok: true, enviadas: 0, motivo: "nada vence hoy ni mañana", hoy });
     }
 
@@ -70,9 +84,17 @@ Deno.serve(async (req: Request) => {
         body += `\n\nMañana vence${vencenManana.length > 1 ? "n" : ""}: ` +
           vencenManana.map(nombre).join(", ");
       }
-    } else {
+    } else if (vencenManana.length > 0) {
       title = vencenManana.length === 1 ? "⚠️ Carne vence mañana" : `⚠️ ${vencenManana.length} carnes vencen mañana`;
       body = vencenManana.map(nombre).join("\n") + "\n¡Úsalas hoy!";
+    } else {
+      // No vence ninguna carne: el aviso es solo de recordatorios.
+      title = recordatorios.length === 1 ? "⏰ Te lo recordé" : `⏰ ${recordatorios.length} recordatorios`;
+      body = recordatorios.map((t) => t.texto).join("\n");
+    }
+    // Si ademas de la carne hay recordatorios, se suman al final del mismo aviso.
+    if (recordatorios.length > 0 && (vencenHoy.length > 0 || vencenManana.length > 0)) {
+      body += "\n\n⏰ Te lo recordé: " + recordatorios.map((t) => t.texto).join(", ");
     }
     const payload = JSON.stringify({ title, body });
 
@@ -111,7 +133,20 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return Response.json({ ok: true, hoy, vencenHoy: vencenHoy.length, vencenManana: vencenManana.length, enviadas, eliminadas, errores });
+    // El recordatorio se apaga una vez avisado: si no, volveria a sonar todos los dias.
+    // La tarea sigue pendiente en la lista, que es el recordatorio de fondo. Solo se
+    // apaga si el aviso salio de verdad hacia algun dispositivo.
+    let recordatoriosApagados = 0;
+    if (enviadas > 0 && recordatorios.length > 0) {
+      const ids = recordatorios.map((t) => t.id);
+      const { error } = await supabase.from("tareas").update({ recordar: null }).in("id", ids);
+      if (error) errores.push("no se pudieron apagar los recordatorios: " + error.message);
+      else recordatoriosApagados = ids.length;
+    }
+
+    return Response.json({ ok: true, hoy, vencenHoy: vencenHoy.length, vencenManana: vencenManana.length,
+                           recordatorios: recordatorios.length, recordatoriosApagados,
+                           enviadas, eliminadas, errores });
   } catch (e: any) {
     return Response.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
   }

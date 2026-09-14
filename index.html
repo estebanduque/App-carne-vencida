@@ -497,6 +497,10 @@
     .tar-overdue { margin: 0 16px 12px; background: rgba(226,75,74,0.14); border: 1px solid rgba(226,75,74,0.45); border-radius: 14px; padding: 12px 14px; }
     .tar-overdue-tit { font-size: 13px; font-weight: 700; color: #F09595; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .tar-overdue-lst { font-size: 12px; color: rgba(240,149,149,0.85); line-height: 1.4; }
+    .tar-recordar { display: inline-flex; align-items: center; gap: 3px; font-size: 10px;
+      font-weight: 600; padding: 2px 7px; border-radius: 20px; background: rgba(123,200,240,0.16);
+      color: #7BC8F0; margin-left: 6px; }
+    .tar-recordar.hoy { background: rgba(226,75,74,0.2); color: #F09595; }
     .tar-recur-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 20px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); margin-left: 6px; }
     .tar-prev-row { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .tar-prev-row:last-child { border-bottom: none; }
@@ -5093,12 +5097,14 @@ function tareasDeLocal(){
 }
 function filaDeTarea(t){
   return { id:t.id, texto:t.texto, urgencia:t.urgencia, hecho:!!t.hecho,
-           created:t.created || t.id, template_key:t.templateKey || null };
+           created:t.created || t.id, template_key:t.templateKey || null,
+           recordar:t.recordar || null };
 }
 function tareaDeFila(f){
   const t = { id:Number(f.id), texto:f.texto, urgencia:Number(f.urgencia) || 3,
               hecho:!!f.hecho, created:Number(f.created || f.id) };
   if(f.template_key) t.templateKey = f.template_key;
+  if(f.recordar) t.recordar = f.recordar;
   return t;
 }
 
@@ -5195,10 +5201,22 @@ function guardarTareas(){
   if(!tareasListas) return;
   sincronizarTareas();
 }
+let avisadoSinRecordar = false;
 async function sincronizarTareas(){
   const filas = tareas.map(filaDeTarea);
   if(filas.length){
-    const {error} = await sb.from('tareas').upsert(filas);
+    let {error} = await sb.from('tareas').upsert(filas);
+    // La columna 'recordar' es nueva: mientras no se haya corrido el SQL, el guardado
+    // entero fallaria por ella. Se reintenta sin ese campo para no perder el resto,
+    // que es lo que de verdad importa.
+    if(error && /recordar/i.test((error.message || '') + (error.details || ''))){
+      const sinRecordar = filas.map(f => { const g = Object.assign({}, f); delete g.recordar; return g; });
+      ({error} = await sb.from('tareas').upsert(sinRecordar));
+      if(!error && !avisadoSinRecordar){
+        avisadoSinRecordar = true;
+        alert('El recordatorio quedó guardado solo en este dispositivo.\n\nPara que te llegue la notificación con la app cerrada, corré en Supabase:\n\nalter table tareas add column if not exists recordar date;');
+      }
+    }
     if(error){ console.log('tareas upsert:', error.code, error.message); return; }
     // Lo que ya no esta en la lista se borro: hay que borrarlo tambien alla.
     const ids = tareas.map(t => t.id).join(',');
@@ -5208,6 +5226,69 @@ async function sincronizarTareas(){
   }
 }
 
+// ---- Recordatorios ----
+// "Tres dias habiles" significa saltar sabados y domingos. Los feriados no se
+// contemplan: cambian por pais y por region, y aqui no hay de donde sacarlos.
+function sumarDiasHabiles(desde, n){
+  const d = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate());
+  let quedan = n;
+  while(quedan > 0){
+    d.setDate(d.getDate() + 1);
+    const dia = d.getDay();
+    if(dia !== 0 && dia !== 6) quedan--;   // 0 domingo, 6 sabado
+  }
+  return d;
+}
+// Tocar el boton pone el recordatorio; volver a tocarlo lo quita.
+async function recordarTarea(id){
+  const t = tareas.find(x => x.id === id); if(!t) return;
+  if(t.recordar){
+    delete t.recordar;
+    guardarTareas();
+    renderTareas();
+    return;
+  }
+  const cuando = sumarDiasHabiles(new Date(), 3);
+  t.recordar = fechaLocal(cuando);
+  guardarTareas();
+  renderTareas();
+  const dia = cuando.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' });
+  if(!('Notification' in window)){
+    alert('Te lo recuerdo el ' + dia + '.\n\nEste navegador no da notificaciones, así que lo verás al abrir la app.');
+    return;
+  }
+  if(Notification.permission === 'granted'){
+    alert('Te lo recuerdo el ' + dia + '.');
+  } else if(Notification.permission === 'denied'){
+    alert('Te lo recuerdo el ' + dia + ', pero las notificaciones están bloqueadas: lo verás al abrir la app.');
+  } else {
+    const permiso = await Notification.requestPermission();
+    alert(permiso === 'granted'
+      ? 'Listo, te aviso el ' + dia + '.'
+      : 'Te lo recuerdo el ' + dia + '. Sin permiso de notificaciones, lo verás al abrir la app.');
+  }
+}
+// Las que ya llegaron a su dia. El push lo manda el cron; esto es para cuando
+// abris la app, que es el otro momento en que te podes enterar.
+function tareasARecordar(){
+  const hoy = fechaLocal(new Date());
+  return tareas.filter(t => !t.hecho && t.recordar && t.recordar <= hoy);
+}
+async function notificarRecordatorios(){
+  const lista = tareasARecordar();
+  if(!lista.length) return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const hoy = fechaLocal(new Date());
+  const cache = cargarNotifCache();
+  for(const t of lista){
+    const clave = 'recordar_' + t.id + '_' + hoy;
+    if(cache[clave]) continue;
+    cache[clave] = 1;
+    await notificar('⏰ Te lo recordé: ' + t.texto.slice(0, 60), 'Lo pospusiste tres días hábiles.');
+  }
+  guardarNotifCache(cache);
+}
+
 function tareaCardHtml(t){
   const cls = 'tar-card urg-' + t.urgencia + (t.hecho ? ' hecho' : '');
   const txtCls = 'tar-texto' + (t.hecho ? ' hecho' : '');
@@ -5215,15 +5296,24 @@ function tareaCardHtml(t){
   const recurBadge = plantilla
     ? `<span class="tar-recur-badge" title="Tarea que se regenera sola">${plantilla.ico} cada ${plantilla.intervaloDias}d</span>`
     : '';
+  let recordarBadge = '';
+  if(t.recordar){
+    const hoy = fechaLocal(new Date());
+    const f = new Date(t.recordar + 'T12:00:00');
+    recordarBadge = `<span class="tar-recordar${t.recordar <= hoy ? ' hoy' : ''}">⏰ ${
+      t.recordar <= hoy ? 'te lo recordé' : f.toLocaleDateString('es-MX', { day:'numeric', month:'short' })}</span>`;
+  }
   return `<div class="${cls}">
     <button class="tar-check${t.hecho ? ' on' : ''}" onclick="toggleTarea(${t.id})" aria-label="Marcar">${t.hecho ? '✓' : ''}</button>
     <div class="tar-body">
       <div class="${txtCls}">${escHtmlAttr(t.texto)}${recurBadge}</div>
       <div class="tar-meta">
         <span class="tar-badge urg-${t.urgencia}">${URGENCIA_LBL[t.urgencia]}</span>
+        ${recordarBadge}
       </div>
     </div>
     <div class="tar-acciones">
+      <button onclick="recordarTarea(${t.id})" title="${t.recordar ? 'Quitar el recordatorio' : 'Recordármelo en 3 días hábiles'}" aria-label="Recordar">${t.recordar ? '🔔' : '⏰'}</button>
       <button onclick="openTareaModal(${t.id})" aria-label="Editar">✏️</button>
       <button onclick="deleteTarea(${t.id})" aria-label="Eliminar">🗑</button>
     </div>
@@ -5599,6 +5689,7 @@ function revisarTareasRecurrentes(){
   regenerarTareasRecurrentes();
   renderTareas();
   notificarTareasAtrasadas();
+  notificarRecordatorios();
 }
 
 // ---- Inicialización (aquí las variables ya existen) ----
