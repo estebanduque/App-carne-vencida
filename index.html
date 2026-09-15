@@ -1181,7 +1181,7 @@
       </div>
       <div class="modal-btns">
         <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
-        <button class="btn-save-amber" onclick="interpretarNotaTar()">Interpretar</button>
+        <button class="btn-save-amber" id="voz-tar-btn-interpretar" onclick="interpretarNotaTar()">Interpretar</button>
       </div>
     </div>
     <div id="voz-tar-paso-revisar" style="display:none;">
@@ -5925,31 +5925,83 @@ function partirFrases(texto){
     .filter(x => x.length >= 3);
   return bruto;
 }
-function interpretarNotaTar(){
-  if(grabandoTar && reconocedorTar) reconocedorTar.stop();
-  const texto = document.getElementById('voz-tar-texto').value.trim();
-  if(!texto){ alert('No hay nada que interpretar.'); return; }
+// El slug que Supabase le asigno a interpretar-tareas al desplegarla. Si todavia no
+// esta creada, la llamada falla y se usan las reglas locales: por eso no rompe nada
+// tenerlo puesto de antemano.
+const FN_TAREAS = 'interpretar-tareas';
+
+// Lo que entiende el telefono solo, sin red ni IA: alcanza para las palabras de la
+// lista y poco mas. Queda como respaldo, no como plan principal.
+function interpretarTareasPorReglas(texto){
   const frases = partirFrases(texto);
   if(!frases.length){
     // Sin cortes claros: se toma todo como una sola tarea.
-    tareasInterpretadas = [{ texto: limpiarFrase(texto) || texto.trim(), urgencia: detectarUrgenciaFrase(texto) }];
-  } else {
-    tareasInterpretadas = frases.map(f => ({
-      texto: limpiarFrase(f) || f.trim(),
-      urgencia: detectarUrgenciaFrase(f),
-    })).filter(x => x.texto.length >= 2);
+    return [{ texto: limpiarFrase(texto) || texto.trim(), urgencia: detectarUrgenciaFrase(texto) }];
   }
-  if(!tareasInterpretadas.length){
-    alert('No entendí ninguna tarea. Probá diciéndolo de otra forma.');
-    return;
-  }
-  renderPreviewVozTar();
-  document.getElementById('voz-tar-paso-dictar').style.display = 'none';
-  document.getElementById('voz-tar-paso-revisar').style.display = '';
+  return frases.map(f => ({
+    texto: limpiarFrase(f) || f.trim(),
+    urgencia: detectarUrgenciaFrase(f),
+  })).filter(x => x.texto.length >= 2);
 }
+
+// Devuelve las tareas que entendio la IA, o null si no se pudo (no esta desplegada,
+// no hay red, falta la clave...). Null significa "usa las reglas", no "fallo todo":
+// quedarse sin dictado porque el servidor no contesta seria peor que interpretarlo
+// peor.
+async function interpretarTareasConIA(texto){
+  try{
+    const {data, error} = await sb.functions.invoke(FN_TAREAS, { body: { texto } });
+    if(error){
+      let detalle = error.message || 'fallo la llamada';
+      try{ const j = await error.context.json(); if(j && j.error) detalle = j.error; }catch(_){}
+      console.log('interpretar-tareas:', detalle);
+      return null;
+    }
+    if(!data || !data.ok || !Array.isArray(data.tareas)){
+      console.log('interpretar-tareas: respuesta inesperada', data && data.error);
+      return null;
+    }
+    return data.tareas.filter(t => t && typeof t.texto === 'string' && t.texto.trim().length >= 2);
+  }catch(e){
+    console.log('interpretar-tareas:', e.message);
+    return null;
+  }
+}
+
+async function interpretarNotaTar(){
+  if(grabandoTar && reconocedorTar) reconocedorTar.stop();
+  const texto = document.getElementById('voz-tar-texto').value.trim();
+  if(!texto){ alert('No hay nada que interpretar.'); return; }
+  const btn = document.getElementById('voz-tar-btn-interpretar');
+  const original = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = 'Interpretando…'; btn.disabled = true; }
+  try{
+    const deIA = await interpretarTareasConIA(texto);
+    // La etiqueta tiene que decir lo que de verdad se uso: si la IA contesto pero no
+    // saco ninguna tarea, se cae a las reglas igual, y decir "interpretado con IA"
+    // seria mentir justo cuando el resultado es peor.
+    const usarIA = !!(deIA && deIA.length);
+    interpretadoConIA = usarIA;
+    tareasInterpretadas = usarIA ? deIA : interpretarTareasPorReglas(texto);
+    if(!tareasInterpretadas.length){
+      alert('No entendí ninguna tarea. Probá diciéndolo de otra forma.');
+      return;
+    }
+    renderPreviewVozTar();
+    document.getElementById('voz-tar-paso-dictar').style.display = 'none';
+    document.getElementById('voz-tar-paso-revisar').style.display = '';
+  } finally {
+    if(btn){ btn.textContent = original; btn.disabled = false; }
+  }
+}
+let interpretadoConIA = false;
 function renderPreviewVozTar(){
   const cont = document.getElementById('voz-tar-preview');
-  cont.innerHTML = tareasInterpretadas.map((t, n) => `
+  // Se dice con que se interpreto: si la funcion no esta desplegada el resultado es
+  // peor y conviene saber por que, en vez de pensar que la IA entiende mal.
+  const fuente = `<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:8px;">${
+    interpretadoConIA ? '✨ Interpretado con IA' : '⚙️ Interpretado en el teléfono (la función de IA no respondió)'}</div>`;
+  cont.innerHTML = fuente + tareasInterpretadas.map((t, n) => `
     <div class="tar-prev-row">
       <div class="tar-prev-top">
         <div class="tar-prev-txt">
@@ -5962,6 +6014,7 @@ function renderPreviewVozTar(){
       </div>
     </div>
   `).join('') || '<div class="tar-vacio">No queda ninguna tarea para agregar.</div>';
+  if(!tareasInterpretadas.length) cont.innerHTML = '<div class="tar-vacio">No queda ninguna tarea para agregar.</div>';
 }
 function volverADictarTar(){
   document.getElementById('voz-tar-paso-revisar').style.display = 'none';
