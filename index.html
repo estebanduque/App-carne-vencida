@@ -5202,6 +5202,33 @@ function toggleLugares(){ mostrarLugares = !mostrarLugares; renderCompras(); }
 // ---- Nota de voz ----
 let reconocedor = null, grabando = false, itemsInterpretados = [];
 function soportaDictado(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+
+// Arma el texto dictado a partir de TODOS los resultados, en vez de ir sumando los
+// que van llegando.
+//
+// El motivo: Android no respeta 'continuous' como el Chrome de escritorio. En vez de
+// ir cerrando una frase y empezando otra, vuelve a entregar la misma frase entera una
+// y otra vez, cada vez un poco mas larga, y marcada como definitiva. Sumar esas
+// entregas daba "lavar / lavar nevera / lavar nevera / lavar nevera urgencia media".
+//
+// Rearmar desde cero en cada evento es idempotente: que el motor reentregue algo ya
+// no puede sumarlo dos veces. Y si una entrega es continuacion (o repeticion) de la
+// anterior, reemplaza a esa en lugar de agregarse.
+function juntarDictado(resultados){
+  const partes = [];
+  for(let k = 0; k < resultados.length; k++){
+    const t = (resultados[k][0] && resultados[k][0].transcript || '').trim();
+    if(!t) continue;
+    const ult = partes.length ? partes[partes.length - 1] : '';
+    const a = t.toLowerCase(), b = ult.toLowerCase();
+    if(ult && (a.startsWith(b) || b.startsWith(a))){
+      partes[partes.length - 1] = t.length >= ult.length ? t : ult;
+    } else {
+      partes.push(t);
+    }
+  }
+  return partes.join(' ');
+}
 function openVozModal(){
   itemsInterpretados = [];
   document.getElementById('voz-paso-dictar').style.display = '';
@@ -5233,18 +5260,8 @@ function alternarDictado(){
   reconocedor.continuous = true;
   reconocedor.interimResults = true;
   reconocedor.onstart = ()=>{ mic.classList.add('grabando'); est.textContent = 'Escuchando… tocá de nuevo para parar'; if(navigator.vibrate) navigator.vibrate(20); };
-  // Chrome corta y reanuda el reconocimiento solo. Hay que acumular unicamente lo
-  // que ya quedo firme (isFinal) y repintar lo provisorio, si no el texto se duplica
-  // en cada corte: "necesitox necesito comprarx necesito comprar esponjasx...".
-  let firme = base;
   reconocedor.onresult = (ev)=>{
-    let provisorio = '';
-    for(let k=ev.resultIndex; k<ev.results.length; k++){
-      const r = ev.results[k];
-      if(r.isFinal) firme += r[0].transcript + ' ';
-      else provisorio += r[0].transcript;
-    }
-    caja.value = (firme + provisorio).replace(/\s+/g,' ').trim();
+    caja.value = (base + juntarDictado(ev.results)).replace(/\s+/g,' ').trim();
   };
   reconocedor.onerror = (ev)=>{
     est.textContent = ev.error==='not-allowed' ? 'No diste permiso al micrófono' :
@@ -5850,15 +5867,8 @@ function alternarDictadoTar(){
   reconocedorTar.continuous = true;
   reconocedorTar.interimResults = true;
   reconocedorTar.onstart = ()=>{ mic.classList.add('grabando'); est.textContent = 'Escuchando… tocá de nuevo para parar'; if(navigator.vibrate) navigator.vibrate(20); };
-  let firme = base;
   reconocedorTar.onresult = (ev)=>{
-    let provisorio = '';
-    for(let k=ev.resultIndex; k<ev.results.length; k++){
-      const r = ev.results[k];
-      if(r.isFinal) firme += r[0].transcript + ' ';
-      else provisorio += r[0].transcript;
-    }
-    caja.value = (firme + provisorio).replace(/\s+/g,' ').trim();
+    caja.value = (base + juntarDictado(ev.results)).replace(/\s+/g,' ').trim();
   };
   reconocedorTar.onerror = (ev)=>{
     est.textContent = ev.error==='not-allowed' ? 'No diste permiso al micrófono' :
@@ -5872,16 +5882,35 @@ function alternarDictadoTar(){
 
 // Divide el texto en tareas y detecta la urgencia por palabras clave. No pretende ser
 // exhaustivo: se abre el editor para que el usuario ajuste antes de guardar.
+// Las pistas de urgencia viven en UNA sola lista. Antes la deteccion y la limpieza
+// llevaban dos listas escritas a mano, y ya se habian desincronizado: nadie reconocia
+// "urgencia media", asi que ni ajustaba la urgencia ni se borraba, y esas dos palabras
+// terminaban dentro del texto de la tarea. Con una sola lista, lo que se reconoce es
+// exactamente lo que se saca.
+const PISTAS_URGENCIA = [
+  // Decirlo con todas las letras manda sobre cualquier otra palabra de la frase.
+  { u:1, re:/\b(urgencia|prioridad)\s+(m[aá]xima|cr[ií]tica|urgente)\b/ },
+  { u:2, re:/\b(urgencia|prioridad)\s+alta\b/ },
+  { u:3, re:/\b(urgencia|prioridad)\s+(media|normal|intermedia)\b/ },
+  { u:4, re:/\b(urgencia|prioridad)\s+(baja|m[ií]nima)\b/ },
+  // Y si no, se deduce de como lo dijiste.
+  { u:1, re:/\b(urgent[eí]?simo|urgente|inmediato|inmediatamente|ya mismo|cuanto antes|para hoy|no puede esperar|imperioso)\b/ },
+  { u:2, re:/\b(importante|prioritari[oa]|alta prioridad|priorida[dt]? alta|apurad[oa]|apremiante|pronto|esta semana|no olvidar)\b/ },
+  { u:4, re:/\b(sin apuro|sin prisa|cuando pueda|cuando tenga tiempo|alg[uú]n d[ií]a|a futuro|de a poco|con calma|no urge|baja prioridad)\b/ },
+];
+// Relleno que sobra una vez quitada la pista ("es muy urgente" -> "").
+const RELLENO_URGENCIA = /\b(es muy|es|muy)\b/gi;
+
 function detectarUrgenciaFrase(frase){
   const s = frase.toLowerCase();
-  if(/\b(urgent[eí]?simo|urgente|inmediato|inmediatamente|ya mismo|cuanto antes|para hoy|no puede esperar|imperioso)\b/.test(s)) return 1;
-  if(/\b(importante|prioritari[oa]|alta prioridad|priorida[dt]? alta|apurad[oa]|apremiante|pronto|esta semana|no olvidar)\b/.test(s)) return 2;
-  if(/\b(sin apuro|sin prisa|cuando pueda|cuando tenga tiempo|alg[uú]n d[ií]a|a futuro|de a poco|con calma|no urge|baja prioridad)\b/.test(s)) return 4;
+  for(const p of PISTAS_URGENCIA){ if(p.re.test(s)) return p.u; }
   return 3;
 }
 function limpiarFrase(frase){
-  return frase
-    .replace(/\b(urgent[eí]?simo|urgente|inmediato|inmediatamente|ya mismo|cuanto antes|para hoy|no puede esperar|imperioso|importante|prioritari[oa]|alta prioridad|priorida[dt]? alta|apurad[oa]|apremiante|pronto|esta semana|no olvidar|sin apuro|sin prisa|cuando pueda|cuando tenga tiempo|alg[uú]n d[ií]a|a futuro|de a poco|con calma|no urge|baja prioridad|es muy|es|muy)\b/gi, ' ')
+  let out = frase;
+  for(const p of PISTAS_URGENCIA){ out = out.replace(new RegExp(p.re.source, 'gi'), ' '); }
+  return out
+    .replace(RELLENO_URGENCIA, ' ')
     .replace(/^[\s,;:.\-—y]+/, '')
     .replace(/[\s,;:.\-—]+$/, '')
     .replace(/\s+/g, ' ')
