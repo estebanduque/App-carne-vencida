@@ -497,6 +497,10 @@
     /* ===== TAREAS (to-do list) ===== */
     .menu-icon.tareas { background: rgba(245,158,11,0.2); }
     .tar-grupo { margin: 0 16px 12px; }
+    /* Aplazadas: siguen a la vista, pero sin competir por la atencion. El titulo
+       queda legible; lo que se apaga son las tarjetas. */
+    .tar-grupo.aplazadas { margin-top: 18px; }
+    .tar-grupo.aplazadas .tar-card { opacity: 0.55; }
     .tar-grupo-tit { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 2px 8px; }
     .tar-grupo-tit .tar-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .tar-grupo-tit .tar-cnt { margin-left: auto; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: none; letter-spacing: 0; }
@@ -1800,7 +1804,8 @@ function renderHoy(){
   // Tareas. Es lo unico de esta pantalla que puede tener una fecha encima, asi que
   // cuando hay urgentes o recurrentes vencidas se va arriba de todo.
   const tarPend = tareas.filter(t => !t.hecho);
-  const tarUrg = tarPend.filter(t => t.urgencia === 1);
+  // Lo aplazado no dispara la alarma de Hoy: para eso lo aplazaste.
+  const tarUrg = tarPend.filter(t => t.urgencia === 1 && !tareaAplazada(t));
   if(tarPend.length){
     const atrasadas = tareasRecurrentesAtrasadas();
     const prioritario = !!(tarUrg.length || atrasadas.length);
@@ -5401,6 +5406,15 @@ const TAREAS_RECUR_SEEDED_KEY = 'tareas_recur_seeded_v1';
 const TAREAS_NOTIF_CACHE_KEY = 'tareas_notif_cache';
 const URGENCIA_LBL = { 1:'🔴 Urgente', 2:'🟠 Alta', 3:'🟡 Media', 4:'🔵 Baja' };
 const URGENCIA_COLOR = { 1:'#E24B4A', 2:'#E5883F', 3:'#FAC775', 4:'#7BC8F0' };
+const APLAZADA_COLOR = '#8A94A6';   // gris: no compite con las urgencias
+
+// Una tarea aplazada es la que pospusiste con el boton del reloj y a la que todavia
+// no le llego el dia. No cambia de urgencia ni se guarda en ningun lado como estado
+// aparte: se deduce de la fecha. Por eso vuelve sola a su grupo cuando el dia llega,
+// sin que haya que correr nada ni tocar la base.
+function tareaAplazada(t){
+  return !t.hecho && !!t.recordar && t.recordar > fechaLocal(new Date());
+}
 const DIA_MS = 86400000;
 
 // Plantillas recurrentes que se auto-generan. Al vencer el intervalo se crea una nueva
@@ -5676,7 +5690,12 @@ function tareaCardHtml(t){
 function renderTareas(){
   const pendientes = tareas.filter(t => !t.hecho);
   const hechas = tareas.filter(t => t.hecho);
-  const urg = pendientes.filter(t => t.urgencia === 1).length;
+  const aplazadas = pendientes.filter(tareaAplazada);
+  const activas = pendientes.filter(t => !tareaAplazada(t));
+  // Las aplazadas no cuentan como urgentes: posponer algo y que siga gritando en
+  // rojo seria no haberlo pospuesto. En el total de pendientes si siguen, porque
+  // pendientes estan.
+  const urg = activas.filter(t => t.urgencia === 1).length;
 
   const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   setTxt('stat-tar-pend', pendientes.length);
@@ -5687,7 +5706,7 @@ function renderTareas(){
   if(typeof renderOverdueBanner === 'function') renderOverdueBanner();
 
   const grupos = [1,2,3,4].map(u => {
-    const items = pendientes.filter(t => t.urgencia === u)
+    const items = activas.filter(t => t.urgencia === u)
       .sort((a,b) => (a.created||0) - (b.created||0));
     if(!items.length) return '';
     return `<div class="tar-grupo">
@@ -5700,10 +5719,25 @@ function renderTareas(){
     </div>`;
   }).join('');
 
+  // Al final de todo, las aplazadas: primero la que vuelve antes, que es la unica
+  // que interesa de ese grupo.
+  const grupoAplazadas = aplazadas.length ? `<div class="tar-grupo aplazadas">
+      <div class="tar-grupo-tit">
+        <span class="tar-dot" style="background:${APLAZADA_COLOR};"></span>
+        <span style="color:${APLAZADA_COLOR};">⏰ Aplazadas</span>
+        <span class="tar-cnt">${aplazadas.length}</span>
+      </div>
+      ${aplazadas
+          .sort((a,b) => a.recordar < b.recordar ? -1
+                       : a.recordar > b.recordar ? 1
+                       : (a.created||0) - (b.created||0))
+          .map(tareaCardHtml).join('')}
+    </div>` : '';
+
   const lista = document.getElementById('tar-lista');
   if(lista){
     lista.innerHTML = pendientes.length
-      ? grupos
+      ? grupos + grupoAplazadas
       : '<div class="tar-vacio">🎉 No hay tareas pendientes.</div>';
   }
 
@@ -5991,6 +6025,8 @@ function tareasRecurrentesAtrasadas(){
   const ahora = Date.now();
   return tareas.filter(t => {
     if(t.hecho || !t.templateKey) return false;
+    if(tareaAplazada(t)) return false;   // pospuesta a proposito: no esta atrasada
+
     const p = tareasRecur.find(x => x.key === t.templateKey);
     if(!p) return false;
     const edad = (ahora - (t.created || 0)) / DIA_MS;
