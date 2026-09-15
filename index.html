@@ -4049,7 +4049,6 @@ async function tiempoStop(){
   if(!tiempoTimer.categoria){ alert('Elige una categoría.'); return; }
   const categoria = tiempoTimer.categoria;
   const subcategoria = leerSubcatCrono() || 'General';
-  if(!confirm('¿Guardar '+fmtHoras(min)+' en '+categoria+' › '+subcategoria+'?')) return;
   const created_at = new Date().toISOString();
   const {start,end} = ventanaDe(created_at, min);
   if(!admiteSolapamiento(categoria, subcategoria) &&
