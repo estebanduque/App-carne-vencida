@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cronómetro</title>
+<!--
+  Botones para arrancar un cronómetro desde el reloj.
+
+  No es una app: es una página. El reloj solo necesita un navegador, así que no hay
+  APK que instalar ni permisos que dar. Cada botón navega a la Edge Function 'crono',
+  que arranca el cronómetro en la base y devuelve una pantalla de confirmación ya
+  pensada para una muñeca. Se vuelve con el botón Atrás.
+
+  Se navega en vez de usar fetch a propósito: así no hace falta que la función tenga
+  cabeceras CORS, y la confirmación que ya devuelve se aprovecha tal cual.
+
+  La clave (CRONO_KEY) se guarda una vez en el reloj y no vuelve a pedirse. No va en
+  el favorito: si la guardaras en la URL, quedaría escrita en el historial.
+-->
+<style>
+  :root{
+    --fondo:#0A1628; --tinta:#fff; --tenue:rgba(255,255,255,0.45);
+    --borde:rgba(255,255,255,0.12);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; background:var(--fondo); color:var(--tinta);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  /* En pantalla redonda las esquinas se cortan: todo va en una columna centrada con
+     aire a los lados, y el primer y último botón nunca quedan pegados al borde. */
+  .hoja{ max-width:420px; margin:0 auto; padding:14% 9% 16%; }
+  h1{ font-size:15px; font-weight:600; margin:0 0 2px; text-align:center; }
+  .sub{ font-size:11px; color:var(--tenue); text-align:center; margin:0 0 14px; }
+  .grupo{ font-size:10px; letter-spacing:0.9px; text-transform:uppercase;
+    color:var(--tenue); margin:16px 0 7px 2px; }
+  .b{ display:flex; align-items:center; gap:11px; width:100%; min-height:54px;
+    padding:11px 14px; margin-bottom:8px; border:1px solid var(--borde);
+    border-radius:16px; background:rgba(255,255,255,0.05); color:var(--tinta);
+    font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer; }
+  .b:active{ background:rgba(255,255,255,0.14); }
+  .ico{ font-size:21px; line-height:1; flex-shrink:0; }
+  .punto{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .txt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* Pantalla de la clave, solo la primera vez */
+  #clave{ display:none; }
+  #clave.on{ display:block; }
+  #botones.off{ display:none; }
+  input{ width:100%; padding:13px; font-size:16px; border-radius:13px;
+    border:1px solid var(--borde); background:rgba(255,255,255,0.08);
+    color:var(--tinta); font-family:inherit; margin-bottom:10px; }
+  .guardar{ width:100%; padding:13px; font-size:15px; font-weight:600;
+    border:none; border-radius:13px; background:#1D9E75; color:#fff; font-family:inherit; }
+  .pie{ margin-top:18px; text-align:center; }
+  .pie button{ background:none; border:none; color:var(--tenue);
+    font:inherit; font-size:11px; text-decoration:underline; padding:8px; }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+  <h1>⏱️ Cronómetro</h1>
+  <p class="sub" id="sub">Tocá una actividad</p>
+
+  <div id="clave">
+    <input id="k" type="text" inputmode="text" autocapitalize="off" autocorrect="off"
+           spellcheck="false" placeholder="CRONO_KEY">
+    <button class="guardar" id="ok">Guardar</button>
+  </div>
+
+  <div id="botones"></div>
+
+  <div class="pie" id="pie" style="display:none;">
+    <button id="cambiar">cambiar clave</button>
+  </div>
+</div>
+
+<script>
+const FUNCION = 'https://suoqdlnmaemugpkbdpef.supabase.co/functions/v1/crono';
+const LS = 'crono_key';
+
+// El 'a' de cada botón tiene que existir en el mapa ATAJOS de la función.
+// Los colores son los mismos que usa la app para cada materia.
+const ACTIVIDADES = [
+  { g:'Estudio' },
+  { a:'civil',      n:'Droit civil',      c:'#F2C94C' },
+  { a:'comercial',  n:'Droit commercial', c:'#4C8DFF' },
+  { a:'procedures', n:'Procédures',       c:'#27AE60' },
+  { a:'deonto',     n:'Déontologie',      c:'#EB5757' },
+  { g:'Tiempo' },
+  { a:'gym',        n:'Gym',              i:'🏋️' },
+  { a:'transporte', n:'Transporte',       i:'🚗' },
+  { a:'trabajo',    n:'Trabajo',          i:'💼' },
+  { a:'proyecto',   n:'Proyecto personal',i:'💡' },
+  { a:'hogar',      n:'Hogar',            i:'🏠' },
+  { a:'cuidado',    n:'Cuidado personal', i:'🚿' },
+  { a:'ocio',       n:'Ocio',             i:'🎮' },
+  { a:'dormir',     n:'Dormir',           i:'😴' },
+  { a:'otro',       n:'Otro',             i:'📦' },
+];
+
+const $ = id => document.getElementById(id);
+const leerClave = () => { try{ return localStorage.getItem(LS) || ''; }catch(e){ return ''; } };
+
+function pintarBotones(){
+  $('botones').innerHTML = ACTIVIDADES.map(x => x.g
+    ? `<div class="grupo">${x.g}</div>`
+    : `<button class="b" data-a="${x.a}">
+         ${x.i ? `<span class="ico">${x.i}</span>`
+               : `<span class="punto" style="background:${x.c}"></span>`}
+         <span class="txt">${x.n}</span>
+       </button>`).join('');
+  $('botones').querySelectorAll('button[data-a]').forEach(b => {
+    b.addEventListener('click', () => {
+      const k = leerClave();
+      if(!k){ mostrarClave(); return; }
+      // Navegar (no fetch): la función devuelve su propia pantalla de confirmación.
+      location.href = FUNCION + '?k=' + encodeURIComponent(k) + '&a=' + encodeURIComponent(b.dataset.a);
+    });
+  });
+}
+
+function mostrarClave(){
+  $('clave').classList.add('on');
+  $('botones').classList.add('off');
+  $('pie').style.display = 'none';
+  $('sub').textContent = 'Pegá tu CRONO_KEY';
+  $('k').value = leerClave();
+  $('k').focus();
+}
+function mostrarBotones(){
+  $('clave').classList.remove('on');
+  $('botones').classList.remove('off');
+  $('pie').style.display = '';
+  $('sub').textContent = 'Tocá una actividad';
+}
+
+$('ok').addEventListener('click', () => {
+  const v = $('k').value.trim();
+  if(!v) return;
+  try{ localStorage.setItem(LS, v); }catch(e){}
+  mostrarBotones();
+});
+$('k').addEventListener('keydown', e => { if(e.key === 'Enter') $('ok').click(); });
+$('cambiar').addEventListener('click', mostrarClave);
+
+pintarBotones();
+if(leerClave()) mostrarBotones(); else mostrarClave();
+</script>
+</body>
+</html>
