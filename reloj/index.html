@@ -68,6 +68,10 @@
   .circ:active{ background:rgba(255,255,255,0.18); }
   /* Los temas llevan dos emojis: se apilan para que no encojan hasta no verse. */
   .circ.doble{ font-size:calc(var(--c) * 0.3); flex-direction:column; gap:1px; }
+  /* Estudio son solo 4 círculos en dos filas, así que sobra sitio: se hacen más
+     grandes que los nueve de Tiempo, que sí tienen que caber apretados. */
+  .circ.xl{ width:calc(var(--c) * 1.4); height:calc(var(--c) * 1.4); }
+  .circ.doble.xl{ font-size:calc(var(--c) * 0.42); }
   .circ.grande{ width:calc(var(--c) * 1.45); height:calc(var(--c) * 1.45);
     font-size:calc(var(--c) * 0.6); }
   .eti{ font-size:10.5px; color:var(--tenue); margin-top:8px; }
@@ -459,7 +463,7 @@ claveDelEnlace();
 // y no cuatro porque con cuatro el botón de volver caía fuera del círculo: en una
 // pantalla redonda lo que sobra abajo no se ve, se pierde.
 panal($('panal-tiempo'), TIEMPO, [3,3,3], '');
-panal($('panal-estudio'), ESTUDIO, [2,2], 'doble');
+panal($('panal-estudio'), ESTUDIO, [2,2], 'doble xl');
 ir(leerClave() ? 'inicio' : 'clave');
 traerListas();
 leerCorriendo();
