@@ -5,100 +5,181 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cronómetro</title>
 <!--
-  Botones para arrancar un cronómetro desde el reloj.
+  Cronómetro para el reloj. No es una app: es una página, así que el reloj solo
+  necesita un navegador (ni APK, ni permisos, ni ADB).
 
-  No es una app: es una página. El reloj solo necesita un navegador, así que no hay
-  APK que instalar ni permisos que dar. Cada botón llama a la Edge Function 'crono',
-  que arranca el cronómetro en la base, y la confirmación se muestra aquí mismo.
+  Maqueta pensada para una pantalla redonda y pequeña:
+  · Elegir se hace con círculos en panal: un círculo con un emoji grande se acierta
+    con el dedo sin leer nada, y el panal aprovecha el ancho del centro, que es donde
+    una pantalla redonda tiene sitio.
+  · Las listas largas (subtemas, puntos) sí son filas de texto: ahí hay que leer.
+  · Cada pantalla cabe entera, sin scroll, salvo esas listas.
+  · Todas las pantallas llevan volver, siempre en el mismo sitio.
 
-  Se llama por detrás (fetch) en vez de navegar: Supabase fuerza 'text/plain' y
-  'nosniff' en las Edge Functions, así que una página devuelta por la función se
-  vería como código fuente, nunca dibujada.
+  Se llama a la Edge Function 'crono' por detrás (fetch) y el resultado se pinta
+  aquí: Supabase fuerza 'text/plain' en las Edge Functions, así que una página
+  devuelta por la función se vería como código fuente, nunca dibujada.
 
-  Tres niveles en Estudio (tema › subtema › punto) y dos en Tiempo, como la base.
-  Ninguna de esas listas está escrita aquí: se leen de lo que ya registraste y de
-  tus puntos de repaso, ordenadas por uso. Así son cortas, son las tuyas, y no hay
-  una copia que se desincronice cuando cambies el plan en la app.
+  Las listas de subtemas y puntos NO están escritas aquí: se leen de lo que ya
+  registraste y de tus puntos de repaso. Así son las tuyas y no se desincronizan.
 
-  La clave (CRONO_KEY) se guarda una vez y no vuelve a pedirse. Puede venir en el
-  enlace (#k=...) porque en un reloj no se puede pegar texto y teclearla es un
-  castigo: con la clave dentro del favorito, el reloj la recibe al importar los
-  favoritos del teléfono y no hay que escribir nada. Va en el fragmento (#) y no en
-  la query (?) a propósito: el fragmento no viaja al servidor. Se borra de la barra
-  en cuanto se lee, para que no quede a la vista.
+  La clave (CRONO_KEY) puede venir en el enlace (#k=...) porque en un reloj no se
+  puede pegar texto: con la clave dentro del favorito, el reloj la recibe al importar
+  los favoritos del teléfono. Va en el fragmento, que no viaja al servidor, y se borra
+  de la barra en cuanto se lee.
 -->
 <style>
   :root{
     --fondo:#0A1628; --tinta:#fff; --tenue:rgba(255,255,255,0.45);
-    --borde:rgba(255,255,255,0.12);
+    --borde:rgba(255,255,255,0.14); --verde:#1D9E75; --rojo:#E24B4A;
+    /* El círculo se mide contra el lado CORTO de la pantalla: así entran tres por
+       fila en un reloj redondo sin tocar el borde, y en una pantalla grande no se
+       vuelven absurdos. */
+    --c: min(18vw, 18vh, 80px);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ margin:0; background:var(--fondo); color:var(--tinta);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  /* En pantalla redonda las esquinas se cortan: todo va en una columna centrada con
-     aire a los lados, y el primer y último botón nunca quedan pegados al borde. */
-  .hoja{ max-width:420px; margin:0 auto; padding:14% 9% 16%; }
-  h1{ font-size:15px; font-weight:600; margin:0 0 2px; text-align:center; }
-  .sub{ font-size:11px; color:var(--tenue); text-align:center; margin:0 0 14px;
+  html,body{ margin:0; height:100%; background:var(--fondo); color:var(--tinta);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; overflow-x:hidden; }
+  body{ display:flex; align-items:center; justify-content:center; }
+
+  .pantalla{ display:none; width:100%; max-width:460px; height:100%;
+    flex-direction:column; align-items:center; justify-content:center;
+    padding:9% 8%; text-align:center; }
+  .pantalla.on{ display:flex; }
+  /* Las listas son lo único que puede desbordar: ahí sí se scrollea. Llevan más
+     margen lateral que el resto porque una fila ancha, arriba o abajo del todo, se
+     come el borde curvo de la pantalla. */
+  .pantalla.lista{ justify-content:flex-start; padding:16% 12% 14%; overflow-y:auto; }
+
+  .titulo{ font-size:13px; font-weight:600; margin:0 0 8px; }
+  .sub{ font-size:11px; color:var(--tenue); margin:0 0 9px; max-width:100%;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .grupo{ font-size:10px; letter-spacing:0.9px; text-transform:uppercase;
-    color:var(--tenue); margin:16px 0 7px 2px; }
-  .b{ display:flex; align-items:center; gap:11px; width:100%; min-height:54px;
-    padding:11px 14px; margin-bottom:8px; border:1px solid var(--borde);
-    border-radius:16px; background:rgba(255,255,255,0.05); color:var(--tinta);
-    font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer; }
-  .b:active{ background:rgba(255,255,255,0.14); }
-  .ico{ font-size:21px; line-height:1; flex-shrink:0; }
-  .punto{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-  /* Los subtemas son frases largas: caben en dos líneas antes de cortarse. */
-  .txt{ flex:1; min-width:0; overflow:hidden; }
-  .b.corto .txt{ white-space:nowrap; text-overflow:ellipsis; }
-  .b.largo{ font-size:13.5px; line-height:1.3; }
+
+  /* ---- Panal ---- */
+  .panal{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .fila{ display:flex; gap:8px; }
+  /* Las filas impares se corren medio círculo: eso es lo que hace el panal. */
+  .fila.offset{ margin-left:calc(var(--c) / 2 + 4px); }
+  .circ{ width:var(--c); height:var(--c); border-radius:50%; flex-shrink:0;
+    border:1px solid var(--borde); background:rgba(255,255,255,0.06);
+    color:var(--tinta); font-family:inherit; cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:calc(var(--c) * 0.42); line-height:1; }
+  .circ:active{ background:rgba(255,255,255,0.18); }
+  /* Los temas llevan dos emojis: se apilan para que no encojan hasta no verse. */
+  .circ.doble{ font-size:calc(var(--c) * 0.3); flex-direction:column; gap:1px; }
+  .circ.grande{ width:calc(var(--c) * 1.45); height:calc(var(--c) * 1.45);
+    font-size:calc(var(--c) * 0.6); }
+  .eti{ font-size:10.5px; color:var(--tenue); margin-top:8px; }
+
+  /* ---- Filas de lista ---- */
+  .b{ display:flex; align-items:center; gap:10px; width:100%; min-height:50px;
+    padding:10px 13px; margin-bottom:7px; border:1px solid var(--borde);
+    border-radius:15px; background:rgba(255,255,255,0.05); color:var(--tinta);
+    font:inherit; font-size:13.5px; font-weight:600; text-align:left;
+    line-height:1.3; cursor:pointer; }
+  .b:active{ background:rgba(255,255,255,0.15); }
+  .b .txt{ flex:1; min-width:0; overflow:hidden; }
   .chev{ color:var(--tenue); font-size:15px; flex-shrink:0; }
-  .b.volver{ background:none; border-style:dashed; color:var(--tenue);
-    font-size:13px; min-height:46px; }
 
-  /* Pantalla de la clave, solo la primera vez */
-  #clave{ display:none; }
-  #clave.on{ display:block; }
-  #botones.off{ display:none; }
-  input{ width:100%; padding:13px; font-size:16px; border-radius:13px;
+  /* ---- Volver: en TODAS las pantallas y siempre en el mismo sitio ---- */
+  .volver{ margin-top:12px; border:1px solid var(--borde); background:none;
+    color:var(--tenue); font:inherit; font-size:12px; border-radius:999px;
+    padding:7px 17px; cursor:pointer; flex-shrink:0; }
+  .volver:active{ background:rgba(255,255,255,0.1); }
+
+  /* ---- Corriendo ---- */
+  #p-corriendo .que{ font-size:14px; font-weight:600; line-height:1.3; margin:0 0 3px; }
+  #p-corriendo .det{ font-size:11px; color:var(--tenue); line-height:1.3;
+    margin:0; max-width:100%; overflow:hidden; }
+  .reloj{ font-size:26px; font-weight:700; font-variant-numeric:tabular-nums;
+    letter-spacing:1px; margin:8px 0 12px; }
+  .stop{ width:calc(var(--c) * 1.45); height:calc(var(--c) * 1.45); border-radius:50%;
+    border:none; background:var(--rojo); color:#fff; font-family:inherit;
+    font-size:calc(var(--c) * 0.14); font-weight:700; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+  .stop:active{ filter:brightness(0.85); }
+  .stop .cuadro{ font-size:calc(var(--c) * 0.3); line-height:1; }
+
+  /* ---- Clave ---- */
+  input{ width:100%; padding:12px; font-size:16px; border-radius:12px;
     border:1px solid var(--borde); background:rgba(255,255,255,0.08);
-    color:var(--tinta); font-family:inherit; margin-bottom:10px; }
-  .guardar{ width:100%; padding:13px; font-size:15px; font-weight:600;
-    border:none; border-radius:13px; background:#1D9E75; color:#fff; font-family:inherit; }
+    color:var(--tinta); font-family:inherit; margin-bottom:9px; }
+  .guardar{ width:100%; padding:12px; font-size:14px; font-weight:600; border:none;
+    border-radius:12px; background:var(--verde); color:#fff; font-family:inherit; }
+  .pie{ margin-top:12px; }
+  .pie button{ background:none; border:none; color:var(--tenue);
+    font:inherit; font-size:10.5px; text-decoration:underline; padding:6px; }
 
-  /* El resultado tapa la pantalla: en una muñeca no hay sitio para ponerlo al lado. */
+  /* ---- Aviso ---- */
   #aviso{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     background:var(--fondo); padding:12%; text-align:center; z-index:9; }
   #aviso.on{ display:flex; }
-  #aviso h2{ font-size:20px; margin:0 0 7px; line-height:1.25; }
-  #aviso p{ font-size:13px; margin:0; color:var(--tenue); line-height:1.35; }
-  .ok h2{ color:#5DCAA5; } .aviso h2{ color:#EF9F27; } .error h2{ color:#E24B4A; }
-
-  .pie{ margin-top:18px; text-align:center; }
-  .pie button{ background:none; border:none; color:var(--tenue);
-    font:inherit; font-size:11px; text-decoration:underline; padding:8px; }
+  #aviso h2{ font-size:18px; margin:0 0 6px; line-height:1.25; }
+  #aviso p{ font-size:12px; margin:0; color:var(--tenue); line-height:1.35; }
+  .ok h2{ color:#5DCAA5; } .aviso h2{ color:#EF9F27; } .error h2{ color:var(--rojo); }
 </style>
 </head>
 <body>
-<div class="hoja">
 
-  <h1>⏱️ Cronómetro</h1>
-  <p class="sub" id="sub">Tocá una actividad</p>
-
-  <div id="clave">
-    <input id="k" type="text" inputmode="text" autocapitalize="off" autocorrect="off"
-           spellcheck="false" placeholder="CRONO_KEY">
-    <button class="guardar" id="ok">Guardar</button>
+<!-- 1. Inicio -->
+<div class="pantalla on" id="p-inicio">
+  <div class="panal">
+    <div class="fila">
+      <button class="circ grande" id="ir-tiempo" title="Crono general">⏱️</button>
+      <button class="circ grande" id="ir-estudio" title="Estudio">📚</button>
+    </div>
   </div>
+  <div class="eti">general · estudio</div>
+  <button class="volver" id="ver-corriendo" style="display:none;">● lo que está corriendo</button>
+  <div class="pie"><button id="cambiar">cambiar clave</button></div>
+</div>
 
-  <div id="botones"></div>
+<!-- 2. Categorías de Mi Tiempo -->
+<div class="pantalla" id="p-tiempo">
+  <p class="titulo">Crono general</p>
+  <div class="panal" id="panal-tiempo"></div>
+  <button class="volver" data-volver="inicio">‹ volver</button>
+</div>
 
-  <div class="pie" id="pie" style="display:none;">
-    <button id="enlace">enlace para el reloj</button>
-    <button id="cambiar">cambiar clave</button>
-  </div>
+<!-- 3. Temas de estudio -->
+<div class="pantalla" id="p-estudio">
+  <p class="titulo">Estudio</p>
+  <div class="panal" id="panal-estudio"></div>
+  <button class="volver" data-volver="inicio">‹ volver</button>
+</div>
+
+<!-- 4. Subtemas -->
+<div class="pantalla lista" id="p-subs">
+  <p class="titulo" id="subs-tit"></p>
+  <div id="subs-lista" style="width:100%;"></div>
+  <button class="volver" id="subs-volver">‹ volver</button>
+</div>
+
+<!-- 5. Puntos -->
+<div class="pantalla lista" id="p-puntos">
+  <p class="titulo">Punto</p>
+  <p class="sub" id="puntos-tit"></p>
+  <div id="puntos-lista" style="width:100%;"></div>
+  <button class="volver" id="puntos-volver">‹ volver</button>
+</div>
+
+<!-- 6. Corriendo -->
+<div class="pantalla" id="p-corriendo">
+  <p class="que" id="corr-que"></p>
+  <p class="det" id="corr-det"></p>
+  <div class="reloj" id="corr-reloj">00:00</div>
+  <button class="stop" id="corr-stop"><span class="cuadro">■</span><span>Terminar</span></button>
+  <button class="volver" data-volver="inicio">‹ volver</button>
+</div>
+
+<!-- 7. Clave -->
+<div class="pantalla" id="p-clave">
+  <p class="titulo">CRONO_KEY</p>
+  <input id="k" type="text" inputmode="text" autocapitalize="off" autocorrect="off"
+         spellcheck="false" placeholder="tu clave">
+  <button class="guardar" id="ok">Guardar</button>
+  <div class="pie"><button id="enlace">enlace para el reloj</button></div>
 </div>
 
 <div id="aviso"><div><h2 id="aviso-tit"></h2><p id="aviso-det"></p></div></div>
@@ -108,244 +189,280 @@ const PROYECTO = 'https://suoqdlnmaemugpkbdpef.supabase.co';
 const FUNCION  = PROYECTO + '/functions/v1/crono';
 // La misma clave anon que ya usa la app; es pública por diseño.
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
-const LS_CLAVE = 'crono_key';
-const LS_SUBS  = 'crono_subs';
-const LS_PUNTOS = 'crono_puntos';
+const LS_CLAVE = 'crono_key', LS_SUBS = 'crono_subs', LS_PUNTOS = 'crono_puntos';
 
-// Nivel 1. El 'a' de cada uno tiene que existir en el mapa ATAJOS de la función;
-// para bajar a un subtema se usan tipo/e1/e2, que la función también acepta.
-// Los colores son los mismos que usa la app para cada materia.
-const ACTIVIDADES = [
-  { g:'Estudio' },
-  { a:'civil',      tipo:'estudio', e1:'Droit civil',       c:'#F2C94C' },
-  { a:'comercial',  tipo:'estudio', e1:'Droit commercial',  c:'#4C8DFF' },
-  { a:'procedures', tipo:'estudio', e1:'Procédures',        c:'#27AE60' },
-  { a:'deonto',     tipo:'estudio', e1:'Déontologie',       c:'#EB5757' },
-  { g:'Tiempo' },
-  { a:'gym',        tipo:'gym',     e1:'Gym',               i:'🏋️', sinSub:true },
-  { a:'transporte', tipo:'tiempo',  e1:'Transporte',        i:'🚗' },
-  { a:'trabajo',    tipo:'tiempo',  e1:'Trabajo',           i:'💼' },
-  { a:'proyecto',   tipo:'tiempo',  e1:'Proyecto personal', i:'💡' },
-  { a:'hogar',      tipo:'tiempo',  e1:'Hogar',             i:'🏠' },
-  { a:'cuidado',    tipo:'tiempo',  e1:'Cuidado personal',  i:'🚿' },
-  { a:'ocio',       tipo:'tiempo',  e1:'Ocio',              i:'🎮' },
-  { a:'dormir',     tipo:'tiempo',  e1:'Dormir',            i:'😴' },
-  { a:'otro',       tipo:'tiempo',  e1:'Otro',              i:'📦' },
+// Emojis y símbolos son los mismos que usa la app: el reloj tiene que verse como
+// una continuación, no como otra cosa.
+const TIEMPO = [
+  { a:'hogar',      e1:'Hogar',             i:'🏠' },
+  { a:'ocio',       e1:'Ocio',              i:'🎮' },
+  { a:'gym',        e1:'Gym',               i:'🏋️', tipo:'gym' },
+  { a:'dormir',     e1:'Dormir',            i:'😴' },
+  { a:'cuidado',    e1:'Cuidado personal',  i:'🚿' },
+  { a:'transporte', e1:'Transporte',        i:'🚗' },
+  { a:'trabajo',    e1:'Trabajo',           i:'💼' },
+  { a:'proyecto',   e1:'Proyecto personal', i:'💡' },
+  { a:'otro',       e1:'Otro',              i:'📦' },
 ];
+const ESTUDIO = [
+  { a:'civil',      e1:'Droit civil',      i:'👥📜' },
+  { a:'comercial',  e1:'Droit commercial', i:'🏢💼' },
+  { a:'procedures', e1:'Procédures',       i:'⚖️📋' },
+  { a:'deonto',     e1:'Déontologie',      i:'🤝📖' },
+];
+TIEMPO.forEach(x => { x.tipo = x.tipo || 'tiempo'; });
+ESTUDIO.forEach(x => { x.tipo = 'estudio'; });
 
 const $ = id => document.getElementById(id);
 const leerClave = () => { try{ return localStorage.getItem(LS_CLAVE) || ''; }catch(e){ return ''; } };
 const esc = t => String(t == null ? '' : t)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-// ---- Los subtemas salen de lo que ya registraste ----
-// Se guardan en el reloj para que la lista aparezca al instante (y sin red), y se
-// refrescan por detrás.
-let SUBS = {};   // { 'estudio|Droit civil': ['Usucapión…', …], 'tiempo|Hogar': […] }
-// Tercer nivel, solo en Estudio: { 'Droit civil|Usucapión…': ['Assignation', …] }
-let PUNTOS = {};
-try{ SUBS = JSON.parse(localStorage.getItem(LS_SUBS) || '{}') || {}; }catch(e){ SUBS = {}; }
-try{ PUNTOS = JSON.parse(localStorage.getItem(LS_PUNTOS) || '{}') || {}; }catch(e){ PUNTOS = {}; }
+let SUBS = {}, PUNTOS = {};
+try{ SUBS = JSON.parse(localStorage.getItem(LS_SUBS) || '{}') || {}; }catch(e){}
+try{ PUNTOS = JSON.parse(localStorage.getItem(LS_PUNTOS) || '{}') || {}; }catch(e){}
 
-async function traerSubs(){
-  const pedir = (tabla, cols) => fetch(
-    PROYECTO + '/rest/v1/' + tabla + '?select=' + cols + '&order=created_at.desc&limit=1000',
-    { headers:{ apikey:ANON, Authorization:'Bearer ' + ANON }, cache:'no-store' }
-  ).then(r => r.ok ? r.json() : []);
+// ---- Navegación ----
+// Cada pantalla sabe a cuál se vuelve, en vez de guardar un historial: así el botón
+// de volver lleva siempre donde tiene sentido y no a donde se pasó por azar.
+function ir(id){
+  document.querySelectorAll('.pantalla').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+  if(id === 'inicio') pintarInicio();
+}
+document.querySelectorAll('[data-volver]').forEach(b =>
+  b.addEventListener('click', () => ir(b.dataset.volver)));
 
-  try{
-    const [est, tie, rep] = await Promise.all([
-      pedir('estudio', 'tema,subtema,punto'),
-      pedir('tiempo', 'categoria,subcategoria'),
-      // Los puntos que ya curaste para la ruleta: son los mismos nombres con los que
-      // conviene registrar el tiempo, para que las dos cosas no se separen.
-      pedir('puntos_repaso', 'tema,subtema,texto'),
-    ]);
-    const cuenta = {};
-    const sumar = (tipo, e1, e2) => {
-      if(!e1 || !e2 || e2 === 'General') return;   // 'General' ya es la opción "sin subtema"
-      const k = tipo + '|' + e1;
-      (cuenta[k] = cuenta[k] || {})[e2] = (cuenta[k][e2] || 0) + 1;
-    };
-    est.forEach(r => sumar('estudio', r.tema, r.subtema));
-    tie.forEach(r => sumar('tiempo', r.categoria, r.subcategoria));
-
-    const nuevo = {};
-    // Los más usados arriba: en una muñeca lo que importa es que lo tuyo esté cerca.
-    Object.keys(cuenta).forEach(k => {
-      nuevo[k] = Object.entries(cuenta[k]).sort((a,b) => b[1]-a[1]).slice(0,12).map(x => x[0]);
-    });
-    SUBS = nuevo;
-    try{ localStorage.setItem(LS_SUBS, JSON.stringify(SUBS)); }catch(e){}
-
-    // Tercer nivel: primero los puntos de repaso, después los ya usados al cronometrar.
-    const pts = {};
-    const meter = (tema, sub, txt) => {
-      if(!tema || !sub || sub === 'General' || !txt) return;
-      const k = tema + '|' + sub;
-      pts[k] = pts[k] || [];
-      if(pts[k].indexOf(txt) === -1) pts[k].push(txt);
-    };
-    (rep || []).forEach(r => meter(r.tema, r.subtema, (r.texto || '').trim()));
-    est.forEach(r => meter(r.tema, r.subtema, (r.punto || '').trim()));
-    Object.keys(pts).forEach(k => { pts[k] = pts[k].slice(0, 12); });
-    PUNTOS = pts;
-    try{ localStorage.setItem(LS_PUNTOS, JSON.stringify(PUNTOS)); }catch(e){}
-
-    if(nivel === 1) pintarNivel1();   // por si llegaron mientras mirabas la lista
-  }catch(e){ /* sin red se sigue con lo guardado */ }
+// ---- Panales ----
+// Las filas se reparten a mano para que la más ancha quede cerca del centro, que es
+// donde una pantalla redonda tiene más sitio.
+function panal(cont, lista, filas, clase){
+  let n = 0, html = '';
+  filas.forEach((cuantos, f) => {
+    const desde = n;
+    const trozo = lista.slice(n, n + cuantos); n += cuantos;
+    html += `<div class="fila${f % 2 ? ' offset' : ''}">` + trozo.map((x, j) =>
+      `<button class="circ ${clase}" data-n="${desde + j}" title="${esc(x.e1)}">${x.i}</button>`
+    ).join('') + `</div>`;
+  });
+  cont.innerHTML = html;
+  cont.querySelectorAll('button[data-n]').forEach(b =>
+    b.addEventListener('click', () => elegir(lista[Number(b.dataset.n)])));
 }
 
-// ---- Pintado ----
-let nivel = 1, actual = null;
+function filaHTML(texto, chev, n){
+  return `<button class="b" data-n="${n}"><span class="txt">${esc(texto)}</span>` +
+         (chev ? `<span class="chev">${chev}</span>` : '') + `</button>`;
+}
+function subsDe(x){ return SUBS[x.tipo + '|' + x.e1] || []; }
+function puntosDe(x, sub){ return (x.tipo === 'estudio' && sub) ? (PUNTOS[x.e1 + '|' + sub] || []) : []; }
 
-function fila(claseExtra, adorno, texto, chevron, datos){
-  return `<button class="b ${claseExtra}"${datos || ''}>${adorno}` +
-         `<span class="txt">${esc(texto)}</span>` +
-         (chevron ? `<span class="chev">${chevron}</span>` : '') + `</button>`;
-}
-function tieneSubs(x){
-  return !x.sinSub && (SUBS[x.tipo + '|' + x.e1] || []).length > 0;
-}
-function adornoDe(x){
-  return x.i ? `<span class="ico">${x.i}</span>`
-             : `<span class="punto" style="background:${x.c || '#8A94A6'}"></span>`;
-}
-
-function pintarNivel1(){
-  nivel = 1; actual = null;
-  $('sub').textContent = 'Tocá una actividad';
-  $('botones').innerHTML = ACTIVIDADES.map((x, i) => {
-    if(x.g) return `<div class="grupo">${x.g}</div>`;
-    return fila('corto', adornoDe(x), x.e1, tieneSubs(x) ? '›' : '', ` data-i="${i}"`);
-  }).join('');
-  $('botones').querySelectorAll('button[data-i]').forEach(b => {
-    const x = ACTIVIDADES[Number(b.dataset.i)];
+function elegir(x){
+  const subs = subsDe(x);
+  // Sin subtemas registrados no hay nada que elegir: arranca de una.
+  if(!subs.length){ arrancar(x, '', ''); return; }
+  $('subs-tit').textContent = x.e1;
+  $('subs-lista').innerHTML =
+    filaHTML('Sin subtema', '', -1) +
+    subs.map((s, n) => filaHTML(s, puntosDe(x, s).length ? '›' : '', n)).join('');
+  $('subs-lista').querySelectorAll('button[data-n]').forEach(b => {
+    const n = Number(b.dataset.n);
     b.addEventListener('click', () => {
-      if(tieneSubs(x)) pintarNivel2(x); else arrancar(x, '');
+      if(n < 0){ arrancar(x, '', ''); return; }
+      const s = subs[n];
+      if(puntosDe(x, s).length) verPuntos(x, s); else arrancar(x, s, '');
     });
   });
+  $('subs-volver').onclick = () => ir(x.tipo === 'estudio' ? 'estudio' : 'tiempo');
+  ir('subs');
 }
-
-function puntosDe(x, sub){
-  return (x.tipo === 'estudio' && sub) ? (PUNTOS[x.e1 + '|' + sub] || []) : [];
-}
-
-function pintarNivel2(x){
-  nivel = 2; actual = x;
-  $('sub').textContent = x.e1;
-  const subs = SUBS[x.tipo + '|' + x.e1] || [];
-  $('botones').innerHTML =
-    fila('corto', adornoDe(x), 'Sin subtema', '') +
-    subs.map(s => fila('largo', adornoDe(x), s, puntosDe(x, s).length ? '›' : '')).join('') +
-    `<button class="b volver"><span class="txt">‹ volver</span></button>`;
-  const btns = $('botones').querySelectorAll('button');
-  btns[0].addEventListener('click', () => arrancar(x, ''));
-  subs.forEach((s, n) => btns[n+1].addEventListener('click', () => {
-    // Con puntos se baja un nivel más; sin ellos arranca ya, como antes.
-    if(puntosDe(x, s).length) pintarNivel3(x, s); else arrancar(x, s);
-  }));
-  btns[btns.length-1].addEventListener('click', pintarNivel1);
-}
-
-function pintarNivel3(x, sub){
-  nivel = 3; actual = x;
-  $('sub').textContent = sub;
+function verPuntos(x, sub){
   const pts = puntosDe(x, sub);
-  $('botones').innerHTML =
-    fila('corto', adornoDe(x), 'Sin punto', '') +
-    pts.map(t => fila('largo', adornoDe(x), t, '')).join('') +
-    `<button class="b volver"><span class="txt">‹ volver</span></button>`;
-  const btns = $('botones').querySelectorAll('button');
-  btns[0].addEventListener('click', () => arrancar(x, sub));
-  pts.forEach((t, n) => btns[n+1].addEventListener('click', () => arrancar(x, sub, t)));
-  btns[btns.length-1].addEventListener('click', () => pintarNivel2(x));
+  $('puntos-tit').textContent = sub;
+  $('puntos-lista').innerHTML =
+    filaHTML('Sin punto', '', -1) + pts.map((t, n) => filaHTML(t, '', n)).join('');
+  $('puntos-lista').querySelectorAll('button[data-n]').forEach(b => {
+    const n = Number(b.dataset.n);
+    b.addEventListener('click', () => arrancar(x, sub, n < 0 ? '' : pts[n]));
+  });
+  $('puntos-volver').onclick = () => elegir(x);
+  ir('puntos');
 }
+
+// ---- Lo que está corriendo ----
+let corriendo = null, tic = null;
+const dos = n => String(n).padStart(2, '0');
+function formato(seg){
+  const h = Math.floor(seg/3600), m = Math.floor((seg%3600)/60), s = seg%60;
+  return h ? h + ':' + dos(m) + ':' + dos(s) : dos(m) + ':' + dos(s);
+}
+// El mismo cálculo que hace la app: lo acumulado más lo que va desde el arranque.
+function segundosDe(f){
+  if(!f) return 0;
+  let s = Number(f.base) || 0;
+  if(f.arranque) s += Math.floor((Date.now() - new Date(f.arranque).getTime()) / 1000);
+  return s;
+}
+async function leerCorriendo(){
+  try{
+    const r = await fetch(PROYECTO + '/rest/v1/cronometro?select=*&id=eq.1',
+      { headers:{ apikey:ANON, Authorization:'Bearer ' + ANON }, cache:'no-store' });
+    const d = await r.json();
+    corriendo = Array.isArray(d) && d.length ? d[0] : null;
+  }catch(e){ /* sin red se deja lo último que se supo */ }
+  pintarInicio();
+}
+function pintarInicio(){
+  $('ver-corriendo').style.display = corriendo ? '' : 'none';
+}
+function pintarCorriendo(){
+  if(!corriendo){ ir('inicio'); return; }
+  $('corr-que').textContent = corriendo.etiqueta1 || (corriendo.tipo === 'gym' ? 'Gym' : 'Cronómetro');
+  $('corr-det').textContent = [corriendo.etiqueta2, corriendo.etiqueta3].filter(Boolean).join(' · ');
+  $('corr-reloj').textContent = formato(segundosDe(corriendo));
+  ir('corriendo');
+  clearInterval(tic);
+  tic = setInterval(() => {
+    if(!corriendo || !$('p-corriendo').classList.contains('on')){ clearInterval(tic); return; }
+    $('corr-reloj').textContent = formato(segundosDe(corriendo));
+  }, 1000);
+}
+$('ver-corriendo').addEventListener('click', pintarCorriendo);
 
 // ---- Aviso ----
 let cerrarAviso = null;
 function avisar(titulo, detalle, tono, msAuto){
-  const a = $('aviso');
   $('aviso-tit').textContent = titulo;
   $('aviso-det').textContent = detalle || '';
-  a.className = 'on ' + (tono || 'ok');
+  $('aviso').className = 'on ' + (tono || 'ok');
   clearTimeout(cerrarAviso);
-  // Lo bueno se va solo; lo que falló se queda hasta que lo toques, para que dé
-  // tiempo a leerlo.
-  if(msAuto) cerrarAviso = setTimeout(() => { a.className = ''; }, msAuto);
+  // Lo bueno se va solo; lo que falló se queda hasta que lo toques.
+  if(msAuto) cerrarAviso = setTimeout(() => { $('aviso').className = ''; }, msAuto);
 }
 $('aviso').addEventListener('click', () => { clearTimeout(cerrarAviso); $('aviso').className = ''; });
 
-// ---- Arrancar ----
-async function arrancar(x, subtema, punto){
+// ---- Llamar a la función ----
+async function llamar(q){
   const k = leerClave();
-  if(!k){ mostrarClave(); return; }
+  if(!k){ ir('clave'); return null; }
+  try{
+    const r = await fetch(FUNCION + '?k=' + encodeURIComponent(k) + q, { cache:'no-store' });
+    return await r.json();
+  }catch(e){
+    // Sin red no pasa nada en el servidor: hay que decirlo, no fingir que sí.
+    avisar('Sin conexión', 'No se pudo avisar al servidor. Nada cambió.', 'error', 0);
+    return null;
+  }
+}
+async function arrancar(x, subtema, punto){
   avisar('…', 'arrancando', 'ok', 0);
   // Con subtema hay que mandar tipo/e1/e2(/e3); sin él alcanza el atajo corto.
   const q = subtema
-    ? '&tipo=' + encodeURIComponent(x.tipo) +
-      '&e1=' + encodeURIComponent(x.e1) + '&e2=' + encodeURIComponent(subtema) +
-      (punto ? '&e3=' + encodeURIComponent(punto) : '')
+    ? '&tipo=' + encodeURIComponent(x.tipo) + '&e1=' + encodeURIComponent(x.e1) +
+      '&e2=' + encodeURIComponent(subtema) + (punto ? '&e3=' + encodeURIComponent(punto) : '')
     : '&a=' + encodeURIComponent(x.a);
-  try{
-    const r = await fetch(FUNCION + '?k=' + encodeURIComponent(k) + q, { cache:'no-store' });
-    const d = await r.json();
-    avisar(d.titulo || (d.ok ? 'Listo' : 'Falló'), d.detalle || '',
-           d.tono || (d.ok ? 'ok' : 'error'), d.ok ? 2200 : 0);
-    if(d.ok) pintarNivel1();
-  }catch(e){
-    // Sin red el cronómetro no arranca: hay que decirlo, no fingir que sí.
-    avisar('Sin conexión', 'No se pudo avisar al servidor. El cronómetro NO arrancó.', 'error', 0);
-  }
+  const d = await llamar(q);
+  if(!d) return;
+  if(!d.ok){ avisar(d.titulo || 'Falló', d.detalle || '', d.tono || 'error', 0); return; }
+  $('aviso').className = '';
+  // Se pinta con lo que acabamos de arrancar, sin esperar a releer la base: si esa
+  // lectura fallara o llegara tarde, te echaría al inicio justo después de haber
+  // arrancado bien. La base se relee después, para ajustar la hora exacta.
+  corriendo = { tipo:x.tipo, etiqueta1:x.e1, etiqueta2:subtema || '', etiqueta3:punto || '',
+                base:0, arranque:new Date().toISOString() };
+  pintarCorriendo();
+  leerCorriendo();
+}
+$('corr-stop').addEventListener('click', async () => {
+  avisar('…', 'terminando', 'ok', 0);
+  const d = await llamar('&a=parar');
+  if(!d) return;
+  avisar(d.titulo || 'Listo', d.detalle || '', d.tono || 'ok', 2600);
+  corriendo = null;
+  ir('inicio');
+});
+
+// ---- Las listas salen de tus datos ----
+async function traerListas(){
+  const pedir = (tabla, cols) => fetch(
+    PROYECTO + '/rest/v1/' + tabla + '?select=' + cols + '&order=created_at.desc&limit=1000',
+    { headers:{ apikey:ANON, Authorization:'Bearer ' + ANON }, cache:'no-store' }
+  ).then(r => r.ok ? r.json() : []).then(j => Array.isArray(j) ? j : []).catch(() => []);
+
+  // Si la columna 'punto' todavía no existe, pedirla devuelve 400 y nos quedaríamos
+  // sin NINGÚN subtema, no solo sin puntos. Por eso se reintenta sin ella: el tercer
+  // nivel es lo único que se pierde hasta que corras el SQL.
+  let est = await pedir('estudio', 'tema,subtema,punto');
+  if(!est.length) est = await pedir('estudio', 'tema,subtema');
+  const [tie, rep] = await Promise.all([
+    pedir('tiempo', 'categoria,subcategoria'),
+    pedir('puntos_repaso', 'tema,subtema,texto'),
+  ]);
+  const cuenta = {};
+  const sumar = (tipo, e1, e2) => {
+    if(!e1 || !e2 || e2 === 'General') return;   // 'General' ya es "Sin subtema"
+    const k = tipo + '|' + e1;
+    (cuenta[k] = cuenta[k] || {})[e2] = (cuenta[k][e2] || 0) + 1;
+  };
+  est.forEach(r => sumar('estudio', r.tema, r.subtema));
+  tie.forEach(r => sumar('tiempo', r.categoria, r.subcategoria));
+  const subs = {};
+  // Los más usados arriba: en una muñeca lo tuyo tiene que estar cerca.
+  Object.keys(cuenta).forEach(k => {
+    subs[k] = Object.entries(cuenta[k]).sort((a,b) => b[1]-a[1]).slice(0,12).map(x => x[0]);
+  });
+  SUBS = subs;
+  try{ localStorage.setItem(LS_SUBS, JSON.stringify(SUBS)); }catch(e){}
+
+  const pts = {};
+  const meter = (tema, sub, txt) => {
+    if(!tema || !sub || sub === 'General' || !txt) return;
+    const k = tema + '|' + sub;
+    pts[k] = pts[k] || [];
+    if(pts[k].indexOf(txt) === -1) pts[k].push(txt);
+  };
+  // Primero los puntos de repaso que ya curaste: son los nombres con los que conviene
+  // registrar el tiempo, para que repaso y cronómetro no hablen de cosas distintas.
+  (rep || []).forEach(r => meter(r.tema, r.subtema, (r.texto || '').trim()));
+  est.forEach(r => meter(r.tema, r.subtema, (r.punto || '').trim()));
+  Object.keys(pts).forEach(k => { pts[k] = pts[k].slice(0,12); });
+  PUNTOS = pts;
+  try{ localStorage.setItem(LS_PUNTOS, JSON.stringify(PUNTOS)); }catch(e){}
 }
 
 // ---- Clave ----
-// Si viene en el enlace se guarda y se limpia la barra en el acto: sirve para
-// traerla, no para quedarse a la vista.
 function claveDelEnlace(){
   const m = /[#&?]k=([^&]+)/.exec(location.hash) || /[?&]k=([^&]+)/.exec(location.search);
-  if(!m) return false;
+  if(!m) return;
   try{ localStorage.setItem(LS_CLAVE, decodeURIComponent(m[1]).trim()); }catch(e){}
   try{ history.replaceState(null, '', location.pathname); }catch(e){}
-  return true;
-}
-
-function mostrarClave(){
-  $('clave').classList.add('on');
-  $('botones').classList.add('off');
-  $('pie').style.display = 'none';
-  $('sub').textContent = 'Pegá tu CRONO_KEY';
-  $('k').value = leerClave();
-  $('k').focus();
-}
-function mostrarBotones(){
-  $('clave').classList.remove('on');
-  $('botones').classList.remove('off');
-  $('pie').style.display = '';
-  pintarNivel1();
 }
 $('ok').addEventListener('click', () => {
   const v = $('k').value.trim();
   if(!v) return;
   try{ localStorage.setItem(LS_CLAVE, v); }catch(e){}
-  mostrarBotones();
+  ir('inicio');
 });
 $('k').addEventListener('keydown', e => { if(e.key === 'Enter') $('ok').click(); });
-$('cambiar').addEventListener('click', mostrarClave);
-
-// Pone la clave en la barra de direcciones para poder guardar el favorito CON ella.
-// Se hace desde el teléfono: ese favorito es el que después importa el reloj.
+$('cambiar').addEventListener('click', () => { $('k').value = leerClave(); ir('clave'); });
 $('enlace').addEventListener('click', () => {
   const k = leerClave();
-  if(!k){ mostrarClave(); return; }
+  if(!k) return;
   try{ history.replaceState(null, '', location.pathname + '#k=' + encodeURIComponent(k)); }catch(e){}
-  avisar('Enlace listo', 'Guardá esta página en favoritos AHORA. Con la clave dentro, el reloj no te la va a pedir.', 'aviso', 0);
+  avisar('Enlace listo', 'Guardá esta página en favoritos AHORA, con la clave dentro.', 'aviso', 0);
 });
 
+// ---- Arranque ----
+$('ir-tiempo').addEventListener('click', () => ir('tiempo'));
+$('ir-estudio').addEventListener('click', () => ir('estudio'));
 claveDelEnlace();
-pintarNivel1();
-if(leerClave()) mostrarBotones(); else mostrarClave();
-traerSubs();
+// 9 categorías en 3-3-3 (con la fila del medio corrida) y 4 temas en 2-2. Tres filas
+// y no cuatro porque con cuatro el botón de volver caía fuera del círculo: en una
+// pantalla redonda lo que sobra abajo no se ve, se pierde.
+panal($('panal-tiempo'), TIEMPO, [3,3,3], '');
+panal($('panal-estudio'), ESTUDIO, [2,2], 'doble');
+ir(leerClave() ? 'inicio' : 'clave');
+traerListas();
+leerCorriendo();
 </script>
 </body>
 </html>

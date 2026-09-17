@@ -1,4 +1,4 @@
-// Arranca un cronómetro desde fuera de la app: el reloj, un widget, un atajo.
+// Arranca o para un cronómetro desde fuera de la app: el reloj, un widget, un atajo.
 //
 // Desde que el cronómetro vive en la tabla 'cronometro' (ver setup-cronometro.sql),
 // no hace falta pasar por el teléfono: cualquier cosa que sepa abrir una URL puede
@@ -8,6 +8,7 @@
 // botón de reloj sabe hacer:
 //
 //   .../functions/v1/crono?k=<CRONO_KEY>&a=civil
+//   .../functions/v1/crono?k=<CRONO_KEY>&a=parar     (termina y guarda lo que corra)
 //   .../functions/v1/crono?k=<CRONO_KEY>&tipo=tiempo&e1=Hogar&e2=Cocinar
 //   .../functions/v1/crono?k=<CRONO_KEY>&tipo=estudio&e1=Droit civil&e2=Usucapión&e3=Assignation
 //
@@ -92,6 +93,38 @@ function normalizarClave(v: string | null | undefined): string {
   return (v ?? "").replace(/^\s*["']|["']\s*$/g, "").replace(/\s+/g, "").toLowerCase();
 }
 
+// Guarda como sesión lo que marcaba el cronómetro. Devuelve el texto de lo guardado,
+// o cadena vacía si no llegaba al minuto. Es la misma regla que aplica la app.
+async function guardarSesion(
+  supabase: ReturnType<typeof createClient>,
+  fila: Record<string, any>,
+  min: number,
+): Promise<string> {
+  if (!(min >= 1)) return "";
+  const created_at = new Date().toISOString();
+  const e1 = fila.etiqueta1 || "";
+  const e2 = fila.etiqueta2 || "";
+  if (fila.tipo === "estudio") {
+    const row: Record<string, unknown> = {
+      tema: e1, subtema: e2 || "General", minutos: min, created_at,
+    };
+    // Solo si hay algo: si la columna 'punto' todavía no existe, mandarla vacía
+    // haría fallar el guardado de una sesión que no la necesita.
+    if (fila.etiqueta3) row.punto = fila.etiqueta3;
+    const { error } = await supabase.from("estudio").insert([row]);
+    if (error) throw error;
+    return `Guardé ${min} min de ${e1}`;
+  }
+  // El cronómetro del gimnasio se guarda en Mi Tiempo como Deporte · Gym, igual que
+  // cuando se termina desde la app.
+  const categoria = fila.tipo === "gym" ? "Deporte" : (e1 || "Otro");
+  const subcategoria = fila.tipo === "gym" ? "Gym" : (e2 || "General");
+  const { error } = await supabase.from("tiempo")
+    .insert([{ categoria, subcategoria, minutos: min, created_at }]);
+  if (error) throw error;
+  return `Guardé ${min} min de ${categoria}`;
+}
+
 Deno.serve(async (req: Request) => {
   // Un GET sin cabeceras raras no dispara preflight, pero si algún cliente lo hace,
   // que no se quede esperando.
@@ -108,8 +141,28 @@ Deno.serve(async (req: Request) => {
       return respuesta("No", "Clave incorrecta", "error", 403);
     }
 
-    // Qué arrancar: o un atajo con nombre, o los campos sueltos.
     const a = (url.searchParams.get("a") || "").toLowerCase().trim();
+
+    const supabaseCli = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // ---- Parar ----
+    // Termina lo que esté corriendo y lo guarda como sesión, igual que el botón
+    // Terminar de la app. Lo que no llega al minuto no deja sesión: seria ruido.
+    if (a === "parar" || a === "stop") {
+      const { data: fila, error: errF } = await supabaseCli
+        .from("cronometro").select("*").eq("id", 1).maybeSingle();
+      if (errF) throw errF;
+      if (!fila) return respuesta("No había nada", "Ningún cronómetro corriendo", "aviso");
+      const min = Math.round(segundosDe(fila) / 60);
+      const guardadoTxt = await guardarSesion(supabaseCli, fila, min);
+      await supabaseCli.from("cronometro").delete().eq("id", 1);
+      return respuesta("■ Terminado", guardadoTxt || "No llegaba al minuto: no se guardó", "ok");
+    }
+
+    // Qué arrancar: o un atajo con nombre, o los campos sueltos.
     let destino = ATAJOS[a];
     if (!destino) {
       const tipo = (url.searchParams.get("tipo") || "").toLowerCase().trim();
@@ -127,54 +180,23 @@ Deno.serve(async (req: Request) => {
       };
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
     // ---- Lo que ya estaba corriendo no se tira ----
     // La app pregunta antes de cerrar un cronómetro con tiempo encima; un botón de
     // reloj no puede preguntar nada, así que aquí la decisión ya está tomada: se
     // guarda como sesión. Perder media hora por tocar el botón equivocado sería el
     // peor comportamiento posible, y es justo el escenario más probable en un reloj.
-    const { data: actual, error: errLeer } = await supabase
+    const { data: actual, error: errLeer } = await supabaseCli
       .from("cronometro").select("*").eq("id", 1).maybeSingle();
     if (errLeer) throw errLeer;
 
-    let guardado = "";
-    if (actual) {
-      const minutos = Math.round(segundosDe(actual) / 60);
-      if (minutos >= 1) {
-        const created_at = new Date().toISOString();
-        const e1 = actual.etiqueta1 || "";
-        const e2 = actual.etiqueta2 || "";
-        if (actual.tipo === "estudio") {
-          const fila: Record<string, unknown> = {
-            tema: e1, subtema: e2 || "General", minutos, created_at,
-          };
-          // Solo se manda si hay algo: si la columna 'punto' todavía no existe,
-          // mandarla vacía haría fallar el guardado de una sesión que no la necesita.
-          if (actual.etiqueta3) fila.punto = actual.etiqueta3;
-          const { error } = await supabase.from("estudio").insert([fila]);
-          if (error) throw error;
-          guardado = `Guardé ${minutos} min de ${e1}`;
-        } else {
-          // El cronómetro del gimnasio se guarda en Mi Tiempo como Deporte · Gym,
-          // igual que cuando se termina desde la app.
-          const categoria = actual.tipo === "gym" ? "Deporte" : (e1 || "Otro");
-          const subcategoria = actual.tipo === "gym" ? "Gym" : (e2 || "General");
-          const { error } = await supabase.from("tiempo")
-            .insert([{ categoria, subcategoria, minutos, created_at }]);
-          if (error) throw error;
-          guardado = `Guardé ${minutos} min de ${categoria}`;
-        }
-      }
-    }
+    const guardado = actual
+      ? await guardarSesion(supabaseCli, actual, Math.round(segundosDe(actual) / 60))
+      : "";
 
     // ---- Arranca el nuevo ----
     // base 0 y arranque ahora: a partir de acá el reloj avanza solo, sin que nadie
     // tenga que escribir nada más.
-    const { error: errGuardar } = await supabase.from("cronometro").upsert({
+    const { error: errGuardar } = await supabaseCli.from("cronometro").upsert({
       id: 1,
       tipo: destino.tipo,
       etiqueta3: destino.e3 || "",
