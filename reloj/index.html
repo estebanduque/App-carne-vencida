@@ -8,12 +8,13 @@
   Botones para arrancar un cronómetro desde el reloj.
 
   No es una app: es una página. El reloj solo necesita un navegador, así que no hay
-  APK que instalar ni permisos que dar. Cada botón navega a la Edge Function 'crono',
-  que arranca el cronómetro en la base y devuelve una pantalla de confirmación ya
-  pensada para una muñeca. Se vuelve con el botón Atrás.
+  APK que instalar ni permisos que dar. Cada botón llama a la Edge Function 'crono',
+  que arranca el cronómetro en la base, y la confirmación se muestra aquí mismo.
 
-  Se navega en vez de usar fetch a propósito: así no hace falta que la función tenga
-  cabeceras CORS, y la confirmación que ya devuelve se aprovecha tal cual.
+  Se llama por detrás (fetch) en vez de navegar: Supabase fuerza 'text/plain' y
+  'nosniff' en las Edge Functions, así que una página devuelta por la función se
+  vería como código fuente, nunca dibujada. Devolviendo datos y pintándolos aquí,
+  además, no te saca de la pantalla ni hace falta volver con Atrás.
 
   La clave (CRONO_KEY) se guarda una vez en el reloj y no vuelve a pedirse. No va en
   el favorito: si la guardaras en la URL, quedaría escrita en el historial.
@@ -51,6 +52,14 @@
     color:var(--tinta); font-family:inherit; margin-bottom:10px; }
   .guardar{ width:100%; padding:13px; font-size:15px; font-weight:600;
     border:none; border-radius:13px; background:#1D9E75; color:#fff; font-family:inherit; }
+  /* El resultado tapa la pantalla: en una muñeca no hay sitio para ponerlo al lado. */
+  #aviso{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:var(--fondo); padding:12%; text-align:center; z-index:9; }
+  #aviso.on{ display:flex; }
+  #aviso h2{ font-size:21px; margin:0 0 7px; }
+  #aviso p{ font-size:13px; margin:0; color:var(--tenue); line-height:1.35; }
+  .ok h2{ color:#5DCAA5; } .aviso h2{ color:#EF9F27; } .error h2{ color:#E24B4A; }
+
   .pie{ margin-top:18px; text-align:center; }
   .pie button{ background:none; border:none; color:var(--tenue);
     font:inherit; font-size:11px; text-decoration:underline; padding:8px; }
@@ -74,6 +83,8 @@
     <button id="cambiar">cambiar clave</button>
   </div>
 </div>
+
+<div id="aviso"><div><h2 id="aviso-tit"></h2><p id="aviso-det"></p></div></div>
 
 <script>
 const FUNCION = 'https://suoqdlnmaemugpkbdpef.supabase.co/functions/v1/crono';
@@ -111,13 +122,37 @@ function pintarBotones(){
          <span class="txt">${x.n}</span>
        </button>`).join('');
   $('botones').querySelectorAll('button[data-a]').forEach(b => {
-    b.addEventListener('click', () => {
-      const k = leerClave();
-      if(!k){ mostrarClave(); return; }
-      // Navegar (no fetch): la función devuelve su propia pantalla de confirmación.
-      location.href = FUNCION + '?k=' + encodeURIComponent(k) + '&a=' + encodeURIComponent(b.dataset.a);
-    });
+    b.addEventListener('click', () => arrancar(b.dataset.a));
   });
+}
+
+let cerrarAviso = null;
+function avisar(titulo, detalle, tono, msAuto){
+  const a = $('aviso');
+  $('aviso-tit').textContent = titulo;
+  $('aviso-det').textContent = detalle || '';
+  a.className = 'on ' + (tono || 'ok');
+  clearTimeout(cerrarAviso);
+  // Lo bueno se va solo; lo que falló se queda hasta que lo toques, para que dé
+  // tiempo a leerlo.
+  if(msAuto) cerrarAviso = setTimeout(() => { a.className = ''; }, msAuto);
+}
+$('aviso').addEventListener('click', () => { clearTimeout(cerrarAviso); $('aviso').className = ''; });
+
+async function arrancar(a){
+  const k = leerClave();
+  if(!k){ mostrarClave(); return; }
+  avisar('…', 'arrancando', 'ok', 0);
+  try{
+    const r = await fetch(FUNCION + '?k=' + encodeURIComponent(k) + '&a=' + encodeURIComponent(a),
+                          { cache:'no-store' });
+    const d = await r.json();
+    avisar(d.titulo || (d.ok ? 'Listo' : 'Falló'), d.detalle || '', d.tono || (d.ok ? 'ok' : 'error'),
+           d.ok ? 2200 : 0);
+  }catch(e){
+    // Sin red el cronómetro no arranca: hay que decirlo, no fingir que sí.
+    avisar('Sin conexión', 'No se pudo avisar al servidor. El cronómetro NO arrancó.', 'error', 0);
+  }
 }
 
 function mostrarClave(){

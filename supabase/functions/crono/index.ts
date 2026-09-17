@@ -14,6 +14,12 @@
 // timestamp ISO, y ese era justamente el motivo por el que no alcanzaba con pegarle
 // directo a la API REST.
 //
+// Devuelve JSON, no HTML: Supabase fuerza 'Content-Type: text/plain' y añade
+// 'nosniff' en las Edge Functions, así que una página devuelta desde aquí se vería
+// como código fuente en el navegador, nunca dibujada. Quien la llama (la página de
+// /reloj/) se encarga de mostrar el resultado con su propio estilo, y por eso hacen
+// falta las cabeceras CORS.
+//
 // Configuración (Project Settings -> Edge Functions):
 //   CRONO_KEY   la clave que va en ?k=. Sin ella la función no atiende a nadie.
 //   SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY las inyecta Supabase sola.
@@ -45,26 +51,24 @@ const ATAJOS: Record<string, { tipo: string; e1: string; e2: string }> = {
 
 const TIPOS = ["tiempo", "estudio", "gym"];
 
-// Una respuesta que se pueda leer en una pantalla de reloj: dos líneas grandes y ya.
-function pagina(titulo: string, detalle: string, color: string, status = 200): Response {
-  const html = `<!doctype html><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-  html,body{margin:0;height:100%;background:#0A1628;color:#fff;
-    font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
-  div{text-align:center;padding:16px}
-  h1{font-size:22px;margin:0 0 6px;color:${color}}
-  p{font-size:14px;margin:0;color:rgba(255,255,255,0.6);line-height:1.35}
-</style>
-<div><h1>${titulo}</h1><p>${detalle}</p></div>`;
-  return new Response(html, {
-    status,
-    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
-  });
-}
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+};
 
-function esc(s: string): string {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// Dos líneas: un título y un detalle. Quien llama las pinta; aquí solo se deciden.
+// 'tono' dice de qué color va, sin que la página tenga que repetir la lógica.
+function respuesta(
+  titulo: string,
+  detalle: string,
+  tono: "ok" | "aviso" | "error",
+  status = 200,
+): Response {
+  return Response.json({ ok: tono === "ok", titulo, detalle, tono }, {
+    status,
+    headers: { ...cors, "Cache-Control": "no-store" },
+  });
 }
 
 // Segundos que lleva una fila del cronómetro: lo acumulado más, si está corriendo,
@@ -85,15 +89,19 @@ function normalizarClave(v: string | null | undefined): string {
 }
 
 Deno.serve(async (req: Request) => {
+  // Un GET sin cabeceras raras no dispara preflight, pero si algún cliente lo hace,
+  // que no se quede esperando.
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
   try {
     const url = new URL(req.url);
 
     // Falla cerrado: si no hay clave configurada, no atiende. Es preferible a quedar
     // abierta sin que nadie se entere.
     const clave = normalizarClave(Deno.env.get("CRONO_KEY"));
-    if (!clave) return pagina("Sin configurar", "Falta el secreto CRONO_KEY", "#EF9F27", 500);
+    if (!clave) return respuesta("Sin configurar", "Falta el secreto CRONO_KEY", "aviso", 500);
     if (normalizarClave(url.searchParams.get("k")) !== clave) {
-      return pagina("No", "Clave incorrecta", "#E24B4A", 403);
+      return respuesta("No", "Clave incorrecta", "error", 403);
     }
 
     // Qué arrancar: o un atajo con nombre, o los campos sueltos.
@@ -102,10 +110,10 @@ Deno.serve(async (req: Request) => {
     if (!destino) {
       const tipo = (url.searchParams.get("tipo") || "").toLowerCase().trim();
       if (!tipo) {
-        return pagina("¿Qué arranco?", "Atajos: " + Object.keys(ATAJOS).join(", "), "#EF9F27", 400);
+        return respuesta("¿Qué arranco?", "Atajos: " + Object.keys(ATAJOS).join(", "), "aviso", 400);
       }
       if (!TIPOS.includes(tipo)) {
-        return pagina("Tipo inválido", "Tiene que ser: " + TIPOS.join(", "), "#E24B4A", 400);
+        return respuesta("Tipo inválido", "Tiene que ser: " + TIPOS.join(", "), "error", 400);
       }
       destino = {
         tipo,
@@ -168,13 +176,12 @@ Deno.serve(async (req: Request) => {
     if (errGuardar) throw errGuardar;
 
     const nombre = destino.tipo === "gym" ? "Gym" : (destino.e1 || destino.tipo);
-    const detalle = destino.e2 ? esc(destino.e2) : "";
-    return pagina(
-      "▶ " + esc(nombre),
-      [detalle, esc(guardado)].filter(Boolean).join("<br>") || "Corriendo",
-      "#5DCAA5",
+    return respuesta(
+      "▶ " + nombre,
+      [destino.e2, guardado].filter(Boolean).join(" · ") || "Corriendo",
+      "ok",
     );
   } catch (e: any) {
-    return pagina("Falló", esc(e?.message ?? String(e)), "#E24B4A", 500);
+    return respuesta("Falló", e?.message ?? String(e), "error", 500);
   }
 });
