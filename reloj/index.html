@@ -13,8 +13,12 @@
 
   Se llama por detrás (fetch) en vez de navegar: Supabase fuerza 'text/plain' y
   'nosniff' en las Edge Functions, así que una página devuelta por la función se
-  vería como código fuente, nunca dibujada. Devolviendo datos y pintándolos aquí,
-  además, no te saca de la pantalla ni hace falta volver con Atrás.
+  vería como código fuente, nunca dibujada.
+
+  Dos niveles, como la base: tema/categoría y subtema/actividad. Los subtemas NO
+  están escritos aquí: se leen de lo que ya registraste, ordenados por uso. Así la
+  lista es corta, es la tuya, y no hay una copia que se desincronice cuando cambies
+  el plan de estudio en la app.
 
   La clave (CRONO_KEY) se guarda una vez en el reloj y no vuelve a pedirse. No va en
   el favorito: si la guardaras en la URL, quedaría escrita en el historial.
@@ -31,7 +35,8 @@
      aire a los lados, y el primer y último botón nunca quedan pegados al borde. */
   .hoja{ max-width:420px; margin:0 auto; padding:14% 9% 16%; }
   h1{ font-size:15px; font-weight:600; margin:0 0 2px; text-align:center; }
-  .sub{ font-size:11px; color:var(--tenue); text-align:center; margin:0 0 14px; }
+  .sub{ font-size:11px; color:var(--tenue); text-align:center; margin:0 0 14px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .grupo{ font-size:10px; letter-spacing:0.9px; text-transform:uppercase;
     color:var(--tenue); margin:16px 0 7px 2px; }
   .b{ display:flex; align-items:center; gap:11px; width:100%; min-height:54px;
@@ -41,7 +46,13 @@
   .b:active{ background:rgba(255,255,255,0.14); }
   .ico{ font-size:21px; line-height:1; flex-shrink:0; }
   .punto{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-  .txt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* Los subtemas son frases largas: caben en dos líneas antes de cortarse. */
+  .txt{ flex:1; min-width:0; overflow:hidden; }
+  .b.corto .txt{ white-space:nowrap; text-overflow:ellipsis; }
+  .b.largo{ font-size:13.5px; line-height:1.3; }
+  .chev{ color:var(--tenue); font-size:15px; flex-shrink:0; }
+  .b.volver{ background:none; border-style:dashed; color:var(--tenue);
+    font-size:13px; min-height:46px; }
 
   /* Pantalla de la clave, solo la primera vez */
   #clave{ display:none; }
@@ -52,11 +63,12 @@
     color:var(--tinta); font-family:inherit; margin-bottom:10px; }
   .guardar{ width:100%; padding:13px; font-size:15px; font-weight:600;
     border:none; border-radius:13px; background:#1D9E75; color:#fff; font-family:inherit; }
+
   /* El resultado tapa la pantalla: en una muñeca no hay sitio para ponerlo al lado. */
   #aviso{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     background:var(--fondo); padding:12%; text-align:center; z-index:9; }
   #aviso.on{ display:flex; }
-  #aviso h2{ font-size:21px; margin:0 0 7px; }
+  #aviso h2{ font-size:20px; margin:0 0 7px; line-height:1.25; }
   #aviso p{ font-size:13px; margin:0; color:var(--tenue); line-height:1.35; }
   .ok h2{ color:#5DCAA5; } .aviso h2{ color:#EF9F27; } .error h2{ color:#E24B4A; }
 
@@ -87,45 +99,122 @@
 <div id="aviso"><div><h2 id="aviso-tit"></h2><p id="aviso-det"></p></div></div>
 
 <script>
-const FUNCION = 'https://suoqdlnmaemugpkbdpef.supabase.co/functions/v1/crono';
-const LS = 'crono_key';
+const PROYECTO = 'https://suoqdlnmaemugpkbdpef.supabase.co';
+const FUNCION  = PROYECTO + '/functions/v1/crono';
+// La misma clave anon que ya usa la app; es pública por diseño.
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
+const LS_CLAVE = 'crono_key';
+const LS_SUBS  = 'crono_subs';
 
-// El 'a' de cada botón tiene que existir en el mapa ATAJOS de la función.
+// Nivel 1. El 'a' de cada uno tiene que existir en el mapa ATAJOS de la función;
+// para bajar a un subtema se usan tipo/e1/e2, que la función también acepta.
 // Los colores son los mismos que usa la app para cada materia.
 const ACTIVIDADES = [
   { g:'Estudio' },
-  { a:'civil',      n:'Droit civil',      c:'#F2C94C' },
-  { a:'comercial',  n:'Droit commercial', c:'#4C8DFF' },
-  { a:'procedures', n:'Procédures',       c:'#27AE60' },
-  { a:'deonto',     n:'Déontologie',      c:'#EB5757' },
+  { a:'civil',      tipo:'estudio', e1:'Droit civil',       c:'#F2C94C' },
+  { a:'comercial',  tipo:'estudio', e1:'Droit commercial',  c:'#4C8DFF' },
+  { a:'procedures', tipo:'estudio', e1:'Procédures',        c:'#27AE60' },
+  { a:'deonto',     tipo:'estudio', e1:'Déontologie',       c:'#EB5757' },
   { g:'Tiempo' },
-  { a:'gym',        n:'Gym',              i:'🏋️' },
-  { a:'transporte', n:'Transporte',       i:'🚗' },
-  { a:'trabajo',    n:'Trabajo',          i:'💼' },
-  { a:'proyecto',   n:'Proyecto personal',i:'💡' },
-  { a:'hogar',      n:'Hogar',            i:'🏠' },
-  { a:'cuidado',    n:'Cuidado personal', i:'🚿' },
-  { a:'ocio',       n:'Ocio',             i:'🎮' },
-  { a:'dormir',     n:'Dormir',           i:'😴' },
-  { a:'otro',       n:'Otro',             i:'📦' },
+  { a:'gym',        tipo:'gym',     e1:'Gym',               i:'🏋️', sinSub:true },
+  { a:'transporte', tipo:'tiempo',  e1:'Transporte',        i:'🚗' },
+  { a:'trabajo',    tipo:'tiempo',  e1:'Trabajo',           i:'💼' },
+  { a:'proyecto',   tipo:'tiempo',  e1:'Proyecto personal', i:'💡' },
+  { a:'hogar',      tipo:'tiempo',  e1:'Hogar',             i:'🏠' },
+  { a:'cuidado',    tipo:'tiempo',  e1:'Cuidado personal',  i:'🚿' },
+  { a:'ocio',       tipo:'tiempo',  e1:'Ocio',              i:'🎮' },
+  { a:'dormir',     tipo:'tiempo',  e1:'Dormir',            i:'😴' },
+  { a:'otro',       tipo:'tiempo',  e1:'Otro',              i:'📦' },
 ];
 
 const $ = id => document.getElementById(id);
-const leerClave = () => { try{ return localStorage.getItem(LS) || ''; }catch(e){ return ''; } };
+const leerClave = () => { try{ return localStorage.getItem(LS_CLAVE) || ''; }catch(e){ return ''; } };
+const esc = t => String(t == null ? '' : t)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-function pintarBotones(){
-  $('botones').innerHTML = ACTIVIDADES.map(x => x.g
-    ? `<div class="grupo">${x.g}</div>`
-    : `<button class="b" data-a="${x.a}">
-         ${x.i ? `<span class="ico">${x.i}</span>`
-               : `<span class="punto" style="background:${x.c}"></span>`}
-         <span class="txt">${x.n}</span>
-       </button>`).join('');
-  $('botones').querySelectorAll('button[data-a]').forEach(b => {
-    b.addEventListener('click', () => arrancar(b.dataset.a));
+// ---- Los subtemas salen de lo que ya registraste ----
+// Se guardan en el reloj para que la lista aparezca al instante (y sin red), y se
+// refrescan por detrás.
+let SUBS = {};   // { 'estudio|Droit civil': ['Usucapión…', …], 'tiempo|Hogar': […] }
+try{ SUBS = JSON.parse(localStorage.getItem(LS_SUBS) || '{}') || {}; }catch(e){ SUBS = {}; }
+
+async function traerSubs(){
+  const pedir = (tabla, cols) => fetch(
+    PROYECTO + '/rest/v1/' + tabla + '?select=' + cols + '&order=created_at.desc&limit=1000',
+    { headers:{ apikey:ANON, Authorization:'Bearer ' + ANON }, cache:'no-store' }
+  ).then(r => r.ok ? r.json() : []);
+
+  try{
+    const [est, tie] = await Promise.all([
+      pedir('estudio', 'tema,subtema'),
+      pedir('tiempo', 'categoria,subcategoria'),
+    ]);
+    const cuenta = {};
+    const sumar = (tipo, e1, e2) => {
+      if(!e1 || !e2 || e2 === 'General') return;   // 'General' ya es la opción "sin subtema"
+      const k = tipo + '|' + e1;
+      (cuenta[k] = cuenta[k] || {})[e2] = (cuenta[k][e2] || 0) + 1;
+    };
+    est.forEach(r => sumar('estudio', r.tema, r.subtema));
+    tie.forEach(r => sumar('tiempo', r.categoria, r.subcategoria));
+
+    const nuevo = {};
+    // Los más usados arriba: en una muñeca lo que importa es que lo tuyo esté cerca.
+    Object.keys(cuenta).forEach(k => {
+      nuevo[k] = Object.entries(cuenta[k]).sort((a,b) => b[1]-a[1]).slice(0,12).map(x => x[0]);
+    });
+    SUBS = nuevo;
+    try{ localStorage.setItem(LS_SUBS, JSON.stringify(SUBS)); }catch(e){}
+    if(nivel === 1) pintarNivel1();   // por si llegaron mientras mirabas la lista
+  }catch(e){ /* sin red se sigue con lo guardado */ }
+}
+
+// ---- Pintado ----
+let nivel = 1, actual = null;
+
+function fila(claseExtra, adorno, texto, chevron, datos){
+  return `<button class="b ${claseExtra}"${datos || ''}>${adorno}` +
+         `<span class="txt">${esc(texto)}</span>` +
+         (chevron ? `<span class="chev">${chevron}</span>` : '') + `</button>`;
+}
+function tieneSubs(x){
+  return !x.sinSub && (SUBS[x.tipo + '|' + x.e1] || []).length > 0;
+}
+function adornoDe(x){
+  return x.i ? `<span class="ico">${x.i}</span>`
+             : `<span class="punto" style="background:${x.c || '#8A94A6'}"></span>`;
+}
+
+function pintarNivel1(){
+  nivel = 1; actual = null;
+  $('sub').textContent = 'Tocá una actividad';
+  $('botones').innerHTML = ACTIVIDADES.map((x, i) => {
+    if(x.g) return `<div class="grupo">${x.g}</div>`;
+    return fila('corto', adornoDe(x), x.e1, tieneSubs(x) ? '›' : '', ` data-i="${i}"`);
+  }).join('');
+  $('botones').querySelectorAll('button[data-i]').forEach(b => {
+    const x = ACTIVIDADES[Number(b.dataset.i)];
+    b.addEventListener('click', () => {
+      if(tieneSubs(x)) pintarNivel2(x); else arrancar(x, '');
+    });
   });
 }
 
+function pintarNivel2(x){
+  nivel = 2; actual = x;
+  $('sub').textContent = x.e1;
+  const subs = SUBS[x.tipo + '|' + x.e1] || [];
+  $('botones').innerHTML =
+    fila('corto', adornoDe(x), 'Sin subtema', '') +
+    subs.map(s => fila('largo', adornoDe(x), s, '')).join('') +
+    `<button class="b volver"><span class="txt">‹ volver</span></button>`;
+  const btns = $('botones').querySelectorAll('button');
+  btns[0].addEventListener('click', () => arrancar(x, ''));
+  subs.forEach((s, n) => btns[n+1].addEventListener('click', () => arrancar(x, s)));
+  btns[btns.length-1].addEventListener('click', pintarNivel1);
+}
+
+// ---- Aviso ----
 let cerrarAviso = null;
 function avisar(titulo, detalle, tono, msAuto){
   const a = $('aviso');
@@ -139,22 +228,29 @@ function avisar(titulo, detalle, tono, msAuto){
 }
 $('aviso').addEventListener('click', () => { clearTimeout(cerrarAviso); $('aviso').className = ''; });
 
-async function arrancar(a){
+// ---- Arrancar ----
+async function arrancar(x, subtema){
   const k = leerClave();
   if(!k){ mostrarClave(); return; }
   avisar('…', 'arrancando', 'ok', 0);
+  // Con subtema hay que mandar tipo/e1/e2; sin él alcanza el atajo corto.
+  const q = subtema
+    ? '&tipo=' + encodeURIComponent(x.tipo) +
+      '&e1=' + encodeURIComponent(x.e1) + '&e2=' + encodeURIComponent(subtema)
+    : '&a=' + encodeURIComponent(x.a);
   try{
-    const r = await fetch(FUNCION + '?k=' + encodeURIComponent(k) + '&a=' + encodeURIComponent(a),
-                          { cache:'no-store' });
+    const r = await fetch(FUNCION + '?k=' + encodeURIComponent(k) + q, { cache:'no-store' });
     const d = await r.json();
-    avisar(d.titulo || (d.ok ? 'Listo' : 'Falló'), d.detalle || '', d.tono || (d.ok ? 'ok' : 'error'),
-           d.ok ? 2200 : 0);
+    avisar(d.titulo || (d.ok ? 'Listo' : 'Falló'), d.detalle || '',
+           d.tono || (d.ok ? 'ok' : 'error'), d.ok ? 2200 : 0);
+    if(d.ok) pintarNivel1();
   }catch(e){
     // Sin red el cronómetro no arranca: hay que decirlo, no fingir que sí.
     avisar('Sin conexión', 'No se pudo avisar al servidor. El cronómetro NO arrancó.', 'error', 0);
   }
 }
 
+// ---- Clave ----
 function mostrarClave(){
   $('clave').classList.add('on');
   $('botones').classList.add('off');
@@ -167,20 +263,20 @@ function mostrarBotones(){
   $('clave').classList.remove('on');
   $('botones').classList.remove('off');
   $('pie').style.display = '';
-  $('sub').textContent = 'Tocá una actividad';
+  pintarNivel1();
 }
-
 $('ok').addEventListener('click', () => {
   const v = $('k').value.trim();
   if(!v) return;
-  try{ localStorage.setItem(LS, v); }catch(e){}
+  try{ localStorage.setItem(LS_CLAVE, v); }catch(e){}
   mostrarBotones();
 });
 $('k').addEventListener('keydown', e => { if(e.key === 'Enter') $('ok').click(); });
 $('cambiar').addEventListener('click', mostrarClave);
 
-pintarBotones();
+pintarNivel1();
 if(leerClave()) mostrarBotones(); else mostrarClave();
+traerSubs();
 </script>
 </body>
 </html>
