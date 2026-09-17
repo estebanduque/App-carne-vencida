@@ -20,8 +20,12 @@
   lista es corta, es la tuya, y no hay una copia que se desincronice cuando cambies
   el plan de estudio en la app.
 
-  La clave (CRONO_KEY) se guarda una vez en el reloj y no vuelve a pedirse. No va en
-  el favorito: si la guardaras en la URL, quedaría escrita en el historial.
+  La clave (CRONO_KEY) se guarda una vez y no vuelve a pedirse. Puede venir en el
+  enlace (#k=...) porque en un reloj no se puede pegar texto y teclearla es un
+  castigo: con la clave dentro del favorito, el reloj la recibe al importar los
+  favoritos del teléfono y no hay que escribir nada. Va en el fragmento (#) y no en
+  la query (?) a propósito: el fragmento no viaja al servidor. Se borra de la barra
+  en cuanto se lee, para que no quede a la vista.
 -->
 <style>
   :root{
@@ -92,6 +96,7 @@
   <div id="botones"></div>
 
   <div class="pie" id="pie" style="display:none;">
+    <button id="enlace">enlace para el reloj</button>
     <button id="cambiar">cambiar clave</button>
   </div>
 </div>
@@ -251,6 +256,16 @@ async function arrancar(x, subtema){
 }
 
 // ---- Clave ----
+// Si viene en el enlace se guarda y se limpia la barra en el acto: sirve para
+// traerla, no para quedarse a la vista.
+function claveDelEnlace(){
+  const m = /[#&?]k=([^&]+)/.exec(location.hash) || /[?&]k=([^&]+)/.exec(location.search);
+  if(!m) return false;
+  try{ localStorage.setItem(LS_CLAVE, decodeURIComponent(m[1]).trim()); }catch(e){}
+  try{ history.replaceState(null, '', location.pathname); }catch(e){}
+  return true;
+}
+
 function mostrarClave(){
   $('clave').classList.add('on');
   $('botones').classList.add('off');
@@ -274,6 +289,16 @@ $('ok').addEventListener('click', () => {
 $('k').addEventListener('keydown', e => { if(e.key === 'Enter') $('ok').click(); });
 $('cambiar').addEventListener('click', mostrarClave);
 
+// Pone la clave en la barra de direcciones para poder guardar el favorito CON ella.
+// Se hace desde el teléfono: ese favorito es el que después importa el reloj.
+$('enlace').addEventListener('click', () => {
+  const k = leerClave();
+  if(!k){ mostrarClave(); return; }
+  try{ history.replaceState(null, '', location.pathname + '#k=' + encodeURIComponent(k)); }catch(e){}
+  avisar('Enlace listo', 'Guardá esta página en favoritos AHORA. Con la clave dentro, el reloj no te la va a pedir.', 'aviso', 0);
+});
+
+claveDelEnlace();
 pintarNivel1();
 if(leerClave()) mostrarBotones(); else mostrarClave();
 traerSubs();

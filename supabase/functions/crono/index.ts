@@ -79,13 +79,14 @@ function segundosDe(fila: { base?: number | null; arranque?: string | null }): n
   return s;
 }
 
-// La clave se compara sin espacios, sin comillas y sin distinguir mayusculas.
-// Las tres cosas son maneras clasicas de fallar sin que sea culpa de nadie: un salto
-// de linea que se cuela al pegar el secreto en el panel, unas comillas alrededor del
-// valor, o el teclado del telefono poniendo la primera letra en mayuscula. Comparar
-// exacto solo servia para que la clave correcta fuera rechazada.
+// La clave se compara sin NINGUN espacio, sin comillas y sin distinguir mayusculas.
+// Son las maneras clasicas de fallar sin que sea culpa de nadie: un salto de linea
+// que se cuela al pegar el secreto en el panel, unas comillas alrededor del valor, o
+// el teclado poniendo la primera letra en mayuscula. Se quitan todos los espacios, no
+// solo los de los extremos, porque en un reloj la clave se dicta por voz y el
+// reconocimiento la parte en trozos ("melon azul" -> "melonazul").
 function normalizarClave(v: string | null | undefined): string {
-  return (v ?? "").trim().replace(/^["'](.*)["']$/, "$1").trim().toLowerCase();
+  return (v ?? "").replace(/^\s*["']|["']\s*$/g, "").replace(/\s+/g, "").toLowerCase();
 }
 
 Deno.serve(async (req: Request) => {
