@@ -15,10 +15,10 @@
   'nosniff' en las Edge Functions, así que una página devuelta por la función se
   vería como código fuente, nunca dibujada.
 
-  Dos niveles, como la base: tema/categoría y subtema/actividad. Los subtemas NO
-  están escritos aquí: se leen de lo que ya registraste, ordenados por uso. Así la
-  lista es corta, es la tuya, y no hay una copia que se desincronice cuando cambies
-  el plan de estudio en la app.
+  Tres niveles en Estudio (tema › subtema › punto) y dos en Tiempo, como la base.
+  Ninguna de esas listas está escrita aquí: se leen de lo que ya registraste y de
+  tus puntos de repaso, ordenadas por uso. Así son cortas, son las tuyas, y no hay
+  una copia que se desincronice cuando cambies el plan en la app.
 
   La clave (CRONO_KEY) se guarda una vez y no vuelve a pedirse. Puede venir en el
   enlace (#k=...) porque en un reloj no se puede pegar texto y teclearla es un
@@ -110,6 +110,7 @@ const FUNCION  = PROYECTO + '/functions/v1/crono';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1b3FkbG5tYWVtdWdwa2JkcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTkxMzksImV4cCI6MjA5NTM3NTEzOX0.kodgwhwDXttWPh1Wqt9HNEZRhC04kUR3lvkbMTXk0_k';
 const LS_CLAVE = 'crono_key';
 const LS_SUBS  = 'crono_subs';
+const LS_PUNTOS = 'crono_puntos';
 
 // Nivel 1. El 'a' de cada uno tiene que existir en el mapa ATAJOS de la función;
 // para bajar a un subtema se usan tipo/e1/e2, que la función también acepta.
@@ -141,7 +142,10 @@ const esc = t => String(t == null ? '' : t)
 // Se guardan en el reloj para que la lista aparezca al instante (y sin red), y se
 // refrescan por detrás.
 let SUBS = {};   // { 'estudio|Droit civil': ['Usucapión…', …], 'tiempo|Hogar': […] }
+// Tercer nivel, solo en Estudio: { 'Droit civil|Usucapión…': ['Assignation', …] }
+let PUNTOS = {};
 try{ SUBS = JSON.parse(localStorage.getItem(LS_SUBS) || '{}') || {}; }catch(e){ SUBS = {}; }
+try{ PUNTOS = JSON.parse(localStorage.getItem(LS_PUNTOS) || '{}') || {}; }catch(e){ PUNTOS = {}; }
 
 async function traerSubs(){
   const pedir = (tabla, cols) => fetch(
@@ -150,9 +154,12 @@ async function traerSubs(){
   ).then(r => r.ok ? r.json() : []);
 
   try{
-    const [est, tie] = await Promise.all([
-      pedir('estudio', 'tema,subtema'),
+    const [est, tie, rep] = await Promise.all([
+      pedir('estudio', 'tema,subtema,punto'),
       pedir('tiempo', 'categoria,subcategoria'),
+      // Los puntos que ya curaste para la ruleta: son los mismos nombres con los que
+      // conviene registrar el tiempo, para que las dos cosas no se separen.
+      pedir('puntos_repaso', 'tema,subtema,texto'),
     ]);
     const cuenta = {};
     const sumar = (tipo, e1, e2) => {
@@ -170,6 +177,21 @@ async function traerSubs(){
     });
     SUBS = nuevo;
     try{ localStorage.setItem(LS_SUBS, JSON.stringify(SUBS)); }catch(e){}
+
+    // Tercer nivel: primero los puntos de repaso, después los ya usados al cronometrar.
+    const pts = {};
+    const meter = (tema, sub, txt) => {
+      if(!tema || !sub || sub === 'General' || !txt) return;
+      const k = tema + '|' + sub;
+      pts[k] = pts[k] || [];
+      if(pts[k].indexOf(txt) === -1) pts[k].push(txt);
+    };
+    (rep || []).forEach(r => meter(r.tema, r.subtema, (r.texto || '').trim()));
+    est.forEach(r => meter(r.tema, r.subtema, (r.punto || '').trim()));
+    Object.keys(pts).forEach(k => { pts[k] = pts[k].slice(0, 12); });
+    PUNTOS = pts;
+    try{ localStorage.setItem(LS_PUNTOS, JSON.stringify(PUNTOS)); }catch(e){}
+
     if(nivel === 1) pintarNivel1();   // por si llegaron mientras mirabas la lista
   }catch(e){ /* sin red se sigue con lo guardado */ }
 }
@@ -205,18 +227,39 @@ function pintarNivel1(){
   });
 }
 
+function puntosDe(x, sub){
+  return (x.tipo === 'estudio' && sub) ? (PUNTOS[x.e1 + '|' + sub] || []) : [];
+}
+
 function pintarNivel2(x){
   nivel = 2; actual = x;
   $('sub').textContent = x.e1;
   const subs = SUBS[x.tipo + '|' + x.e1] || [];
   $('botones').innerHTML =
     fila('corto', adornoDe(x), 'Sin subtema', '') +
-    subs.map(s => fila('largo', adornoDe(x), s, '')).join('') +
+    subs.map(s => fila('largo', adornoDe(x), s, puntosDe(x, s).length ? '›' : '')).join('') +
     `<button class="b volver"><span class="txt">‹ volver</span></button>`;
   const btns = $('botones').querySelectorAll('button');
   btns[0].addEventListener('click', () => arrancar(x, ''));
-  subs.forEach((s, n) => btns[n+1].addEventListener('click', () => arrancar(x, s)));
+  subs.forEach((s, n) => btns[n+1].addEventListener('click', () => {
+    // Con puntos se baja un nivel más; sin ellos arranca ya, como antes.
+    if(puntosDe(x, s).length) pintarNivel3(x, s); else arrancar(x, s);
+  }));
   btns[btns.length-1].addEventListener('click', pintarNivel1);
+}
+
+function pintarNivel3(x, sub){
+  nivel = 3; actual = x;
+  $('sub').textContent = sub;
+  const pts = puntosDe(x, sub);
+  $('botones').innerHTML =
+    fila('corto', adornoDe(x), 'Sin punto', '') +
+    pts.map(t => fila('largo', adornoDe(x), t, '')).join('') +
+    `<button class="b volver"><span class="txt">‹ volver</span></button>`;
+  const btns = $('botones').querySelectorAll('button');
+  btns[0].addEventListener('click', () => arrancar(x, sub));
+  pts.forEach((t, n) => btns[n+1].addEventListener('click', () => arrancar(x, sub, t)));
+  btns[btns.length-1].addEventListener('click', () => pintarNivel2(x));
 }
 
 // ---- Aviso ----
@@ -234,14 +277,15 @@ function avisar(titulo, detalle, tono, msAuto){
 $('aviso').addEventListener('click', () => { clearTimeout(cerrarAviso); $('aviso').className = ''; });
 
 // ---- Arrancar ----
-async function arrancar(x, subtema){
+async function arrancar(x, subtema, punto){
   const k = leerClave();
   if(!k){ mostrarClave(); return; }
   avisar('…', 'arrancando', 'ok', 0);
-  // Con subtema hay que mandar tipo/e1/e2; sin él alcanza el atajo corto.
+  // Con subtema hay que mandar tipo/e1/e2(/e3); sin él alcanza el atajo corto.
   const q = subtema
     ? '&tipo=' + encodeURIComponent(x.tipo) +
-      '&e1=' + encodeURIComponent(x.e1) + '&e2=' + encodeURIComponent(subtema)
+      '&e1=' + encodeURIComponent(x.e1) + '&e2=' + encodeURIComponent(subtema) +
+      (punto ? '&e3=' + encodeURIComponent(punto) : '')
     : '&a=' + encodeURIComponent(x.a);
   try{
     const r = await fetch(FUNCION + '?k=' + encodeURIComponent(k) + q, { cache:'no-store' });

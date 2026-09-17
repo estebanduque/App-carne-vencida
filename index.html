@@ -774,6 +774,8 @@
           <div class="tema-chips" id="crono-chips"></div>
           <input class="crono-sub" id="crono-subtema" placeholder="Subtema (ej: Contrats, Responsabilité…)" list="subtemas-list">
           <datalist id="subtemas-list"></datalist>
+          <input class="crono-sub" id="crono-punto" placeholder="Punto (opcional: Assignation, Dignité…)" list="puntos-list">
+          <datalist id="puntos-list"></datalist>
           <div class="crono-btns">
             <button id="crono-start-btn" class="crono-btn crono-start" onclick="estudioStartPause()">▶ Iniciar</button>
             <button class="crono-btn crono-stop" onclick="estudioStop()">■ Terminar</button>
@@ -1059,6 +1061,8 @@
     </div>
     <div class="form-row"><label>Subtema</label>
       <input type="text" id="e-subtema" placeholder="Ej: Contrats, Responsabilité…" list="subtemas-list-modal">
+      <input type="text" id="e-punto" placeholder="Punto (opcional)" list="puntos-list-modal" style="margin-top:8px;">
+      <datalist id="puntos-list-modal"></datalist>
       <datalist id="subtemas-list-modal"></datalist>
     </div>
     <div class="two-col-row">
@@ -2064,7 +2068,7 @@ const CRONO_LS = 'cronometro_estado';
 // reloj: se conserva aunque el cronometro que este corriendo sea otro, o no haya
 // ninguno. Por eso vive aparte y no viaja a la base.
 let selTiempo = { categoria:'', subcategoria:'' };
-let selEstudio = { tema:'', subtema:'' };
+let selEstudio = { tema:'', subtema:'', punto:'' };
 
 // ---- Leer el estado ----
 function segundosDeEstado(e){
@@ -2098,6 +2102,7 @@ function proyectarCrono(){
   estudioTimer = Object.assign(reloj('estudio'), {
     tema:    (e && e.tipo === 'estudio' && e.e1) ? e.e1 : (selEstudio.tema || ''),
     subtema: (e && e.tipo === 'estudio') ? (e.e2 || '') : (selEstudio.subtema || ''),
+    punto:   (e && e.tipo === 'estudio') ? (e.e3 || '') : (selEstudio.punto || ''),
   });
   gymTimer = reloj('gym');
 
@@ -2130,7 +2135,7 @@ function leerSeleccionCrono(){
     const t = JSON.parse(localStorage.getItem(TIEMPO_TIMER_KEY) || '{}') || {};
     selTiempo = { categoria:t.categoria || '', subcategoria:t.subcategoria || '' };
     const d = JSON.parse(localStorage.getItem(ESTUDIO_TIMER_KEY) || '{}') || {};
-    selEstudio = { tema:d.tema || '', subtema:d.subtema || '' };
+    selEstudio = { tema:d.tema || '', subtema:d.subtema || '', punto:d.punto || '' };
   }catch(err){}
 }
 
@@ -2163,6 +2168,7 @@ async function empujarCronoABase(){
     tipo: cronoEstado.tipo,
     etiqueta1: cronoEstado.e1 || '',
     etiqueta2: cronoEstado.e2 || '',
+    etiqueta3: cronoEstado.e3 || '',
     base: cronoEstado.base || 0,
     arranque: cronoEstado.arranque ? new Date(cronoEstado.arranque).toISOString() : null,
     updated_at: new Date().toISOString(),
@@ -2183,7 +2189,7 @@ async function ponerCrono(estado){
 function mismoCrono(a, b){
   if(!a && !b) return true;
   if(!a || !b) return false;
-  return a.tipo === b.tipo && a.e1 === b.e1 && a.e2 === b.e2 &&
+  return a.tipo === b.tipo && a.e1 === b.e1 && a.e2 === b.e2 && (a.e3||'') === (b.e3||'') &&
          a.base === b.base && a.arranque === b.arranque;
 }
 async function refrescarCronoDesdeBase(){
@@ -2194,6 +2200,9 @@ async function refrescarCronoDesdeBase(){
     tipo: data.tipo,
     e1: data.etiqueta1 || '',
     e2: data.etiqueta2 || '',
+    // Si la columna todavia no existe llega undefined, y el tercer nivel queda vacio
+    // sin romper nada: la app sigue funcionando con dos.
+    e3: data.etiqueta3 || '',
     base: parseInt(data.base) || 0,
     arranque: data.arranque ? new Date(data.arranque).getTime() : null,
   } : null;
@@ -2214,6 +2223,8 @@ function sincronizarCamposCrono(){
   if(sc && document.activeElement !== sc) sc.value = tiempoTimer.subcategoria || '';
   const st = document.getElementById('crono-subtema');
   if(st && document.activeElement !== st) st.value = estudioTimer.subtema || '';
+  const pt = document.getElementById('crono-punto');
+  if(pt && document.activeElement !== pt) pt.value = estudioTimer.punto || '';
 }
 
 // ---- Arranque de la app ----
@@ -2242,14 +2253,16 @@ async function cerrarCronoAnterior(tipoNuevo){
   const min = Math.round(segundosDeEstado(e) / 60);
   if(min >= 1){
     const nombre = e.tipo === 'gym' ? 'Deporte › Gym'
-                 : (e.e1 || (e.tipo === 'tiempo' ? 'Mi Tiempo' : 'Mi Estudio')) + (e.e2 ? ' › ' + e.e2 : '');
+                 : (e.e1 || (e.tipo === 'tiempo' ? 'Mi Tiempo' : 'Mi Estudio'))
+                   + (e.e2 ? ' › ' + e.e2 : '') + (e.e3 ? ' › ' + e.e3 : '');
     if(!confirm('Tenés ' + fmtHoras(min) + ' corriendo en ' + nombre +
                 '.\n\nAceptar: lo guardo y arranco el nuevo.\nCancelar: no arranco nada.')) return false;
     const created_at = new Date().toISOString();
     const {start, end} = ventanaDe(created_at, min);
     if(e.tipo === 'estudio'){
       if(!(await liberarConflictosParaCrono(start, end, null))) return false;
-      await saveEstudioItem({ tema:e.e1, subtema:e.e2 || 'General', minutos:min, created_at });
+      await saveEstudioItem({ tema:e.e1, subtema:e.e2 || 'General', punto:e.e3 || '',
+                             minutos:min, created_at });
     } else {
       const categoria = e.tipo === 'gym' ? 'Deporte' : e.e1;
       const subcategoria = e.tipo === 'gym' ? 'Gym' : (e.e2 || 'General');
@@ -2260,9 +2273,9 @@ async function cerrarCronoAnterior(tipoNuevo){
   }
   return true;
 }
-async function arrancarCrono(tipo, e1, e2){
+async function arrancarCrono(tipo, e1, e2, e3){
   if(!(await cerrarCronoAnterior(tipo))) return false;
-  await ponerCrono({ tipo, e1:e1 || '', e2:e2 || '', base:0, arranque:Date.now() });
+  await ponerCrono({ tipo, e1:e1 || '', e2:e2 || '', e3:e3 || '', base:0, arranque:Date.now() });
   return true;
 }
 async function pausarCrono(){
@@ -2275,11 +2288,12 @@ async function reanudarCrono(){
   await ponerCrono(Object.assign({}, cronoEstado, { arranque: Date.now() }));
 }
 // Cambiar la etiqueta de lo que YA esta corriendo (elegir otra subcategoria sin parar).
-async function etiquetarCrono(tipo, e1, e2){
+async function etiquetarCrono(tipo, e1, e2, e3){
   if(!cronoEstado || cronoEstado.tipo !== tipo) return;
   const nuevo = Object.assign({}, cronoEstado);
   if(e1 !== null && e1 !== undefined) nuevo.e1 = e1;
   if(e2 !== null && e2 !== undefined) nuevo.e2 = e2;
+  if(e3 !== null && e3 !== undefined) nuevo.e3 = e3;
   if(mismoCrono(nuevo, cronoEstado)) return;
   await ponerCrono(nuevo);
 }
@@ -3246,6 +3260,25 @@ function renderCronoChips(){
   ['crono-chips','d-crono-chips'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
 }
 function renderModalChips(){ const el=document.getElementById('modal-chips'); if(el) el.innerHTML = chipsHTML(modalTema, 'seleccionarTemaModal'); }
+function puntosSugeridos(tema, subtema){
+  if(!tema) return [];
+  const sub = subtema && subtema !== 'General' ? subtema : '';
+  const out = [];
+  const meter = t => { const v = (t||'').trim(); if(v && out.indexOf(v) === -1) out.push(v); };
+  // Primero los puntos de repaso de ese subtema: son los que ya curaste y los que
+  // usa la ruleta, asi que conviene que el tiempo se registre con los mismos nombres.
+  puntosRepaso.filter(x => x.tema === tema && (!sub || x.subtema === sub))
+              .forEach(x => meter(x.texto));
+  // Despues, los que ya usaste en sesiones anteriores.
+  estudioItems.filter(i => i.tema === tema && (!sub || i.subtema === sub))
+              .forEach(i => meter(i.punto));
+  return out;
+}
+function actualizarDatalistPuntos(id, tema, subtema){
+  const dl = document.getElementById(id); if(!dl) return;
+  dl.innerHTML = puntosSugeridos(tema, subtema)
+    .map(x => `<option value="${(x||'').replace(/"/g,'&quot;')}">`).join('');
+}
 function actualizarDatalist(id, tema){
   const dl = document.getElementById(id); if(!dl) return;
   dl.innerHTML = subtemasDe(tema).map(s=>`<option value="${(s||'').replace(/"/g,'&quot;')}">`).join('');
@@ -3269,6 +3302,10 @@ function leerSubtemaCrono(){
   const a = document.getElementById('crono-subtema');
   return (a && a.value.trim()) || estudioTimer.subtema || '';
 }
+function leerPuntoCrono(){
+  const a = document.getElementById('crono-punto');
+  return (a && a.value.trim()) || estudioTimer.punto || '';
+}
 async function seleccionarTemaCrono(nombre){
   selEstudio.tema = nombre; guardarSeleccionCrono();
   // Si el que corre es el de estudio, cambiarle el tema es cambiar la fila.
@@ -3276,20 +3313,21 @@ async function seleccionarTemaCrono(nombre){
   proyectarCrono();
   renderCronoChips();
   actualizarDatalist('subtemas-list', nombre);
+  actualizarDatalistPuntos('puntos-list', nombre, leerSubtemaCrono());
 }
 async function estudioStartPause(){
-  const sub = leerSubtemaCrono();
-  selEstudio.subtema = sub; guardarSeleccionCrono();
+  const sub = leerSubtemaCrono(), pto = leerPuntoCrono();
+  selEstudio.subtema = sub; selEstudio.punto = pto; guardarSeleccionCrono();
   if(estudioTimer.running){
-    await etiquetarCrono('estudio', null, sub);
+    await etiquetarCrono('estudio', null, sub, pto);
     await pausarCrono();
     return;
   }
   if(!estudioTimer.tema){ alert('Elige un tema antes de iniciar el cronómetro.'); return; }
   if(cronoEstado && cronoEstado.tipo === 'estudio'){
-    await etiquetarCrono('estudio', null, sub);
+    await etiquetarCrono('estudio', null, sub, pto);
     await reanudarCrono();
-  } else if(!(await arrancarCrono('estudio', estudioTimer.tema, sub))) return;
+  } else if(!(await arrancarCrono('estudio', estudioTimer.tema, sub, pto))) return;
   feedbackInicioCronoIds(['crono-start-btn','d-crono-start-btn']);
 }
 async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
@@ -3304,15 +3342,18 @@ async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
       const { start, end } = ventanaDe(created_at, min);
       if(!(await liberarConflictosParaCrono(start, end, null))) return;
       await saveEstudioItem({ tema:estudioTimer.tema, subtema:leerSubtemaCrono() || 'General',
-                              minutos:min, created_at });
+                              punto:leerPuntoCrono(), minutos:min, created_at });
     }
     await borrarCronoSiEs('estudio');
   }
-  selEstudio = { tema, subtema:sub }; guardarSeleccionCrono();
-  if(!(await arrancarCrono('estudio', tema, sub))) return;
+  // Se arranca desde un subtema: el punto arranca vacio, no se hereda del anterior.
+  selEstudio = { tema, subtema:sub, punto:'' }; guardarSeleccionCrono();
+  if(!(await arrancarCrono('estudio', tema, sub, ''))) return;
   renderCronoChips();
   actualizarDatalist('subtemas-list', tema);
+  actualizarDatalistPuntos('puntos-list', tema, sub);
   ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=sub; });
+  const pel = document.getElementById('crono-punto'); if(pel) pel.value = '';
   feedbackInicioCrono(btnEl, color);
 }
 async function estudioStop(){
@@ -3321,21 +3362,22 @@ async function estudioStop(){
   if(!estudioTimer.tema){ alert('Elige un tema.'); return; }
   const tema = estudioTimer.tema;
   const subtema = leerSubtemaCrono() || 'General';
-  if(!confirm('¿Guardar '+fmtHoras(min)+' en '+tema+' › '+subtema+'?')) return;
+  const punto = leerPuntoCrono();
+  if(!confirm('¿Guardar '+fmtHoras(min)+' en '+tema+' › '+subtema+(punto ? ' › '+punto : '')+'?')) return;
   const created_at = new Date().toISOString();
   const {start,end} = ventanaDe(created_at, min);
   if(!(await liberarConflictosParaCrono(start, end, null))) return;
   await borrarCronoSiEs('estudio');
-  selEstudio.subtema = ''; guardarSeleccionCrono();
-  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  selEstudio.subtema = ''; selEstudio.punto = ''; guardarSeleccionCrono();
+  ['crono-subtema','d-crono-subtema','crono-punto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   proyectarCrono();
-  await saveEstudioItem({ tema, subtema, minutos:min, created_at });
+  await saveEstudioItem({ tema, subtema, punto, minutos:min, created_at });
 }
 async function estudioReset(){
   if(segundosCrono() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
   await borrarCronoSiEs('estudio');
-  selEstudio.subtema = ''; guardarSeleccionCrono();
-  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  selEstudio.subtema = ''; selEstudio.punto = ''; guardarSeleccionCrono();
+  ['crono-subtema','d-crono-subtema','crono-punto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   proyectarCrono();
 }
 function restaurarEstudioTimer(){
@@ -3353,6 +3395,9 @@ async function loadEstudio(){
 }
 async function saveEstudioItem(item){
   const row = { tema:item.tema, subtema:item.subtema, minutos:item.minutos };
+  // Solo se manda si hay algo: si la columna 'punto' todavia no existe, mandarla
+  // vacia haria fallar el guardado entero de una sesion que no la necesita.
+  if(item.punto) row.punto = item.punto;
   if(item.created_at) row.created_at = item.created_at;
   const {data,error} = await sb.from('estudio').insert([row]).select();
   if(!error && data){
@@ -3361,11 +3406,14 @@ async function saveEstudioItem(item){
     renderEstudio();
   } else {
     console.log('Error guardando estudio:', JSON.stringify(error));
-    alert('No se pudo guardar la sesión. Revisa que la tabla tenga las columnas tema y subtema.');
+    const falta = /punto/i.test(error && error.message || '');
+    alert(falta
+      ? 'Falta la columna "punto" en la tabla estudio: corré supabase/setup-punto-estudio.sql en el SQL Editor.'
+      : 'No se pudo guardar la sesión. Revisa que la tabla tenga las columnas tema y subtema.');
   }
 }
 async function updateEstudioItem(id, item){
-  const upd = { tema:item.tema, subtema:item.subtema, minutos:item.minutos };
+  const upd = { tema:item.tema, subtema:item.subtema, punto:item.punto || null, minutos:item.minutos };
   if(item.created_at) upd.created_at = item.created_at;
   const {data,error} = await sb.from('estudio').update(upd).eq('id',id).select();
   if(!error && data && data[0]){
@@ -3392,6 +3440,8 @@ function openEstudioModal(temaPreset, subtemaPreset){
   renderModalChips();
   actualizarDatalist('subtemas-list-modal', modalTema);
   document.getElementById('e-subtema').value = subtemaPreset || '';
+  actualizarDatalistPuntos('puntos-list-modal', modalTema, subtemaPreset || '');
+  document.getElementById('e-punto').value = '';
   document.getElementById('e-horas').value = '';
   document.getElementById('e-minutos').value = '';
   document.getElementById('e-fecha').value = fechaLocal(new Date());
@@ -3401,6 +3451,8 @@ function registrarEnSubtema(tema, subtema){ openEstudioModal(tema, subtema==='Ge
 function seleccionarTemaModal(nombre){
   modalTema = nombre; renderModalChips();
   actualizarDatalist('subtemas-list-modal', nombre);
+  actualizarDatalistPuntos('puntos-list-modal', nombre,
+    document.getElementById('e-subtema').value.trim());
 }
 function editarEstudio(id){
   const s = estudioItems.find(i=>i.id===id); if(!s) return;
@@ -3411,6 +3463,8 @@ function editarEstudio(id){
   renderModalChips();
   actualizarDatalist('subtemas-list-modal', modalTema);
   document.getElementById('e-subtema').value = (s.subtema && s.subtema!=='General') ? s.subtema : '';
+  actualizarDatalistPuntos('puntos-list-modal', modalTema, s.subtema || '');
+  document.getElementById('e-punto').value = s.punto || '';
   const min = parseInt(s.minutos)||0;
   document.getElementById('e-horas').value = Math.floor(min/60) || '';
   document.getElementById('e-minutos').value = (min%60) || '';
@@ -3420,6 +3474,7 @@ function editarEstudio(id){
 function saveEstudioManual(){
   const tema = modalTema;
   const subtema = document.getElementById('e-subtema').value.trim() || 'General';
+  const punto = document.getElementById('e-punto').value.trim();
   const h = parseInt(document.getElementById('e-horas').value)||0;
   const m = parseInt(document.getElementById('e-minutos').value)||0;
   const fecha = document.getElementById('e-fecha').value;
@@ -3438,9 +3493,9 @@ function saveEstudioManual(){
     }
   }
   if(estudioEditId){
-    updateEstudioItem(estudioEditId, { tema, subtema, minutos, created_at });
+    updateEstudioItem(estudioEditId, { tema, subtema, punto, minutos, created_at });
   } else {
-    saveEstudioItem({ tema, subtema, minutos, created_at });
+    saveEstudioItem({ tema, subtema, punto, minutos, created_at });
   }
   closeModals();
 }
@@ -3808,7 +3863,7 @@ function renderTemasEn(containerId){
       const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
         const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
         return `<div class="ses-row">
-          <span class="ses-fecha">${fecha}</span>
+          <span class="ses-fecha">${fecha}${se.punto ? ' · ' + escHtmlAttr(se.punto) : ''}</span>
           ${durSesionHTML(se)}
           <button class="sub-btn" onclick="event.stopPropagation();editarEstudio(${se.id})" title="Editar">✏️</button>
           <button class="sub-btn" onclick="event.stopPropagation();delEstudio(${se.id})" title="Eliminar">🗑</button>
@@ -4542,7 +4597,7 @@ function renderCategoriaBlockHTML(c){
       const sesionesHTML = sd.sesiones.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(se=>{
         const fecha = se.created_at ? new Date(se.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '—';
         return `<div class="ses-row">
-          <span class="ses-fecha">${fecha}</span>
+          <span class="ses-fecha">${fecha}${se.punto ? ' · ' + escHtmlAttr(se.punto) : ''}</span>
           ${durSesionHTML(se)}
           <button class="sub-btn" onclick="event.stopPropagation();editarTiempo(${se.id})" title="Editar">✏️</button>
           <button class="sub-btn" onclick="event.stopPropagation();delTiempo(${se.id})" title="Eliminar">🗑</button>

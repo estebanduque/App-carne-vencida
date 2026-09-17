@@ -9,6 +9,9 @@
 //
 //   .../functions/v1/crono?k=<CRONO_KEY>&a=civil
 //   .../functions/v1/crono?k=<CRONO_KEY>&tipo=tiempo&e1=Hogar&e2=Cocinar
+//   .../functions/v1/crono?k=<CRONO_KEY>&tipo=estudio&e1=Droit civil&e2=Usucapión&e3=Assignation
+//
+// En Mi Estudio hay tres niveles: tema (e1), subtema (e2) y punto (e3).
 //
 // La hora de arranque la pone el servidor: un botón de reloj no sabe calcular un
 // timestamp ISO, y ese era justamente el motivo por el que no alcanzaba con pegarle
@@ -30,7 +33,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Atajos con nombre, para que la URL del botón sea corta y legible en un reloj.
 // 'tipo' tiene que ser uno de los tres que entiende la app: tiempo | estudio | gym.
 // En 'estudio', e1 debe coincidir exactamente con el nombre del tema en la app.
-const ATAJOS: Record<string, { tipo: string; e1: string; e2: string }> = {
+const ATAJOS: Record<string, { tipo: string; e1: string; e2: string; e3?: string }> = {
   // Estudio
   civil:      { tipo: "estudio", e1: "Droit civil",      e2: "" },
   comercial:  { tipo: "estudio", e1: "Droit commercial", e2: "" },
@@ -120,6 +123,7 @@ Deno.serve(async (req: Request) => {
         tipo,
         e1: (url.searchParams.get("e1") || "").trim(),
         e2: (url.searchParams.get("e2") || "").trim(),
+        e3: (url.searchParams.get("e3") || "").trim(),
       };
     }
 
@@ -145,8 +149,13 @@ Deno.serve(async (req: Request) => {
         const e1 = actual.etiqueta1 || "";
         const e2 = actual.etiqueta2 || "";
         if (actual.tipo === "estudio") {
-          const { error } = await supabase.from("estudio")
-            .insert([{ tema: e1, subtema: e2 || "General", minutos, created_at }]);
+          const fila: Record<string, unknown> = {
+            tema: e1, subtema: e2 || "General", minutos, created_at,
+          };
+          // Solo se manda si hay algo: si la columna 'punto' todavía no existe,
+          // mandarla vacía haría fallar el guardado de una sesión que no la necesita.
+          if (actual.etiqueta3) fila.punto = actual.etiqueta3;
+          const { error } = await supabase.from("estudio").insert([fila]);
           if (error) throw error;
           guardado = `Guardé ${minutos} min de ${e1}`;
         } else {
@@ -168,6 +177,7 @@ Deno.serve(async (req: Request) => {
     const { error: errGuardar } = await supabase.from("cronometro").upsert({
       id: 1,
       tipo: destino.tipo,
+      etiqueta3: destino.e3 || "",
       etiqueta1: destino.e1,
       etiqueta2: destino.e2,
       base: 0,
@@ -179,7 +189,7 @@ Deno.serve(async (req: Request) => {
     const nombre = destino.tipo === "gym" ? "Gym" : (destino.e1 || destino.tipo);
     return respuesta(
       "▶ " + nombre,
-      [destino.e2, guardado].filter(Boolean).join(" · ") || "Corriendo",
+      [destino.e2, destino.e3, guardado].filter(Boolean).join(" · ") || "Corriendo",
       "ok",
     );
   } catch (e: any) {
