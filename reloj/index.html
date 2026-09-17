@@ -32,9 +32,11 @@
   :root{
     --fondo:#0A1628; --tinta:#fff; --tenue:rgba(255,255,255,0.45);
     --borde:rgba(255,255,255,0.14); --verde:#1D9E75; --rojo:#E24B4A;
-    /* El círculo se mide contra el lado CORTO de la pantalla: así entran tres por
-       fila en un reloj redondo sin tocar el borde, y en una pantalla grande no se
-       vuelven absurdos. */
+    /* El círculo se mide contra el lado CORTO de la pantalla, y cada pantalla fija
+       su propio tamaño: no es lo mismo repartir diez círculos que cinco. Los valores
+       salen de la restricción real de una pantalla redonda — el círculo más alejado
+       del centro no puede pasarse del borde — y están comprobados con capturas
+       recortadas en círculo, no a ojo. */
     --c: min(18vw, 18vh, 80px);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -55,11 +57,14 @@
   .sub{ font-size:11px; color:var(--tenue); margin:0 0 9px; max-width:100%;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  /* ---- Panal ---- */
-  .panal{ display:flex; flex-direction:column; align-items:center; gap:6px; }
-  .fila{ display:flex; gap:8px; }
-  /* Las filas impares se corren medio círculo: eso es lo que hace el panal. */
-  .fila.offset{ margin-left:calc(var(--c) / 2 + 4px); }
+  /* ---- Panal ----
+     Las filas van centradas y con distinto número de círculos (3-4-3, 2-3): así
+     encajan unas en los huecos de otras sin necesidad de correrlas a mano. El
+     solape vertical es el de un panal de verdad (paso √3/2), que es lo que permite
+     que quepan tres filas donde antes cabían dos y media. */
+  .panal{ display:flex; flex-direction:column; align-items:stretch; width:100%; }
+  .fila{ display:flex; gap:7px; width:100%; justify-content:center; }
+  .fila + .fila{ margin-top:calc(var(--c) * -0.134); }
   .circ{ width:var(--c); height:var(--c); border-radius:50%; flex-shrink:0;
     border:1px solid var(--borde); background:rgba(255,255,255,0.06);
     color:var(--tinta); font-family:inherit; cursor:pointer; padding:0;
@@ -67,14 +72,28 @@
     font-size:calc(var(--c) * 0.42); line-height:1; }
   .circ:active{ background:rgba(255,255,255,0.18); }
   /* Los temas llevan dos emojis: se apilan para que no encojan hasta no verse. */
-  .circ.doble{ font-size:calc(var(--c) * 0.3); flex-direction:column; gap:1px; }
-  /* Estudio son solo 4 círculos en dos filas, así que sobra sitio: se hacen más
-     grandes que los nueve de Tiempo, que sí tienen que caber apretados. */
-  .circ.xl{ width:calc(var(--c) * 1.4); height:calc(var(--c) * 1.4); }
-  .circ.doble.xl{ font-size:calc(var(--c) * 0.42); }
-  .circ.grande{ width:calc(var(--c) * 1.45); height:calc(var(--c) * 1.45);
-    font-size:calc(var(--c) * 0.6); }
-  .eti{ font-size:10.5px; color:var(--tenue); margin-top:8px; }
+  .circ.doble{ font-size:calc(var(--c) * 0.33); }
+  /* El volver es un círculo más, pero se tiene que notar que no arranca nada: borde
+     de puntos y apagado. Si se pareciera a los otros, un dedo torpe empezaría una
+     sesión al querer salir. */
+  .circ.atras{ border-style:dashed; color:var(--tenue); background:none;
+    font-size:calc(var(--c) * 0.45); }
+  .eti{ font-size:10.5px; color:var(--tenue); margin-top:6px; }
+
+  /* Cada pantalla reparte su espacio: diez círculos no pueden medir lo que cinco.
+     Las de panal llevan margen casi nulo a propósito: quien limita el tamaño es la
+     curva de la pantalla, no un padding. La fila ancha se apoya justo en el punto
+     más ancho del círculo, que es donde hay que aprovechar. */
+  /* Los topes salen de una cuenta, no del ojo: en una pantalla redonda de radio R,
+     el circulo mas alejado del centro no puede pasarse del borde.
+       3-4-3  -> el de la punta de la fila de 4 esta a 1,5(d+g) del centro
+                 => 2d + 1,5g <= R - margen   =>  d <= 100 en un reloj de 450
+       2-3    -> el de la punta de la fila de 3 esta a (d+g), en diagonal
+                 => d <= 125
+     El tope en px evita que en una pantalla grande los circulos se vuelvan absurdos. */
+  #p-inicio  { --c: min(33vw, 33vh, 168px); }
+  #p-tiempo  { --c: min(21vw, 21vh, 112px); padding:2% 0; }
+  #p-estudio { --c: min(27vw, 27vh, 148px); padding:2% 0; }
 
   /* ---- Filas de lista ---- */
   .b{ display:flex; align-items:center; gap:10px; width:100%; min-height:50px;
@@ -86,11 +105,15 @@
   .b .txt{ flex:1; min-width:0; overflow:hidden; }
   .chev{ color:var(--tenue); font-size:15px; flex-shrink:0; }
 
-  /* ---- Volver: en TODAS las pantallas y siempre en el mismo sitio ---- */
-  .volver{ margin-top:12px; border:1px solid var(--borde); background:none;
-    color:var(--tenue); font:inherit; font-size:12px; border-radius:999px;
-    padding:7px 17px; cursor:pointer; flex-shrink:0; }
+  /* ---- Volver: en TODAS las pantallas, siempre redondo y en el mismo sitio ---- */
+  .volver{ margin-top:11px; width:46px; height:46px; border-radius:50%;
+    border:1px dashed var(--borde); background:none; color:var(--tenue);
+    font:inherit; font-size:21px; line-height:1; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; padding:0; }
   .volver:active{ background:rgba(255,255,255,0.1); }
+  /* En Inicio no hay adónde volver: ese botón lleva a lo que está corriendo. */
+  .volver.ancho{ width:auto; height:auto; border-radius:999px; font-size:12px;
+    padding:7px 17px; border-style:solid; }
 
   /* ---- Corriendo ---- */
   #p-corriendo .que{ font-size:14px; font-weight:600; line-height:1.3; margin:0 0 3px; }
@@ -135,29 +158,25 @@
     </div>
   </div>
   <div class="eti">general · estudio</div>
-  <button class="volver" id="ver-corriendo" style="display:none;">● lo que está corriendo</button>
+  <button class="volver ancho" id="ver-corriendo" style="display:none;">● lo que está corriendo</button>
   <div class="pie"><button id="cambiar">cambiar clave</button></div>
 </div>
 
 <!-- 2. Categorías de Mi Tiempo -->
 <div class="pantalla" id="p-tiempo">
-  <p class="titulo">Crono general</p>
   <div class="panal" id="panal-tiempo"></div>
-  <button class="volver" data-volver="inicio">‹ volver</button>
 </div>
 
 <!-- 3. Temas de estudio -->
 <div class="pantalla" id="p-estudio">
-  <p class="titulo">Estudio</p>
   <div class="panal" id="panal-estudio"></div>
-  <button class="volver" data-volver="inicio">‹ volver</button>
 </div>
 
 <!-- 4. Subtemas -->
 <div class="pantalla lista" id="p-subs">
   <p class="titulo" id="subs-tit"></p>
   <div id="subs-lista" style="width:100%;"></div>
-  <button class="volver" id="subs-volver">‹ volver</button>
+  <button class="volver" id="subs-volver">‹</button>
 </div>
 
 <!-- 5. Puntos -->
@@ -165,7 +184,7 @@
   <p class="titulo">Punto</p>
   <p class="sub" id="puntos-tit"></p>
   <div id="puntos-lista" style="width:100%;"></div>
-  <button class="volver" id="puntos-volver">‹ volver</button>
+  <button class="volver" id="puntos-volver">‹</button>
 </div>
 
 <!-- 6. Corriendo -->
@@ -174,7 +193,7 @@
   <p class="det" id="corr-det"></p>
   <div class="reloj" id="corr-reloj">00:00</div>
   <button class="stop" id="corr-stop"><span class="cuadro">■</span><span>Terminar</span></button>
-  <button class="volver" data-volver="inicio">‹ volver</button>
+  <button class="volver" data-volver="inicio">‹</button>
 </div>
 
 <!-- 7. Clave -->
@@ -215,7 +234,9 @@ const ESTUDIO = [
   { a:'deonto',     e1:'Déontologie',      i:'🤝📖' },
 ];
 TIEMPO.forEach(x => { x.tipo = x.tipo || 'tiempo'; });
-ESTUDIO.forEach(x => { x.tipo = 'estudio'; });
+// Los temas llevan dos emojis: necesitan cuerpo de letra propio para no encoger.
+ESTUDIO.forEach(x => { x.tipo = 'estudio'; x.doble = true; });
+const ATRAS = { volver:'inicio' };
 
 const $ = id => document.getElementById(id);
 const leerClave = () => { try{ return localStorage.getItem(LS_CLAVE) || ''; }catch(e){ return ''; } };
@@ -239,18 +260,25 @@ document.querySelectorAll('[data-volver]').forEach(b =>
 // ---- Panales ----
 // Las filas se reparten a mano para que la más ancha quede cerca del centro, que es
 // donde una pantalla redonda tiene más sitio.
-function panal(cont, lista, filas, clase){
+// 'celdas' mezcla actividades con la celda de volver: metiendo el volver DENTRO del
+// panal deja de costar una fila entera abajo, y ese espacio se reparte entre todos
+// los círculos. En una pantalla de reloj eso es la diferencia entre acertar con el
+// dedo y no acertar.
+function panal(cont, celdas, filas){
   let n = 0, html = '';
-  filas.forEach((cuantos, f) => {
+  filas.forEach(cuantos => {
     const desde = n;
-    const trozo = lista.slice(n, n + cuantos); n += cuantos;
-    html += `<div class="fila${f % 2 ? ' offset' : ''}">` + trozo.map((x, j) =>
-      `<button class="circ ${clase}" data-n="${desde + j}" title="${esc(x.e1)}">${x.i}</button>`
-    ).join('') + `</div>`;
+    const trozo = celdas.slice(n, n + cuantos); n += cuantos;
+    html += '<div class="fila">' + trozo.map((x, j) => x.volver
+      ? `<button class="circ atras" data-atras="${x.volver}" title="Volver">‹</button>`
+      : `<button class="circ${x.doble ? ' doble' : ''}" data-n="${desde + j}" title="${esc(x.e1)}">${x.i}</button>`
+    ).join('') + '</div>';
   });
   cont.innerHTML = html;
   cont.querySelectorAll('button[data-n]').forEach(b =>
-    b.addEventListener('click', () => elegir(lista[Number(b.dataset.n)])));
+    b.addEventListener('click', () => elegir(celdas[Number(b.dataset.n)])));
+  cont.querySelectorAll('button[data-atras]').forEach(b =>
+    b.addEventListener('click', () => ir(b.dataset.atras)));
 }
 
 function filaHTML(texto, chev, n){
@@ -459,11 +487,11 @@ $('enlace').addEventListener('click', () => {
 $('ir-tiempo').addEventListener('click', () => ir('tiempo'));
 $('ir-estudio').addEventListener('click', () => ir('estudio'));
 claveDelEnlace();
-// 9 categorías en 3-3-3 (con la fila del medio corrida) y 4 temas en 2-2. Tres filas
-// y no cuatro porque con cuatro el botón de volver caía fuera del círculo: en una
-// pantalla redonda lo que sobra abajo no se ve, se pierde.
-panal($('panal-tiempo'), TIEMPO, [3,3,3], '');
-panal($('panal-estudio'), ESTUDIO, [2,2], 'doble xl');
+// 9 categorías + volver = 10 celdas, que es justo un panal 3-4-3: centrado y sin
+// huecos. Estudio son 4 + volver = 5, en 2-3. Las filas se centran solas, así que
+// encajan unas en los huecos de otras sin correrlas a mano.
+panal($('panal-tiempo'), TIEMPO.concat([ATRAS]), [3,4,3]);
+panal($('panal-estudio'), ESTUDIO.concat([ATRAS]), [2,3]);
 ir(leerClave() ? 'inicio' : 'clave');
 traerListas();
 leerCorriendo();
