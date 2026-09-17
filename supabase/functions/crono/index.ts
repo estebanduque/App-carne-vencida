@@ -75,15 +75,26 @@ function segundosDe(fila: { base?: number | null; arranque?: string | null }): n
   return s;
 }
 
+// La clave se compara sin espacios, sin comillas y sin distinguir mayusculas.
+// Las tres cosas son maneras clasicas de fallar sin que sea culpa de nadie: un salto
+// de linea que se cuela al pegar el secreto en el panel, unas comillas alrededor del
+// valor, o el teclado del telefono poniendo la primera letra en mayuscula. Comparar
+// exacto solo servia para que la clave correcta fuera rechazada.
+function normalizarClave(v: string | null | undefined): string {
+  return (v ?? "").trim().replace(/^["'](.*)["']$/, "$1").trim().toLowerCase();
+}
+
 Deno.serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
 
     // Falla cerrado: si no hay clave configurada, no atiende. Es preferible a quedar
     // abierta sin que nadie se entere.
-    const clave = Deno.env.get("CRONO_KEY");
+    const clave = normalizarClave(Deno.env.get("CRONO_KEY"));
     if (!clave) return pagina("Sin configurar", "Falta el secreto CRONO_KEY", "#EF9F27", 500);
-    if (url.searchParams.get("k") !== clave) return pagina("No", "Clave incorrecta", "#E24B4A", 403);
+    if (normalizarClave(url.searchParams.get("k")) !== clave) {
+      return pagina("No", "Clave incorrecta", "#E24B4A", 403);
+    }
 
     // Qué arrancar: o un atajo con nombre, o los campos sueltos.
     const a = (url.searchParams.get("a") || "").toLowerCase().trim();
