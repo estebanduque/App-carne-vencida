@@ -5392,8 +5392,13 @@ function listaComprasHTML(){
 
   const aqui = lugarActual ? categoriasQueCubre(lugarActual.lugar.categoria) : [];
   // Lo que se consigue donde estás va primero; el resto, por cantidad.
+  // Un articulo marcado en varias tiendas aparece bajo cada una: asi lo ves donde
+  // estes parado, y no te obliga a acordarte de en cual lo habias anotado.
   const grupos = {};
-  pendientes.forEach(i=>{ (grupos[i.categoria] = grupos[i.categoria] || []).push(i); });
+  pendientes.forEach(i=>{
+    const cats = categoriasDe(i);
+    (cats.length ? cats : ['otro']).forEach(c=>{ (grupos[c] = grupos[c] || []).push(i); });
+  });
   const orden = Object.keys(grupos).sort((a,b)=>{
     const pa = aqui.includes(a) ? 0 : 1, pb = aqui.includes(b) ? 0 : 1;
     return (pa-pb) || (grupos[b].length - grupos[a].length) || a.localeCompare(b);
