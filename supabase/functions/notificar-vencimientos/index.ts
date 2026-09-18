@@ -1,5 +1,5 @@
-// Envía las notificaciones push diarias: vencimiento de carnes y recordatorios de
-// tareas pospuestas con el botón "3 días hábiles".
+// Envía las notificaciones push diarias: alimentos que vencen (Mi DLC) y recordatorios
+// de tareas pospuestas con el botón "3 días hábiles".
 // Se ejecuta una vez por día desde un cron de Supabase (ver supabase/cron.sql).
 //
 // Variables de entorno necesarias (Project Settings -> Edge Functions -> Secrets):
@@ -39,16 +39,24 @@ Deno.serve(async (req: Request) => {
     // ?test=1 manda un aviso de prueba aunque no venza nada, para verificar la cadena completa.
     const esPrueba = new URL(req.url).searchParams.get("test") === "1";
 
+    // 'destino' marca lo que ya salio del inventario (consumido o tirado). Se pide
+    // con select('*') y se filtra en memoria para que la funcion siga andando
+    // aunque supabase/setup-dlc.sql todavia no se haya corrido: sin esa columna,
+    // pedirla por nombre tumbaria el aviso entero.
     const { data: filas, error: errCarnes } = await supabase
       .from("carnes")
-      .select("tipo, desc, fecha, ubicacion")
+      .select("*")
       .in("fecha", [hoy, manana]);
     if (errCarnes) throw errCarnes;
 
-    // Lo que esta en el congelador tiene el vencimiento en pausa: no avisa.
-    // Se filtra aca y no en la query para que una 'ubicacion' nula (registros
-    // viejos) no quede fuera por las reglas de comparacion con null de SQL.
-    const carnes = (filas ?? []).filter((c) => c.ubicacion !== "Congelador");
+    // No avisa de lo que ya salio del inventario: recordarte que vence algo que te
+    // comiste anteayer es ruido, y justo lo que el boton de consumido vino a evitar.
+    // Lo del congelador tiene el vencimiento en pausa y tampoco avisa; se filtra aca
+    // y no en la query para que una 'ubicacion' nula (registros viejos) no quede
+    // fuera por las reglas de comparacion con null de SQL.
+    const carnes = (filas ?? []).filter((c) =>
+      c.ubicacion !== "Congelador" && !c.destino
+    );
 
     // Tareas cuyo recordatorio ya llego. Se piden aparte porque el push es uno solo al
     // dia: si hay carne venciendo y ademas un recordatorio, van en el mismo aviso.
@@ -78,21 +86,21 @@ Deno.serve(async (req: Request) => {
       title = "🔔 Prueba de notificaciones";
       body = "Si ves esto, los push están funcionando.";
     } else if (vencenHoy.length > 0) {
-      title = vencenHoy.length === 1 ? "🔴 ¡Carne vence HOY!" : `🔴 ${vencenHoy.length} carnes vencen HOY`;
+      title = vencenHoy.length === 1 ? "🔴 ¡Vence HOY!" : `🔴 ${vencenHoy.length} alimentos vencen HOY`;
       body = vencenHoy.map(nombre).join("\n");
       if (vencenManana.length > 0) {
         body += `\n\nMañana vence${vencenManana.length > 1 ? "n" : ""}: ` +
           vencenManana.map(nombre).join(", ");
       }
     } else if (vencenManana.length > 0) {
-      title = vencenManana.length === 1 ? "⚠️ Carne vence mañana" : `⚠️ ${vencenManana.length} carnes vencen mañana`;
-      body = vencenManana.map(nombre).join("\n") + "\n¡Úsalas hoy!";
+      title = vencenManana.length === 1 ? "⚠️ Vence mañana" : `⚠️ ${vencenManana.length} alimentos vencen mañana`;
+      body = vencenManana.map(nombre).join("\n") + "\n¡Úsalos hoy!";
     } else {
-      // No vence ninguna carne: el aviso es solo de recordatorios.
+      // No vence ningun alimento: el aviso es solo de recordatorios.
       title = recordatorios.length === 1 ? "⏰ Te lo recordé" : `⏰ ${recordatorios.length} recordatorios`;
       body = recordatorios.map((t) => t.texto).join("\n");
     }
-    // Si ademas de la carne hay recordatorios, se suman al final del mismo aviso.
+    // Si ademas del alimento hay recordatorios, se suman al final del mismo aviso.
     if (recordatorios.length > 0 && (vencenHoy.length > 0 || vencenManana.length > 0)) {
       body += "\n\n⏰ Te lo recordé: " + recordatorios.map((t) => t.texto).join(", ");
     }
