@@ -2091,24 +2091,61 @@ document.getElementById('photo-input').addEventListener('change', async function
         res(canvas.toDataURL('image/jpeg',0.8).split(',')[1]);
       };img.onerror=rej;img.src=URL.createObjectURL(file);
     });
-    const resp=await fetch('https://long-breeze-5893.duqes-j.workers.dev',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({imageData:b64,mediaType:'image/jpeg'})
-    });
-    const rawText=await resp.text();
-    console.log('Respuesta IA:',rawText);
-    let parsed;try{parsed=JSON.parse(rawText);}catch{parsed={};}
+    const parsed = await analizarEtiqueta(b64);
     document.getElementById('scanning-msg').classList.remove('active');
-    const tipo=parsed.tipo||null;const desc=parsed.desc||null;const fecha=parsed.fecha||null;
-    if(tipo){const sel=document.getElementById('p-tipo');for(let o of sel.options){if(o.value===tipo){sel.value=tipo;break;}}}
-    if(desc)document.getElementById('p-desc').value=desc;
-    if(fecha)document.getElementById('p-fecha').value=fecha;
-    document.getElementById('prefilled-msg').textContent=fecha?'✅ IA detectó los datos — revisa y confirma':'⚠️ IA leyó la imagen pero no encontró la fecha — ingrésala manualmente';
+    const ponerEnSelect = (id, valor) => {
+      if(!valor) return;
+      const sel = document.getElementById(id);
+      for(const o of sel.options){ if(o.value === valor){ sel.value = valor; return; } }
+    };
+    ponerEnSelect('p-tipo', parsed.tipo);
+    ponerEnSelect('p-ubicacion', parsed.ubicacion);
+    if(parsed.desc) document.getElementById('p-desc').value = parsed.desc;
+    if(parsed.fecha) document.getElementById('p-fecha').value = parsed.fecha;
+    document.getElementById('prefilled-msg').textContent = parsed.fecha
+      ? '✅ IA detectó los datos — revisa y confirma'
+      : '⚠️ IA leyó la imagen pero no encontró la fecha — ingrésala manualmente';
     document.getElementById('prefilled-msg').classList.add('show');
   }catch(e){
     document.getElementById('scanning-msg').textContent='⚠️ No se pudo leer la etiqueta. Llena los datos manualmente.';
   }
 });
+
+// ---- Lectura de la etiqueta por foto ----
+// El slug que Supabase le asigne al desplegar analizar-etiqueta. Si te toca otro
+// (como paso con 'bright-worker' y 'super-responder'), cambialo aca.
+const FN_ETIQUETA = 'analizar-etiqueta';
+// El Cloudflare Worker que hacia esto antes. Queda de respaldo SOLO para que el
+// escaneo no se caiga entre que este codigo sale y la funcion nueva esta desplegada.
+// Una vez que veas 'analizar-etiqueta' andando, borra esta constante, la rama que la
+// usa, y el Worker desde el panel de Cloudflare.
+const WORKER_ETIQUETA_VIEJO = 'https://long-breeze-5893.duqes-j.workers.dev';
+
+async function analizarEtiqueta(b64){
+  try{
+    const {data, error} = await sb.functions.invoke(FN_ETIQUETA, {
+      body: { imageData: b64, mediaType: 'image/jpeg' },
+    });
+    if(!error && data && data.ok) return data;
+    console.log('analizar-etiqueta:', (error && error.message) || (data && data.error) || 'respuesta vacía');
+  }catch(e){
+    console.log('analizar-etiqueta:', e.message);
+  }
+  // Respaldo: el Worker viejo. No conoce los tipos nuevos ni devuelve ubicacion, pero
+  // lee la fecha, que es el dato por el que se saca la foto.
+  try{
+    const resp = await fetch(WORKER_ETIQUETA_VIEJO, {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ imageData:b64, mediaType:'image/jpeg' }),
+    });
+    const crudo = await resp.text();
+    console.log('worker viejo:', crudo);
+    return JSON.parse(crudo);
+  }catch(e){
+    console.log('worker viejo:', e.message);
+    return {};
+  }
+}
 
 function savePhoto(){
   const fecha=document.getElementById('p-fecha').value;
