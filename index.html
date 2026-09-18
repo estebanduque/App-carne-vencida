@@ -2112,9 +2112,10 @@ document.getElementById('photo-input').addEventListener('change', async function
 });
 
 // ---- Lectura de la etiqueta por foto ----
-// El slug que Supabase le asigne al desplegar analizar-etiqueta. Si te toca otro
-// (como paso con 'bright-worker' y 'super-responder'), cambialo aca.
-const FN_ETIQUETA = 'analizar-etiqueta';
+// El slug que Supabase le asigno al desplegar: se comio el guion de la carpeta
+// 'analizar-etiqueta'. Es el que va en la URL y no se puede renombrar, igual que
+// 'bright-worker' y 'super-responder'.
+const FN_ETIQUETA = 'analizaretiqueta';
 // El Cloudflare Worker que hacia esto antes. Queda de respaldo SOLO para que el
 // escaneo no se caiga entre que este codigo sale y la funcion nueva esta desplegada.
 // Una vez que veas 'analizar-etiqueta' andando, borra esta constante, la rama que la
