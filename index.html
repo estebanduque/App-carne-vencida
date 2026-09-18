@@ -2308,17 +2308,17 @@ async function borrarCronoSiEs(tipo){
 const GYM_TIMER_KEY = 'gym_timer';
 let gymTimer = { running:false, base:0, startTs:null };
 function pintarCronoGym(){
-  const txt = formatCrono(segundosCronoGym());
-  ['gym-crono-display','d-gym-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
-  const running = gymTimer.running;
-  ['gym-crono-start-btn','d-gym-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+  const el = document.getElementById('gym-crono-display');
+  if(el) el.textContent = formatCrono(segundosCronoGym());
+  const b = document.getElementById('gym-crono-start-btn');
+  if(b) b.textContent = gymTimer.running ? '⏸ Pausar' : '▶ Iniciar';
 }
 async function gymStartPause(){
   if(gymTimer.running){ await pausarCrono(); return; }
   // Si ya hay uno de gym en pausa se reanuda; si no, se arranca de cero.
   if(cronoEstado && cronoEstado.tipo === 'gym'){ await reanudarCrono(); }
   else if(!(await arrancarCrono('gym', '', ''))) return;
-  feedbackInicioCronoIds(['gym-crono-start-btn','d-gym-crono-start-btn']);
+  feedbackInicioCronoIds(['gym-crono-start-btn']);
 }
 async function gymStop(){
   const min = Math.round(segundosCronoGym()/60);
@@ -2557,10 +2557,8 @@ function getLentesData() {
 // El boton de descartar solo aparece si hay un par en uso: sin registro no hay nada
 // de que deshacerse.
 function mostrarBotonDescartarLentes(hay){
-  ['lentes-descartar-btn','d-lentes-descartar-btn'].forEach(id=>{
-    const b = document.getElementById(id);
-    if(b) b.style.display = hay ? '' : 'none';
-  });
+  const b = document.getElementById('lentes-descartar-btn');
+  if(b) b.style.display = hay ? '' : 'none';
 }
 // Tirar los lentes borra el registro: el contador queda en blanco hasta que estrenes
 // el proximo par. Es lo mismo que ve la app cuando nunca hubo lentes cargados.
@@ -3256,8 +3254,8 @@ function chipsHTML(activo, onclickName, lista, claro){
   }).join('');
 }
 function renderCronoChips(){
-  const html = chipsHTML(estudioTimer.tema, 'seleccionarTemaCrono');
-  ['crono-chips','d-crono-chips'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
+  const el = document.getElementById('crono-chips');
+  if(el) el.innerHTML = chipsHTML(estudioTimer.tema, 'seleccionarTemaCrono');
 }
 function renderModalChips(){ const el=document.getElementById('modal-chips'); if(el) el.innerHTML = chipsHTML(modalTema, 'seleccionarTemaModal'); }
 function puntosSugeridos(tema, subtema){
@@ -3293,10 +3291,10 @@ function formatCrono(seg){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
 }
 function pintarCrono(){
-  const txt = formatCrono(segundosCrono());
-  ['crono-display','d-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
-  const running = estudioTimer.running;
-  ['crono-start-btn','d-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+  const el = document.getElementById('crono-display');
+  if(el) el.textContent = formatCrono(segundosCrono());
+  const b = document.getElementById('crono-start-btn');
+  if(b) b.textContent = estudioTimer.running ? '⏸ Pausar' : '▶ Iniciar';
 }
 function leerSubtemaCrono(){
   const a = document.getElementById('crono-subtema');
@@ -3328,7 +3326,7 @@ async function estudioStartPause(){
     await etiquetarCrono('estudio', null, sub, pto);
     await reanudarCrono();
   } else if(!(await arrancarCrono('estudio', estudioTimer.tema, sub, pto))) return;
-  feedbackInicioCronoIds(['crono-start-btn','d-crono-start-btn']);
+  feedbackInicioCronoIds(['crono-start-btn']);
 }
 async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
   const sub = subtema==='General' ? '' : (subtema||'');
@@ -3352,7 +3350,7 @@ async function iniciarCronoEstudioDesdeSubtema(tema, subtema, btnEl, color){
   renderCronoChips();
   actualizarDatalist('subtemas-list', tema);
   actualizarDatalistPuntos('puntos-list', tema, sub);
-  ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=sub; });
+  const sel = document.getElementById('crono-subtema'); if(sel) sel.value = sub;
   const pel = document.getElementById('crono-punto'); if(pel) pel.value = '';
   feedbackInicioCrono(btnEl, color);
 }
@@ -3369,7 +3367,7 @@ async function estudioStop(){
   if(!(await liberarConflictosParaCrono(start, end, null))) return;
   await borrarCronoSiEs('estudio');
   selEstudio.subtema = ''; selEstudio.punto = ''; guardarSeleccionCrono();
-  ['crono-subtema','d-crono-subtema','crono-punto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['crono-subtema','crono-punto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   proyectarCrono();
   await saveEstudioItem({ tema, subtema, punto, minutos:min, created_at });
 }
@@ -3377,12 +3375,12 @@ async function estudioReset(){
   if(segundosCrono() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
   await borrarCronoSiEs('estudio');
   selEstudio.subtema = ''; selEstudio.punto = ''; guardarSeleccionCrono();
-  ['crono-subtema','d-crono-subtema','crono-punto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['crono-subtema','crono-punto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   proyectarCrono();
 }
 function restaurarEstudioTimer(){
   renderCronoChips();
-  if(estudioTimer.subtema){ ['crono-subtema','d-crono-subtema'].forEach(id=>{ const el=document.getElementById(id); if(el && !el.value) el.value = estudioTimer.subtema; }); }
+  if(estudioTimer.subtema){ const el=document.getElementById('crono-subtema'); if(el && !el.value) el.value = estudioTimer.subtema; }
   if(estudioTimer.tema) actualizarDatalist('subtemas-list', estudioTimer.tema);
   pintarCrono();
 }
@@ -4049,14 +4047,13 @@ function renderPerdidoFranja(){
   const hoyStr = fechaLocal(new Date());
   const mostrarFranja = TIEMPO_PERDIDO_HABILITADO && hoyStr >= TIEMPO_PERDIDO_DESDE;
   const mostrar7d = TIEMPO_PERDIDO_HABILITADO && hoyStr >= TIEMPO_PERDIDO_7D_DESDE;
-  ['tie-perdido-franja','d-tie-perdido-stats'].forEach(id=>{
-    const el = document.getElementById(id); if(el) el.style.display = mostrarFranja ? '' : 'none';
-  });
+  const franja = document.getElementById('tie-perdido-franja');
+  if(franja) franja.style.display = mostrarFranja ? '' : 'none';
   if(!mostrarFranja) return;
-  const pS = fmtHoras(minutosPerdidoSemana());
-  ['tie-perdido-semana-mobile','d-tie-perdido-semana'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = pS; });
-  const p7 = mostrar7d ? fmtHoras(minutosPerdido7Dias()) : '—';
-  ['tie-perdido-7d-mobile','d-tie-perdido-7d'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = p7; });
+  const elSem = document.getElementById('tie-perdido-semana-mobile');
+  if(elSem) elSem.textContent = fmtHoras(minutosPerdidoSemana());
+  const el7 = document.getElementById('tie-perdido-7d-mobile');
+  if(el7) el7.textContent = mostrar7d ? fmtHoras(minutosPerdido7Dias()) : '—';
 }
 // claveSem: lunes 'YYYY-MM-DD' para acotar a una semana; sin ella suma todo el histórico.
 function statsCategoria(nombre, clavePer){
@@ -4083,7 +4080,8 @@ function subcategoriasDe(categoria){
 // ---- Chips y datalists ----
 function renderCronoChipsTiempo(){
   const html = chipsHTML(tiempoTimer.categoria, 'seleccionarCategoriaCrono', CATEGORIAS_TIEMPO, true);
-  ['tiempo-crono-chips','d-tiempo-crono-chips'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
+  const el = document.getElementById('tiempo-crono-chips');
+  if(el) el.innerHTML = html;
 }
 function renderModalChipsTiempo(){ const el=document.getElementById('modal-tiempo-chips'); if(el) el.innerHTML = chipsHTML(modalCategoria, 'seleccionarCategoriaModal', CATEGORIAS_TIEMPO, true); }
 function actualizarDatalistTiempo(id, categoria){
@@ -4096,10 +4094,10 @@ const TIEMPO_TIMER_KEY = 'tiempo_timer';
 let tiempoTimer = { running:false, base:0, startTs:null, categoria:'', subcategoria:'' };
 
 function pintarCronoTiempo(){
-  const txt = formatCrono(segundosCronoTiempo());
-  ['tiempo-crono-display','d-tiempo-crono-display'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = txt; });
-  const running = tiempoTimer.running;
-  ['tiempo-crono-start-btn','d-tiempo-crono-start-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = running ? '⏸ Pausar' : '▶ Iniciar'; });
+  const el = document.getElementById('tiempo-crono-display');
+  if(el) el.textContent = formatCrono(segundosCronoTiempo());
+  const b = document.getElementById('tiempo-crono-start-btn');
+  if(b) b.textContent = tiempoTimer.running ? '⏸ Pausar' : '▶ Iniciar';
 }
 function leerSubcatCrono(){
   const a = document.getElementById('tiempo-crono-subcat');
@@ -4125,7 +4123,7 @@ async function tiempoStartPause(){
     await etiquetarCrono('tiempo', null, sub);
     await reanudarCrono();
   } else if(!(await arrancarCrono('tiempo', tiempoTimer.categoria, sub))) return;
-  feedbackInicioCronoIds(['tiempo-crono-start-btn','d-tiempo-crono-start-btn']);
+  feedbackInicioCronoIds(['tiempo-crono-start-btn']);
 }
 async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
   const sc = subcategoria==='General' ? '' : subcategoria;
@@ -4149,7 +4147,7 @@ async function iniciarCronoDesdeSubcat(categoria, subcategoria, btnEl, color){
   if(!(await arrancarCrono('tiempo', categoria, sc))) return;
   renderCronoChipsTiempo();
   actualizarDatalistTiempo('subcats-list', categoria);
-  ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = sc; });
+  const elSub = document.getElementById('tiempo-crono-subcat'); if(elSub) elSub.value = sc;
   feedbackInicioCrono(btnEl, color);
 }
 async function tiempoStop(){
@@ -4164,7 +4162,7 @@ async function tiempoStop(){
      !(await liberarConflictosParaCrono(start, end, null))) return;
   await borrarCronoSiEs('tiempo');
   selTiempo.subcategoria = ''; guardarSeleccionCrono();
-  ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const elSub = document.getElementById('tiempo-crono-subcat'); if(elSub) elSub.value = '';
   proyectarCrono();
   await saveTiempoItem({ categoria, subcategoria, minutos:min, created_at });
 }
@@ -4172,12 +4170,12 @@ async function tiempoReset(){
   if(segundosCronoTiempo() > 0 && !confirm('¿Descartar el tiempo del cronómetro?')) return;
   await borrarCronoSiEs('tiempo');
   selTiempo.subcategoria = ''; guardarSeleccionCrono();
-  ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const elSub = document.getElementById('tiempo-crono-subcat'); if(elSub) elSub.value = '';
   proyectarCrono();
 }
 function restaurarTiempoTimer(){
   renderCronoChipsTiempo();
-  if(tiempoTimer.subcategoria){ ['tiempo-crono-subcat','d-tiempo-crono-subcat'].forEach(id=>{ const el=document.getElementById(id); if(el && !el.value) el.value = tiempoTimer.subcategoria; }); }
+  if(tiempoTimer.subcategoria){ const el=document.getElementById('tiempo-crono-subcat'); if(el && !el.value) el.value = tiempoTimer.subcategoria; }
   if(tiempoTimer.categoria) actualizarDatalistTiempo('subcats-list', tiempoTimer.categoria);
   pintarCronoTiempo();
 }
@@ -4722,19 +4720,18 @@ function hayCronoEnCurso(){
 }
 function refrescarGrid(){
   renderGridSemana('tie-grid-semana');
-  renderGridSemana('d-tie-grid-semana');
 }
 function toggleFiltroGrid(nombre){
   filtroGridCategoria = (filtroGridCategoria===nombre) ? null : nombre;
   cerrarPopoverGrid();
-  renderGridSemana('tie-grid-semana'); renderGridSemana('d-tie-grid-semana');
-  renderLegendSemana('tie-grid-legend'); renderLegendSemana('d-tie-grid-legend');
+  renderGridSemana('tie-grid-semana');
+  renderLegendSemana('tie-grid-legend');
 }
 function cambiarZoomGrid(delta){
   const idx = GRID_ZOOM_NIVELES.indexOf(gridZoom);
   const nuevo = Math.max(0, Math.min(GRID_ZOOM_NIVELES.length-1, idx+delta));
   gridZoom = GRID_ZOOM_NIVELES[nuevo];
-  renderGridSemana('tie-grid-semana'); renderGridSemana('d-tie-grid-semana');
+  renderGridSemana('tie-grid-semana');
 }
 // No pueden existir 2 actividades en paralelo: cada minuto del día tiene un único dueño.
 // Si dos actividades se disputan un minuto, gana la que ocupó más segundos de ese minuto;
@@ -4839,8 +4836,8 @@ function renderGridSemana(containerId){
   }
   svg += '</svg>';
   cont.innerHTML = svg;
-  const zoomTxt = Math.round(gridZoom*100)+'%';
-  ['tie-grid-zoom-lbl','d-tie-grid-zoom-lbl'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = zoomTxt; });
+  const lbl = document.getElementById('tie-grid-zoom-lbl');
+  if(lbl) lbl.textContent = Math.round(gridZoom*100)+'%';
 }
 function renderLegendSemana(containerId){
   const cont = document.getElementById(containerId); if(!cont) return;
@@ -5517,7 +5514,6 @@ const TAREAS_KEY = 'tareas_lista';
 const TAREAS_SEEDED_KEY = 'tareas_seeded_v1';
 const TAREAS_MOSTRAR_HECHAS_KEY = 'tareas_mostrar_hechas';
 const TAREAS_RECUR_KEY = 'tareas_recurrentes';
-const TAREAS_RECUR_SEEDED_KEY = 'tareas_recur_seeded_v1';
 const TAREAS_NOTIF_CACHE_KEY = 'tareas_notif_cache';
 const URGENCIA_LBL = { 1:'🔴 Urgente', 2:'🟠 Alta', 3:'🟡 Media', 4:'🔵 Baja' };
 const URGENCIA_COLOR = { 1:'#E24B4A', 2:'#E5883F', 3:'#FAC775', 4:'#7BC8F0' };
@@ -5815,8 +5811,6 @@ function renderTareas(){
   const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   setTxt('stat-tar-pend', pendientes.length);
   setTxt('stat-tar-urg', urg);
-  setTxt('d-stat-tar-pend', pendientes.length);
-  setTxt('d-stat-tar-urg', urg);
 
   if(typeof renderOverdueBanner === 'function') renderOverdueBanner();
 
@@ -6137,36 +6131,77 @@ function guardarInterpretadoTar(){
 }
 
 // ===== Tareas recurrentes (limpieza cada 15 días, plantas cada 4) =====
+// Las plantillas viven en la base, igual que las tareas que generan. Lo importante
+// de que esten alla es 'ultimaGeneracion': mientras fue local, dos dispositivos no
+// sabian que el otro acababa de generar la limpieza y la creaban dos veces.
+// localStorage queda de respaldo, como en el resto del modulo.
 let tareasRecur = [];
-function cargarTareasRecur(){
+let tareasRecurListas = false;
+
+function recurDeLocal(){
   try{
     const raw = localStorage.getItem(TAREAS_RECUR_KEY);
-    tareasRecur = raw ? JSON.parse(raw) : [];
-    if(!Array.isArray(tareasRecur)) tareasRecur = [];
-  }catch(e){ tareasRecur = []; }
-  if(!localStorage.getItem(TAREAS_RECUR_SEEDED_KEY)){
-    // La primera vez la ultimaGeneracion se pone a 0 para que la próxima corrida
-    // cree una tarea de cada plantilla enseguida. Así el usuario ve el módulo activo
-    // desde el primer día sin esperar 15 días.
-    tareasRecur = TAREAS_RECUR_SEMILLA.map(p => ({ ...p, ultimaGeneracion: 0, activa: true }));
-    localStorage.setItem(TAREAS_RECUR_SEEDED_KEY, '1');
+    const l = raw ? JSON.parse(raw) : [];
+    return Array.isArray(l) ? l : [];
+  }catch(e){ return []; }
+}
+function filaDeRecur(p){
+  return { key:p.key, texto:p.texto, urgencia:p.urgencia, intervalo_dias:p.intervaloDias,
+           ico:p.ico || null, ultima_generacion:p.ultimaGeneracion || 0, activa:p.activa !== false };
+}
+function recurDeFila(f){
+  return { key:f.key, texto:f.texto, urgencia:Number(f.urgencia) || 3,
+           intervaloDias:Number(f.intervalo_dias) || 1, ico:f.ico || '',
+           ultimaGeneracion:Number(f.ultima_generacion) || 0, activa:f.activa !== false };
+}
+// Plantillas que estan en el codigo y todavia no en la lista. ultimaGeneracion 0 hace
+// que la proxima corrida genere una enseguida, en vez de esperar el intervalo entero.
+function recurFaltantes(lista){
+  const claves = new Set(lista.map(x => x.key));
+  return TAREAS_RECUR_SEMILLA.filter(p => !claves.has(p.key))
+                             .map(p => ({ ...p, ultimaGeneracion: 0, activa: true }));
+}
+
+async function cargarTareasRecur(){
+  const {data, error} = await sb.from('tareas_recurrentes').select('*');
+  if(error){
+    // Sin tabla o sin permisos: se sigue con lo del dispositivo. El aviso lo da
+    // cargarTareas() una vez al dia; dos ventanas por lo mismo seria de mas.
+    console.log('tareas_recurrentes:', error.code, error.message);
+    tareasRecur = recurDeLocal();
+    if(!tareasRecur.length) tareasRecur = recurFaltantes([]);
+    else tareasRecur = tareasRecur.concat(recurFaltantes(tareasRecur));
+    guardarTareasRecurLocal();
+    return;
+  }
+
+  // La base manda. Lo local solo se mira si la tabla esta vacia: lo que un
+  // dispositivo apago o genero no puede resucitar desde el cache de otro.
+  tareasRecur = (data || []).map(recurDeFila);
+  if(!tareasRecur.length) tareasRecur = recurDeLocal();
+
+  const nuevas = recurFaltantes(tareasRecur);
+  tareasRecurListas = true;
+  if(nuevas.length || !data.length){
+    tareasRecur = tareasRecur.concat(nuevas);
     guardarTareasRecur();
   } else {
-    // Si aparecieron plantillas nuevas en el código, se agregan; las existentes se
-    // dejan como están (respeta si el usuario las apagó o cambió).
-    const claves = new Set(tareasRecur.map(x => x.key));
-    let cambio = false;
-    for(const p of TAREAS_RECUR_SEMILLA){
-      if(!claves.has(p.key)){
-        tareasRecur.push({ ...p, ultimaGeneracion: 0, activa: true });
-        cambio = true;
-      }
-    }
-    if(cambio) guardarTareasRecur();
+    guardarTareasRecurLocal();
   }
 }
-function guardarTareasRecur(){
+
+function guardarTareasRecurLocal(){
   try{ localStorage.setItem(TAREAS_RECUR_KEY, JSON.stringify(tareasRecur)); }catch(e){}
+}
+function guardarTareasRecur(){
+  guardarTareasRecurLocal();
+  if(!tareasRecurListas) return;
+  sincronizarTareasRecur();
+}
+async function sincronizarTareasRecur(){
+  if(!tareasRecur.length) return;
+  const {error} = await sb.from('tareas_recurrentes').upsert(tareasRecur.map(filaDeRecur));
+  if(error) console.log('tareas_recurrentes upsert:', error.code, error.message);
 }
 function ultimaTareaDePlantilla(key){
   const list = tareas.filter(t => t.templateKey === key).sort((a,b) => (b.created||0) - (a.created||0));
@@ -6254,7 +6289,12 @@ async function notificarTareasAtrasadas(){
   guardarNotifCache(limpio);
 }
 // Punto de entrada que llama la app: regenera, refresca la UI y notifica si hace falta.
-function revisarTareasRecurrentes(){
+// Antes de decidir se relee la base, porque 'ultimaGeneracion' pudo haberla movido otro
+// dispositivo hace un rato. Ese es justo el dato que evita generar dos veces la misma
+// limpieza: aunque la lista de tareas de aca este vieja y no vea la que creo el otro,
+// la fecha de generacion si llega y frena la segunda.
+async function revisarTareasRecurrentes(){
+  await cargarTareasRecur();
   regenerarTareasRecurrentes();
   renderTareas();
   notificarTareasAtrasadas();
@@ -6267,8 +6307,8 @@ loadLugares();
 loadEstudio();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
-// pendiente' seria mentira y se crearia una limpieza duplicada en cada dispositivo.
-cargarTareasRecur();
+// pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las
+// carga revisarTareasRecurrentes por su cuenta, cada vez que corre.
 cargarTareas().then(revisarTareasRecurrentes);
 // Revisa cada hora mientras la app esté abierta, y en cada vuelta a la app (visibilitychange).
 setInterval(revisarTareasRecurrentes, 60 * 60 * 1000);
