@@ -599,6 +599,53 @@
     .peso-fila-kcal { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.45); }
     .peso-nota { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.45; margin-top: 8px; }
 
+    /* Diario de comidas */
+    .peso-kcal-barra { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 9px; }
+    .peso-kcal-relleno { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+    .peso-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+    .peso-chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 7px 11px; font-size: 12px; color: rgba(255,255,255,0.6); font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .peso-chip:active { background: rgba(139,195,74,0.2); border-color: rgba(139,195,74,0.5); color: #C7E58A; }
+    .peso-acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .peso-cargando { font-size: 12px; color: #C7E58A; margin-top: 10px; }
+    .peso-prev-row { display: grid; grid-template-columns: 1fr 76px 26px; gap: 8px; align-items: end; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .peso-prev-row:last-child { border-bottom: none; }
+    .peso-prev-row label { font-size: 10px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 4px; }
+    .peso-prev-row input { width: 100%; padding: 9px 10px; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); border-radius: 9px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .peso-prev-x { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 16px; cursor: pointer; padding: 0 0 10px; font-family: inherit; }
+
+    /* Ejercicio: resumen, progreso y bici */
+    .gym-resumen { margin: 0 16px 12px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; overflow: hidden; }
+    .gym-res-item { flex: 1; text-align: center; padding: 14px 6px; min-width: 0; }
+    .gym-res-num { font-size: 22px; font-weight: 700; line-height: 1; }
+    .gym-res-lbl { font-size: 11px; margin-top: 6px; color: rgba(255,255,255,0.4); line-height: 1.25; }
+    .gym-prog { margin: 0 16px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 2px 14px; }
+    .gym-prog-fila { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .gym-prog-fila:last-child { border-bottom: none; }
+    .gym-prog-info { flex: 1; min-width: 0; }
+    .gym-prog-nombre { font-size: 14px; font-weight: 600; color: #fff; }
+    .gym-prog-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+    .gym-prog-delta { font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+
+    /* Bici: se usa con una mano y en la calle, asi que el reloj y los botones son
+       lo mas grande del modulo. */
+    .bici-box { margin: 0 16px 12px; background: rgba(26,122,181,0.10); border: 1px solid rgba(26,122,181,0.30); border-radius: 16px; padding: 16px 14px; text-align: center; }
+    .bici-display { font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: 1px; color: #8FCBF2; font-variant-numeric: tabular-nums; }
+    .bici-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 7px; line-height: 1.35; }
+    .bici-chips { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+    .bici-chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 6px 12px; font-size: 12px; color: rgba(255,255,255,0.55); font-family: inherit; cursor: pointer; }
+    .bici-chip.on { background: rgba(26,122,181,0.28); border-color: rgba(26,122,181,0.6); color: #8FCBF2; font-weight: 600; }
+    .bici-km { width: 100%; padding: 12px; margin-top: 12px; font-size: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.15); border-radius: 11px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .bici-btns { display: grid; gap: 9px; margin-top: 12px; }
+    .bici-btn { width: 100%; padding: 17px; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; color: #fff; }
+    .bici-btn.go { background: #1a7ab5; }
+    .bici-btn.go:active { background: #145E8C; }
+    .bici-btn.stop { background: #E24B4A; }
+    .bici-btn.stop:active { background: #B03A39; }
+    .bici-btn.ghost { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600; padding: 12px; }
+    .bici-lista { margin-top: 14px; text-align: left; }
+    .bici-fila { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.07); font-size: 12px; color: rgba(255,255,255,0.5); }
+    .bici-fila-dur { font-size: 13px; font-weight: 600; color: #fff; }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -675,6 +722,7 @@
           </div>
         </div>
         <div id="gym-ultimo-mobile" style="font-size:11px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,0.3);"></div>
+        <div class="gym-resumen" id="gym-resumen"></div>
         <div class="crono-box" style="background:rgba(224,90,20,0.08);border-color:rgba(224,90,20,0.22);">
           <div class="crono-display" id="gym-crono-display">00:00:00</div>
           <div class="crono-btns">
@@ -684,9 +732,13 @@
           </div>
           <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">Se registra en Mi Tiempo → Deporte</div>
         </div>
+        <p class="inner-title">Bici · transporte</p>
+        <div class="bici-box" id="bici-box"></div>
         <p class="inner-title">Últimas sesiones</p>
         <div id="gym-groups-list"></div>
         <button id="gym-ver-mas-btn" onclick="toggleVerMasGym()" style="display:none;width:100%;margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;font-size:13px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;">Ver todas las sesiones</button>
+        <p class="inner-title">Progreso por ejercicio</p>
+        <div class="gym-prog" id="gym-progreso"></div>
         <div class="gym-add-row">
           <button class="gym-add-full" onclick="openGymModal()">+ Registrar ejercicio</button>
         </div>
@@ -730,7 +782,7 @@
           <div class="peso-form">
             <div style="grid-column:span 2;">
               <label for="peso-fecha">Fecha</label>
-              <input type="date" id="peso-fecha" onchange="prefillPeso()">
+              <input type="date" id="peso-fecha" onchange="renderPeso()">
             </div>
             <div>
               <label for="peso-kg">Peso (kg)</label>
@@ -744,6 +796,10 @@
           <button class="peso-btn" style="margin-top:11px;" onclick="guardarPesoDia()">Guardar el día</button>
           <div class="peso-nota">Una fila por fecha: si te volvés a pesar hoy, se corrige la de hoy.</div>
         </div>
+        <p class="inner-title">Comida del día</p>
+        <div class="peso-card" id="peso-comida"></div>
+        <input type="file" id="peso-foto-input" accept="image/*" capture="environment"
+               style="display:none;" onchange="fotoComidaElegida(this)">
         <p class="inner-title">Meta</p>
         <div class="peso-card" id="peso-meta"></div>
         <p class="inner-title">Últimos registros</p>
@@ -1134,6 +1190,7 @@
     <div id="g-campos-cardio" style="display:none;">
       <div class="form-row"><label>Actividad</label><input type="text" id="g-actividad" placeholder="Ej: Correr, Bicicleta, Elíptica…"></div>
       <div class="form-row"><label>Tiempo (minutos)</label><input type="number" id="g-tiempo" placeholder="30" min="1"></div>
+      <div class="form-row"><label>Distancia (km, opcional)</label><input type="number" id="g-distancia" placeholder="5" min="0" step="0.1"></div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
@@ -1199,6 +1256,24 @@
 </div>
 
 <!-- Modal ropa -->
+<div class="modal-overlay" id="modal-comida">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🍽️ Lo que comiste</h2>
+    <div class="peso-nota" id="peso-prev-nota" style="margin:0 0 10px;"></div>
+    <div id="peso-prev-lista"></div>
+    <button class="peso-btn ghost" style="margin-top:10px;" onclick="agregarFilaPropuesta()">+ Agregar otro</button>
+    <div class="peso-dato" style="margin-top:12px;">
+      <span class="peso-dato-lbl">Total</span>
+      <span class="peso-dato-val" id="peso-prev-total">0 kcal</span>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" style="background:#7CB342;" onclick="guardarComidas()">Guardar en el día</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-ropa">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1320,6 +1395,11 @@ let gymEditId = null;
 let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
+// Bici de transporte. 'biciInicio' es el timestamp del arranque (el mismo que vive en
+// localStorage) y 'biciTick' el intervalo que refresca el display.
+let biciRows = [];
+let biciInicio = null;
+let biciTick = null;
 
 // Mi Peso: las pesadas y la config viven en la base, y la pantalla se dibuja siempre
 // con lo que ella devuelve. Se declaran aca arriba, con el resto del estado, porque
@@ -1327,6 +1407,10 @@ let openMenus = new Set();
 let pesoRows = [];
 let pesoConfig = null;
 let pesoAvisoOculto = false;   // el "ahora no" del aviso dura hasta recargar la app
+// El diario de comidas: de aca salen las kcal de cada dia.
+let pesoComidas = [];
+let pesoAlimentos = [];
+let pesoPropuesta = [];        // lo que la IA propuso y todavia no se guardo
 
 // ===== MI DLC (antes "Mis Carnes") =====
 // El modulo lleva ahora la despensa entera, no solo lo que va al frigorifico. La tabla
@@ -1379,13 +1463,31 @@ async function deleteItem(id) {
 // ===== GYM =====
 async function loadGym() {
   const {data,error} = await sb.from('gym').select('*').order('created_at');
-  if(!error) { gymItems = data || []; openGroups.clear(); renderGym(); renderDesktop(); }
+  if(!error) { gymItems = data || []; openGroups.clear(); renderGym(); renderDesktop(); renderPeso(); }
+}
+// Las dos columnas nuevas (distancia y gasto estimado) son de setup-ejercicio.sql. Si
+// esa migracion todavia no corrio, el ejercicio se guarda igual y lo unico que falta
+// es el dato informativo: perder el registro por eso seria mucho peor.
+function filaGym(item){
+  return { grupo:item.grupo, maquina:item.maquina, series:item.series, reps:item.reps,
+           peso:item.peso, tiempo:item.tiempo,
+           distancia_km: item.distancia_km != null ? item.distancia_km : null,
+           kcal_est:     item.kcal_est     != null ? item.kcal_est     : null };
+}
+function sinColumnasNuevas(fila){
+  const g = Object.assign({}, fila);
+  delete g.distancia_km; delete g.kcal_est;
+  return g;
+}
+function esErrorColumnaGym(error){
+  return !!error && /distancia_km|kcal_est/i.test((error.message || '') + (error.details || ''));
 }
 async function saveGymItem(item) {
-  console.log('Enviando a gym:', JSON.stringify(item));
-  const {data,error} = await sb.from('gym').insert([{grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso,tiempo:item.tiempo}]).select();
-  console.log('Respuesta gym:', JSON.stringify({data,error}));
-  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); }
+  const fila = filaGym(item);
+  let {data,error} = await sb.from('gym').insert([fila]).select();
+  if(esErrorColumnaGym(error)) ({data,error} = await sb.from('gym').insert([sinColumnasNuevas(fila)]).select());
+  if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); renderPeso(); }
+  else if(error) alert('No se pudo registrar: ' + (error.message || 'revisá la conexión'));
 }
 async function deleteGymItem(id) {
   await sb.from('gym').delete().eq('id',id);
@@ -1597,6 +1699,11 @@ function toggleVerMasGym() {
 function toggleMes(m){if(openMeses.has(m))openMeses.delete(m);else openMeses.add(m);renderGym();}
 
 function renderGym(){
+  // Lo nuevo se dibuja antes que nada: mas abajo hay un return temprano cuando no hay
+  // ejercicios cargados, y el cronometro de la bici tiene que verse igual.
+  renderEjercicioResumen();
+  renderBici();
+  renderProgresoFuerza();
   // Contador días sin ir - móvil
   const hoyM = new Date(); hoyM.setHours(0,0,0,0);
   const diasNumM = document.getElementById('gym-dias-num-mobile');
@@ -1754,7 +1861,11 @@ async function repetirGym(id){
   const ex = gymItems.find(i=>i.id===id);
   if(!ex) return;
   if(!confirm('¿Registrar "'+ex.maquina+'" de nuevo hoy?')) return;
-  const {data,error} = await sb.from('gym').insert([{grupo:ex.grupo,maquina:ex.maquina,series:ex.series,reps:ex.reps,peso:ex.peso,tiempo:ex.tiempo}]).select();
+  const fila = filaGym({ grupo:ex.grupo, maquina:ex.maquina, series:ex.series, reps:ex.reps,
+    peso:ex.peso, tiempo:ex.tiempo, distancia_km:ex.distancia_km,
+    kcal_est: ex.grupo === 'Cardio' ? kcalPorMet(metDeActividad(ex.maquina), ex.tiempo) : null });
+  let {data,error} = await sb.from('gym').insert([fila]).select();
+  if(esErrorColumnaGym(error)) ({data,error} = await sb.from('gym').insert([sinColumnasNuevas(fila)]).select());
   if(!error && data){
     gymItems.push(data[0]);
     if(data[0].created_at) openGroups.add(diaLocalDe(data[0].created_at));
@@ -2150,6 +2261,7 @@ function openGymModal(){
   document.getElementById('g-maquina').value='';document.getElementById('g-series').value='';
   document.getElementById('g-reps').value='';document.getElementById('g-peso').value='';
   document.getElementById('g-actividad').value='';document.getElementById('g-tiempo').value='';
+  document.getElementById('g-distancia').value='';
   document.getElementById('g-grupo').value='Pecho';toggleCamposGym('Pecho');
 }
 function editarGym(id){
@@ -2163,6 +2275,7 @@ function editarGym(id){
   if(ex.grupo === 'Cardio'){
     document.getElementById('g-actividad').value = ex.maquina || '';
     document.getElementById('g-tiempo').value = ex.tiempo != null ? ex.tiempo : '';
+    document.getElementById('g-distancia').value = ex.distancia_km != null ? ex.distancia_km : '';
   } else {
     document.getElementById('g-maquina').value = ex.maquina || '';
     document.getElementById('g-series').value = ex.series != null ? ex.series : '';
@@ -2277,14 +2390,21 @@ function saveGym(){
     const actividad = document.getElementById('g-actividad').value.trim();
     const tiempo = document.getElementById('g-tiempo').value;
     if(!actividad||!tiempo){alert('Faltan datos');return;}
-    item = {grupo, maquina:actividad, series:null, reps:null, peso:null, tiempo:parseInt(tiempo)};
+    const distTxt = document.getElementById('g-distancia').value.trim().replace(',', '.');
+    const dist = distTxt === '' ? null : parseFloat(distTxt);
+    if(distTxt !== '' && !(dist >= 0)){ alert('Esos km no se entienden.'); return; }
+    // El gasto se estima al guardar, con el peso que tenes hoy. Es informativo: no
+    // entra en el deficit ni en la recalibracion de Mi Peso (Modelo A).
+    item = {grupo, maquina:actividad, series:null, reps:null, peso:null, tiempo:parseInt(tiempo),
+            distancia_km:dist, kcal_est:kcalPorMet(metDeActividad(actividad), parseInt(tiempo))};
   } else {
     const maquina=document.getElementById('g-maquina').value.trim();
     const series=document.getElementById('g-series').value;
     const reps=document.getElementById('g-reps').value;
     if(!maquina||!series||!reps){alert('Faltan datos');return;}
     const pesoVal = document.getElementById('g-peso').value;
-    item = {grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null};
+    // Fuerza no lleva kcal estimadas a proposito: lo que se mide aca es el tonelaje.
+    item = {grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null,distancia_km:null,kcal_est:null};
   }
   if(gymEditId){
     updateGymItem(gymEditId, item);
@@ -2295,11 +2415,13 @@ function saveGym(){
 }
 
 async function updateGymItem(id, item){
-  const {data,error} = await sb.from('gym').update({grupo:item.grupo,maquina:item.maquina,series:item.series,reps:item.reps,peso:item.peso,tiempo:item.tiempo}).eq('id',id).select();
+  const fila = filaGym(item);
+  let {data,error} = await sb.from('gym').update(fila).eq('id',id).select();
+  if(esErrorColumnaGym(error)) ({data,error} = await sb.from('gym').update(sinColumnasNuevas(fila)).eq('id',id).select());
   if(!error && data && data[0]){
     const idx = gymItems.findIndex(i=>i.id===id);
     if(idx!==-1) gymItems[idx] = data[0];
-    renderGym(); renderDesktop();
+    renderGym(); renderDesktop(); renderPeso();
   } else {
     alert('No se pudo actualizar. Intenta de nuevo.');
   }
@@ -6569,6 +6691,290 @@ async function revisarTareasRecurrentes(){
   notificarRecordatorios();
 }
 
+// ===== EJERCICIO: TONELAJE, CARDIO Y BICI =====
+// Modelo A (empirico). El gasto por ejercicio es INFORMATIVO: no se suma ni se resta
+// en ningun calculo de Mi Peso. La recalibracion de TDEE ya mide el gasto real por lo
+// que hace la balanza, y ahi dentro ya esta lo que gastaste entrenando; sumarlo
+// aparte seria contarlo dos veces y bajar la ingesta objetivo sin motivo.
+//
+// No hay tablas 'fuerza' ni 'cardio': 'gym' ya guarda las dos cosas. El tonelaje
+// tampoco se guarda, se calcula al dibujar; un total guardado se queda viejo en
+// cuanto se corrige una serie.
+
+const MET_BICI_TRANQUILA = 4.0;
+const MET_BICI_MODERADA  = 6.0;
+const MET_CORRER         = 9.8;
+const MET_MAQUINA        = 7.0;   // eliptica, remo y cardio de sala en general
+const PESO_FALLBACK_MET  = 94;    // hasta que haya una pesada cargada en Mi Peso
+
+// El peso que entra en la formula es el promedio de 7 dias de Mi Peso: el mismo numero
+// que manda en aquel modulo, no la pesada suelta del dia. El try/catch es por el orden
+// del archivo: este bloque se evalua antes que el de Mi Peso, y si algo se llamara
+// demasiado pronto vale mas devolver el fallback que romper el modulo entero.
+function pesoParaMet(){
+  try{
+    const p = pesoPromedio7d(pesoUltimaFecha());
+    return (p != null && p > 0) ? p : PESO_FALLBACK_MET;
+  }catch(e){ return PESO_FALLBACK_MET; }
+}
+// kcal = MET × peso × horas
+function kcalPorMet(met, minutos){
+  const h = (Number(minutos) || 0) / 60;
+  return Math.round(met * pesoParaMet() * h);
+}
+// El MET sale de lo que escribiste como actividad. Lo que no se reconoce se cobra como
+// maquina de sala, que es el termino medio de lo que hay en un gimnasio.
+function metDeActividad(texto){
+  const t = (texto || '').toLowerCase();
+  if(/corr|runn|trot|footing/.test(t)) return MET_CORRER;
+  if(/bici|ciclis|spinning|velo/.test(t)) return MET_BICI_MODERADA;
+  return MET_MAQUINA;
+}
+
+// ---- Fuerza: tonelaje ----
+// Tonelaje = Σ(peso × series × reps). Es la forma mas simple de ver sobrecarga
+// progresiva: si sube semana a semana estas moviendo mas trabajo, aunque el peso de
+// la barra sea el mismo. El cardio no entra: no hay peso que multiplicar.
+function tonelajeDe(exs){
+  return (exs || [])
+    .filter(e => e.grupo !== 'Cardio')
+    .reduce((a, e) => a + (Number(e.peso) || 0) * (Number(e.series) || 0) * (Number(e.reps) || 0), 0);
+}
+function gymDelDia(fecha){ return gymItems.filter(i => diaLocalDe(i.created_at) === fecha); }
+function fmtTonelaje(kg){
+  if(!kg) return '0';
+  return kg >= 1000 ? (kg / 1000).toFixed(1).replace('.', ',') + ' t' : Math.round(kg) + ' kg';
+}
+
+// ---- Gasto estimado del dia (informativo) ----
+// Cardio + bici. Si la columna kcal_est todavia no existe en 'gym', se calcula al
+// vuelo con la misma formula para no mostrar un cero que parece un dato.
+function gastoEjercicioDia(fecha){
+  const cardio = gymDelDia(fecha)
+    .filter(e => e.grupo === 'Cardio')
+    .reduce((a, e) => a + (e.kcal_est != null ? Number(e.kcal_est)
+                                              : kcalPorMet(metDeActividad(e.maquina), e.tiempo)), 0);
+  const rodado = biciRows
+    .filter(b => b.fecha === fecha)
+    .reduce((a, b) => a + (b.kcal_est != null ? Number(b.kcal_est)
+                                              : kcalPorMet(MET_BICI_MODERADA, (b.duracion_seg || 0) / 60)), 0);
+  return Math.round(cardio + rodado);
+}
+
+// ---- Progreso por ejercicio ----
+// El ultimo entreno de cada ejercicio, su mejor marca y si el tonelaje subio o bajo
+// respecto de la vez anterior. Contesta "¿estoy progresando?" sin leer la lista de
+// sesiones entera. Se agrupa por dia porque un ejercicio puede registrarse en varias
+// filas el mismo dia (una por escalon de una piramide).
+function progresoFuerza(){
+  const porEj = {};
+  gymItems.filter(e => e.grupo !== 'Cardio' && e.maquina).forEach(e => {
+    const clave = e.maquina.trim().toLowerCase();
+    const fecha = diaLocalDe(e.created_at) || '';
+    if(!porEj[clave]) porEj[clave] = { nombre:e.maquina.trim(), grupo:e.grupo, dias:{}, mejor:0 };
+    const g = porEj[clave];
+    g.dias[fecha] = (g.dias[fecha] || 0) + tonelajeDe([e]);
+    const p = Number(e.peso) || 0;
+    if(p > g.mejor) g.mejor = p;
+  });
+  return Object.values(porEj).map(g => {
+    const fechas = Object.keys(g.dias).sort((a, b) => b.localeCompare(a));
+    return { nombre:g.nombre, grupo:g.grupo, mejor:g.mejor,
+             ultimo: fechas[0] ? g.dias[fechas[0]] : 0,
+             previo: fechas[1] ? g.dias[fechas[1]] : null,
+             fecha: fechas[0] || '', veces: fechas.length };
+  }).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 8);
+}
+
+function renderEjercicioResumen(){
+  const cont = document.getElementById('gym-resumen'); if(!cont) return;
+  const hoy   = fechaLocal(new Date());
+  const ton   = tonelajeDe(gymDelDia(hoy));
+  const gasto = gastoEjercicioDia(hoy);
+  cont.innerHTML =
+    '<div class="gym-res-item">' +
+      '<div class="gym-res-num" style="color:' + (ton ? '#E5883F' : 'rgba(255,255,255,0.5)') + ';">' +
+        fmtTonelaje(ton) + '</div>' +
+      '<div class="gym-res-lbl">tonelaje de hoy</div></div>' +
+    '<div style="width:1px;background:rgba(255,255,255,0.1);margin:12px 0;"></div>' +
+    '<div class="gym-res-item">' +
+      '<div class="gym-res-num" style="color:' + (gasto ? '#8FCBF2' : 'rgba(255,255,255,0.5)') + ';">' +
+        (gasto || '—') + '</div>' +
+      '<div class="gym-res-lbl">kcal estimadas hoy</div></div>';
+}
+function renderProgresoFuerza(){
+  const cont = document.getElementById('gym-progreso'); if(!cont) return;
+  const lista = progresoFuerza();
+  if(!lista.length){
+    cont.innerHTML = '<div class="empty-msg" style="padding:16px 0;">Todavía no hay ejercicios de fuerza registrados.</div>';
+    return;
+  }
+  cont.innerHTML = lista.map(p => {
+    let delta = '<span class="gym-prog-delta" style="color:rgba(255,255,255,0.3);">primera vez</span>';
+    if(p.previo != null && p.previo > 0){
+      const pct = Math.round((p.ultimo - p.previo) / p.previo * 100);
+      const color = pct > 0 ? '#5DCAA5' : pct < 0 ? '#F09595' : 'rgba(255,255,255,0.4)';
+      const flecha = pct > 0 ? '▲' : pct < 0 ? '▼' : '=';
+      delta = '<span class="gym-prog-delta" style="color:' + color + ';">' + flecha + ' ' +
+              (pct > 0 ? '+' : '') + pct + '%</span>';
+    }
+    const cuando = p.fecha ? pesoFechaCorta(p.fecha) : '';
+    return '<div class="gym-prog-fila">' +
+        '<div class="ex-num">' + (GYM_ICONS[p.grupo] || '⚡') + '</div>' +
+        '<div class="gym-prog-info">' +
+          '<div class="gym-prog-nombre">' + escHtmlAttr(p.nombre) + '</div>' +
+          '<div class="gym-prog-sub">' + fmtTonelaje(p.ultimo) + ' el ' + cuando +
+            (p.mejor ? ' · mejor marca ' + p.mejor + ' kg' : '') + '</div>' +
+        '</div>' + delta +
+      '</div>';
+  }).join('');
+}
+
+// ---- Bici: cronometro de transporte ----
+// El arranque vive en el navegador y no en la base, al reves que el cronometro de
+// Mi Tiempo. Es a proposito: un trayecto en bici se mide en el telefono que llevas
+// encima y lo que tiene que sobrevivir es que el sistema cierre la app a mitad de
+// camino, no que quieras verlo desde la computadora.
+const BICI_INICIO_KEY     = 'bici_inicio';
+const BICI_INTENSIDAD_KEY = 'bici_intensidad';
+
+async function loadBici(){
+  // Un mes de trayectos: alcanza para el resumen del dia y para la lista reciente.
+  const desde = pesoFechaMas(fechaLocal(new Date()), -29);
+  const { data, error } = await sb.from('bici').select('*').gte('fecha', desde)
+                                  .order('inicio', { ascending:false });
+  if(error){ console.log('bici:', error.code, error.message); biciRows = []; }
+  else biciRows = data || [];
+  renderBici();
+}
+function biciIntensidad(){
+  try{ return localStorage.getItem(BICI_INTENSIDAD_KEY) === 'tranquila' ? 'tranquila' : 'moderada'; }
+  catch(e){ return 'moderada'; }
+}
+function ponerBiciIntensidad(v){
+  try{ localStorage.setItem(BICI_INTENSIDAD_KEY, v); }catch(e){}
+  renderBici();
+}
+function metBici(){ return biciIntensidad() === 'tranquila' ? MET_BICI_TRANQUILA : MET_BICI_MODERADA; }
+
+function leerBiciInicio(){
+  try{
+    const t = Number(localStorage.getItem(BICI_INICIO_KEY));
+    return Number.isFinite(t) && t > 0 ? t : null;
+  }catch(e){ return null; }
+}
+function segundosBici(){ return biciInicio ? Math.max(0, Math.floor((Date.now() - biciInicio) / 1000)) : 0; }
+function latirBici(){
+  detenerLatidoBici();
+  biciTick = setInterval(()=>{
+    const d = document.getElementById('bici-display');
+    if(d) d.textContent = formatCrono(segundosBici());
+  }, 1000);
+}
+function detenerLatidoBici(){ if(biciTick){ clearInterval(biciTick); biciTick = null; } }
+// Al abrir la app (y al volver a ella) el reloj se rearma desde el timestamp guardado:
+// el tiempo lo lleva el reloj del sistema, no un contador que se muere con la pestaña.
+function restaurarBici(){
+  biciInicio = leerBiciInicio();
+  if(biciInicio) latirBici(); else detenerLatidoBici();
+  renderBici();
+}
+function arrancarBici(){
+  biciInicio = Date.now();
+  try{ localStorage.setItem(BICI_INICIO_KEY, String(biciInicio)); }catch(e){}
+  latirBici();
+  renderBici();
+}
+async function pararBici(){
+  if(!biciInicio) return;
+  const inicio = biciInicio, fin = Date.now();
+  const seg = Math.max(1, Math.round((fin - inicio) / 1000));
+  const el = document.getElementById('bici-km');
+  const kmTxt = el ? el.value.trim().replace(',', '.') : '';
+  const km = kmTxt === '' ? null : parseFloat(kmTxt);
+  if(kmTxt !== '' && !(km >= 0)){ alert('Esos km no se entienden.'); return; }
+  const fila = {
+    fecha: fechaLocal(new Date(inicio)),
+    inicio: new Date(inicio).toISOString(),
+    fin: new Date(fin).toISOString(),
+    duracion_seg: seg,
+    distancia_km: km,
+    kcal_est: kcalPorMet(metBici(), seg / 60),
+  };
+  const { error } = await sb.from('bici').insert([fila]);
+  if(error){
+    // El arranque NO se borra: sin fila guardada, borrarlo perderia el trayecto entero.
+    alert('No se pudo guardar el trayecto: ' + (error.message || 'revisá la conexión') +
+          '\n\nEl cronómetro sigue corriendo, no se pierde nada. Probá de nuevo.');
+    return;
+  }
+  biciInicio = null;
+  try{ localStorage.removeItem(BICI_INICIO_KEY); }catch(e){}
+  detenerLatidoBici();
+  if(el) el.value = '';
+  await loadBici();          // la lista y el gasto salen de lo que devolvio la base
+  renderEjercicioResumen();
+  renderPeso();              // el gasto estimado del dia cambio
+}
+function descartarBici(){
+  if(!biciInicio) return;
+  if(!confirm('¿Descartar este trayecto sin guardarlo?')) return;
+  biciInicio = null;
+  try{ localStorage.removeItem(BICI_INICIO_KEY); }catch(e){}
+  detenerLatidoBici();
+  renderBici();
+}
+function fmtDuracionBici(seg){
+  const m = Math.round((Number(seg) || 0) / 60);
+  if(m < 60) return m + ' min';
+  return Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+}
+function renderBici(){
+  const cont = document.getElementById('bici-box'); if(!cont) return;
+  const corriendo = !!biciInicio;
+  const hoy     = fechaLocal(new Date());
+  const delDia  = biciRows.filter(b => b.fecha === hoy);
+  const kmHoy   = delDia.reduce((a, b) => a + (Number(b.distancia_km) || 0), 0);
+  const kcalHoy = delDia.reduce((a, b) => a + (Number(b.kcal_est) || 0), 0);
+  const inten   = biciIntensidad();
+
+  const chips =
+    '<div class="bici-chips">' +
+      '<button class="bici-chip' + (inten === 'tranquila' ? ' on' : '') + '" onclick="ponerBiciIntensidad(\'tranquila\')">🚲 tranquila</button>' +
+      '<button class="bici-chip' + (inten === 'moderada' ? ' on' : '') + '" onclick="ponerBiciIntensidad(\'moderada\')">🚴 moderada</button>' +
+    '</div>';
+
+  const botones = corriendo
+    ? '<input type="number" class="bici-km" id="bici-km" inputmode="decimal" step="0.1" min="0" placeholder="km recorridos (opcional)">' +
+      '<div class="bici-btns">' +
+        '<button class="bici-btn stop" onclick="pararBici()">■ Llegué</button>' +
+        '<button class="bici-btn ghost" onclick="descartarBici()">Descartar</button>' +
+      '</div>'
+    : '<div class="bici-btns"><button class="bici-btn go" onclick="arrancarBici()">▶ Salgo en bici</button></div>';
+
+  const recientes = biciRows.slice(0, 4);
+  const lista = recientes.length
+    ? '<div class="bici-lista">' + recientes.map(b => '<div class="bici-fila">' +
+          '<span class="bici-fila-dur">' + fmtDuracionBici(b.duracion_seg) + '</span>' +
+          '<span>' + pesoFechaCorta(b.fecha) + '</span>' +
+          '<span style="margin-left:auto;">' +
+            (b.distancia_km != null ? Number(b.distancia_km) + ' km · ' : '') +
+            Math.round(Number(b.kcal_est) || 0) + ' kcal</span>' +
+        '</div>').join('') + '</div>'
+    : '';
+
+  cont.innerHTML =
+    '<div class="bici-display" id="bici-display">' + formatCrono(segundosBici()) + '</div>' +
+    '<div class="bici-sub">' + (corriendo
+        ? 'en camino · ' + Math.round(kcalPorMet(metBici(), segundosBici() / 60)) + ' kcal estimadas'
+        : (delDia.length
+            ? delDia.length + (delDia.length === 1 ? ' trayecto hoy · ' : ' trayectos hoy · ') +
+              (kmHoy ? Number(kmHoy.toFixed(1)) + ' km · ' : '') + Math.round(kcalHoy) + ' kcal'
+            : 'sin trayectos hoy')) + '</div>' +
+    chips + botones + lista +
+    '<div class="bici-sub" style="margin-top:12px;">El cronómetro sigue corriendo aunque cierres la app.</div>';
+}
+
 // ===== MI PESO =====
 // Una pesada por dia y, si se anotaron, las kcal de ese dia. Todo lo que se ve
 // —promedio, tendencia, recalibracion y fecha de meta— se calcula sobre las filas
@@ -6656,9 +7062,13 @@ function pesoRecalibracion(){
   const antes = pesoPromedio7d(pesoFechaMas(ref, -14));
   const ahora = pesoPromedio7d(ref);
   if(antes == null || ahora == null) return { ok:false, motivo:'faltan pesadas en alguna de las dos semanas que se comparan.' };
-  const desdeKcal = pesoFechaMas(ref, -13);
-  const kcal = pesoRows.filter(r => r.fecha >= desdeKcal && r.fecha <= ref && r.kcal_ingeridas != null)
-                       .map(r => Number(r.kcal_ingeridas));
+  // Un dia cuenta si se sabe cuanto se comio, sea por las comidas cargadas o por el
+  // numero que se escribio a mano antes de que existiera el diario.
+  const kcal = [];
+  for(let i = 0; i < 14; i++){
+    const v = pesoKcalDia(pesoFechaMas(ref, -i));
+    if(v != null) kcal.push(v);
+  }
   if(kcal.length < PESO_MIN_DIAS_KCAL){
     return { ok:false, motivo:'solo hay ' + kcal.length + (kcal.length === 1 ? ' día' : ' días') +
                               ' con kcal en las últimas 2 semanas; con menos de ' + PESO_MIN_DIAS_KCAL + ' la media no dice nada.' };
@@ -6707,6 +7117,7 @@ async function loadPeso(){
   const cfg = await sb.from('peso_config').select('*').eq('id', 1).maybeSingle();
   if(cfg.error) console.log('peso_config:', cfg.error.code, cfg.error.message);
   else pesoConfig = cfg.data || null;
+  await loadComidas();
   renderPeso(); renderDesktop();
 }
 // Upsert por fecha: volver a pesarse el mismo dia corrige esa fila, no agrega otra.
@@ -6719,8 +7130,12 @@ async function guardarPesoDia(){
   const kg = parseFloat(kgTxt);
   if(!(kg > 0)){ alert('Falta el peso del día.'); return; }
   if(kg > 400){ alert('Ese peso no parece de una persona. Revisalo.'); return; }
-  const kcal = kcalTxt === '' ? null : parseFloat(kcalTxt);
-  if(kcalTxt !== '' && !(kcal >= 0)){ alert('Las kcal no se entienden.'); return; }
+  // Con comidas cargadas ese dia, las kcal son su suma y el campo esta bloqueado:
+  // dos fuentes para el mismo numero es la forma segura de que una quede vieja.
+  const hayComidas = pesoComidasDe(fecha).length > 0;
+  const kcal = hayComidas ? Math.round(pesoKcalDia(fecha))
+             : (kcalTxt === '' ? null : parseFloat(kcalTxt));
+  if(!hayComidas && kcalTxt !== '' && !(kcal >= 0)){ alert('Las kcal no se entienden.'); return; }
   const { error } = await sb.from('peso')
     .upsert({ fecha, peso_kg:kg, kcal_ingeridas:kcal }, { onConflict:'fecha' });
   if(error){ alert('No se pudo guardar: ' + (error.message || 'revisá la conexión')); return; }
@@ -6855,6 +7270,9 @@ function pesoMetaHTML(){
 }
 function renderPeso(){
   const elA = document.getElementById('peso-hdr-actual'); if(!elA) return;
+  // La fecha se fija antes que nada: la tarjeta de comidas se dibuja para ese dia.
+  const inFecha = document.getElementById('peso-fecha');
+  if(inFecha && !inFecha.value) inFecha.value = fechaLocal(new Date());
   const ref    = pesoUltimaFecha();
   const actual = pesoPromedio7d(ref);
   const semana = pesoPerdidaEstaSemana();
@@ -6882,6 +7300,7 @@ function renderPeso(){
     : '';
 
   document.getElementById('peso-grafica').innerHTML = pesoGraficaHTML();
+  document.getElementById('peso-comida').innerHTML = pesoComidaHTML();
   document.getElementById('peso-meta').innerHTML = pesoMetaHTML();
 
   const ultimos = pesoRows.slice(-14).reverse();
@@ -6903,8 +7322,289 @@ function prefillPeso(){
   const inFecha = document.getElementById('peso-fecha'); if(!inFecha) return;
   if(!inFecha.value) inFecha.value = fechaLocal(new Date());
   const fila = pesoRows.find(r => r.fecha === inFecha.value);
-  document.getElementById('peso-kg').value   = fila ? Number(fila.peso_kg) : '';
-  document.getElementById('peso-kcal').value = (fila && fila.kcal_ingeridas != null) ? Math.round(Number(fila.kcal_ingeridas)) : '';
+  document.getElementById('peso-kg').value = fila ? Number(fila.peso_kg) : '';
+  const hayComidas = pesoComidasDe(inFecha.value).length > 0;
+  const v = pesoKcalDia(inFecha.value);
+  const elK = document.getElementById('peso-kcal');
+  elK.value = v == null ? '' : Math.round(v);
+  // Con comidas cargadas el campo es un espejo de la suma, no una entrada.
+  elK.disabled = hayComidas;
+  elK.placeholder = hayComidas ? 'sale de tus comidas' : 'opcional';
+}
+
+// ---- Diario de comidas ----
+// Las kcal dejaron de escribirse a mano: se carga lo que se comio (escrito o de una
+// foto), la funcion 'contar-kcal' lo convierte en alimentos con calorias, y el dia es
+// la suma de esas filas. Lo que la IA propone pasa SIEMPRE por un cuadro de revision
+// antes de guardarse: una estimacion de calorias es un punto de partida, no un hecho,
+// y quien comio es el unico que sabe si la porcion era esa.
+//
+// El slug que Supabase le asigno al desplegar. A esta le respeto el guion de la
+// carpeta, al reves que a 'analizaretiqueta'; por eso se comprueba y no se adivina.
+const FN_KCAL = 'contar-kcal';
+
+function pesoComidasDe(fecha){ return pesoComidas.filter(c => c.fecha === fecha); }
+// Que dia se esta mirando. Es navegacion, no un dato: los numeros salen de la base.
+function pesoFechaActiva(){
+  const el = document.getElementById('peso-fecha');
+  return (el && el.value) || fechaLocal(new Date());
+}
+// Las kcal de un dia: si hay comidas cargadas mandan ellas; si no, lo que se haya
+// escrito a mano en la fila de peso, para que los dias viejos sigan valiendo.
+function pesoKcalDia(fecha){
+  const c = pesoComidasDe(fecha);
+  if(c.length) return c.reduce((a, x) => a + Number(x.kcal), 0);
+  const fila = pesoRows.find(r => r.fecha === fecha);
+  return (fila && fila.kcal_ingeridas != null) ? Number(fila.kcal_ingeridas) : null;
+}
+
+async function loadComidas(){
+  // La misma ventana que la grafica: cubre de sobra los 14 dias del calculo sin
+  // arrastrar el historial entero a cada apertura.
+  const desde = pesoFechaMas(fechaLocal(new Date()), -(PESO_DIAS_GRAFICA - 1));
+  const { data, error } = await sb.from('comidas').select('*').gte('fecha', desde).order('created_at');
+  if(error) console.log('comidas:', error.code, error.message);
+  else pesoComidas = data || [];
+  const al = await sb.from('alimentos').select('*').order('veces', { ascending:false }).limit(12);
+  if(al.error) console.log('alimentos:', al.error.code, al.error.message);
+  else pesoAlimentos = al.data || [];
+}
+// Despues de tocar las comidas de un dia: se relee ese dia de la base y su suma se
+// copia a 'peso.kcal_ingeridas', que es lo que lee la recalibracion. La suma se
+// calcula sobre lo que devuelve la consulta, no sobre la copia que tiene la pantalla:
+// si el dia quedo fuera de la ventana cargada, esa copia diria 0 y borraria las kcal.
+async function refrescarDiaComida(fecha){
+  const { data, error } = await sb.from('comidas').select('kcal').eq('fecha', fecha);
+  if(error){ console.log('comidas dia:', error.code, error.message); await loadPeso(); return; }
+  const filas = data || [];
+  const total = filas.length ? filas.reduce((a, c) => a + Number(c.kcal), 0) : null;
+  const fila = pesoRows.find(r => r.fecha === fecha);
+  if(fila){
+    const { error: e2 } = await sb.from('peso').update({ kcal_ingeridas: total }).eq('fecha', fecha);
+    if(e2) console.log('peso kcal:', e2.code, e2.message);
+  }
+  await loadPeso();
+}
+
+// ---- Cargar comida ----
+async function analizarComida(payload, aviso){
+  const caja = document.getElementById('peso-comida-estado');
+  if(caja) caja.textContent = '⏳ ' + aviso;
+  let fallo = '';
+  try{
+    const { data, error } = await sb.functions.invoke(FN_KCAL, { body: payload });
+    if(!error && data && data.ok){
+      if(caja) caja.textContent = '';
+      abrirPropuesta(data.items || [], data.nota || '');
+      return;
+    }
+    fallo = (error && error.message) || (data && data.error) || 'respuesta vacía';
+  }catch(e){
+    fallo = e.message;
+  }
+  console.log('contar-kcal:', fallo);
+  if(caja) caja.textContent = '';
+  // Lo que ya se escribio no se pierde porque la funcion no conteste: se abre el mismo
+  // cuadro vacio para cargarlo a mano.
+  abrirPropuesta([], 'No se pudo consultar a la IA (' + fallo + '). Cargalo a mano, o revisá el slug de la función: ' + FN_KCAL + '.');
+}
+function abrirFotoComida(){
+  const el = document.getElementById('peso-foto-input');
+  if(el){ el.value = ''; el.click(); }
+}
+async function fotoComidaElegida(input){
+  const file = input.files && input.files[0]; if(!file) return;
+  const el = document.getElementById('peso-texto');
+  const texto = el ? el.value.trim() : '';
+  try{
+    const b64 = await archivoAJpegB64(file, 1024);
+    if(el) el.value = '';
+    // Si ademas escribiste algo ("me comi la mitad"), va junto con la foto: manda lo
+    // que aclaras vos sobre lo que se ve.
+    await analizarComida({ imageData:b64, mediaType:'image/jpeg', texto }, 'Mirando la foto…');
+  }catch(e){
+    alert('No se pudo leer la foto: ' + (e.message || e));
+  }
+}
+// Misma receta que la foto de etiqueta de Mi DLC: 1024 px del lado mayor y JPEG, que
+// es lo que acepta la API y lo que hace que la subida no tarde una eternidad.
+function archivoAJpegB64(file, max){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if(w > max || h > max){
+        if(w > h){ h = Math.round(h * max / w); w = max; }
+        else { w = Math.round(w * max / h); h = max; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function calcularComidaTexto(){
+  const el = document.getElementById('peso-texto');
+  const texto = el ? el.value.trim() : '';
+  if(!texto){ alert('Escribí qué comiste.'); return; }
+  el.value = '';
+  await analizarComida({ texto }, 'Calculando…');
+}
+function cargarComidaAMano(){ abrirPropuesta([], ''); }
+
+// ---- Cuadro de revision ----
+function abrirPropuesta(items, nota){
+  const lista = (items && items.length) ? items : [{ nombre:'', cantidad:'', kcal:0 }];
+  pesoPropuesta = lista.map(it => ({ nombre:it.nombre || '', cantidad:it.cantidad || '',
+                                     kcal:Number(it.kcal) || 0 }));
+  document.getElementById('peso-prev-nota').textContent = nota || '';
+  document.getElementById('modal-comida').classList.add('open');
+  renderPropuesta();
+}
+function renderPropuesta(){
+  document.getElementById('peso-prev-lista').innerHTML = pesoPropuesta.map((it, i) =>
+    '<div class="peso-prev-row">' +
+      '<div><label>Alimento</label>' +
+        '<input type="text" value="' + escHtmlAttr(it.nombre) + '" placeholder="Ej: huevo frito" ' +
+          'oninput="editarPropuesta(' + i + ',\'nombre\',this.value)">' +
+        '<input type="text" value="' + escHtmlAttr(it.cantidad) + '" placeholder="Cantidad" style="margin-top:6px;" ' +
+          'oninput="editarPropuesta(' + i + ',\'cantidad\',this.value)">' +
+      '</div>' +
+      '<div><label>kcal</label>' +
+        '<input type="number" inputmode="numeric" value="' + Math.round(it.kcal) + '" ' +
+          'oninput="editarPropuesta(' + i + ',\'kcal\',this.value)"></div>' +
+      '<button class="peso-prev-x" onclick="quitarFilaPropuesta(' + i + ')">✕</button>' +
+    '</div>').join('');
+  actualizarTotalPropuesta();
+}
+// Se toca el modelo y no se redibuja la fila: rehacer el input debajo del dedo le
+// saca el foco al teclado en mitad de una palabra.
+function editarPropuesta(i, campo, valor){
+  if(!pesoPropuesta[i]) return;
+  if(campo === 'kcal'){
+    pesoPropuesta[i].kcal = parseFloat(String(valor).replace(',', '.')) || 0;
+    actualizarTotalPropuesta();
+  } else {
+    pesoPropuesta[i][campo] = valor;
+  }
+}
+function actualizarTotalPropuesta(){
+  const el = document.getElementById('peso-prev-total');
+  if(el) el.textContent = Math.round(pesoPropuesta.reduce((a, it) => a + (Number(it.kcal) || 0), 0)) + ' kcal';
+}
+function agregarFilaPropuesta(){ pesoPropuesta.push({ nombre:'', cantidad:'', kcal:0 }); renderPropuesta(); }
+function quitarFilaPropuesta(i){
+  pesoPropuesta.splice(i, 1);
+  if(!pesoPropuesta.length) pesoPropuesta.push({ nombre:'', cantidad:'', kcal:0 });
+  renderPropuesta();
+}
+async function guardarComidas(){
+  const fecha = pesoFechaActiva();
+  const filas = pesoPropuesta
+    .filter(it => (it.nombre || '').trim())
+    .map(it => ({ fecha, nombre:it.nombre.trim().slice(0, 60),
+                  cantidad:(it.cantidad || '').trim().slice(0, 40) || null,
+                  kcal:Math.max(0, Math.round(Number(it.kcal) || 0)), origen:'ia' }));
+  if(!filas.length){ alert('No hay nada que guardar: falta el nombre del alimento.'); return; }
+  const { error } = await sb.from('comidas').insert(filas);
+  if(error){ alert('No se pudo guardar la comida: ' + (error.message || 'revisá la conexión')); return; }
+  await recordarAlimentos(filas);
+  closeModals();
+  await refrescarDiaComida(fecha);
+}
+// La memoria del modulo: lo que se estimo una vez queda guardado con su porcion, asi
+// el desayuno de todos los dias se agrega con un toque y sin gastar otra llamada. El
+// contador de usos es el que ordena los chips.
+async function recordarAlimentos(filas){
+  for(const f of filas){
+    const clave = f.nombre.toLowerCase();
+    // Se pregunta por el contador en vez de usar la lista de chips: ahi solo estan los
+    // doce mas usados, y un alimento fuera de esa lista volveria a empezar de cero.
+    const { data } = await sb.from('alimentos').select('veces').eq('nombre', clave).maybeSingle();
+    const { error } = await sb.from('alimentos').upsert({
+      nombre:clave, etiqueta:f.nombre, cantidad:f.cantidad, kcal:f.kcal,
+      veces:((data && data.veces) || 0) + 1, ultima_vez:new Date().toISOString(),
+    }, { onConflict:'nombre' });
+    if(error) console.log('alimentos:', error.code, error.message);
+  }
+}
+async function agregarAlimentoGuardado(id){
+  const a = pesoAlimentos.find(x => x.id === id); if(!a) return;
+  const fecha = pesoFechaActiva();
+  const { error } = await sb.from('comidas').insert([{ fecha, nombre:a.etiqueta, cantidad:a.cantidad,
+                                                       kcal:Number(a.kcal), origen:'guardado' }]);
+  if(error){ alert('No se pudo agregar: ' + (error.message || 'revisá la conexión')); return; }
+  const { error: e2 } = await sb.from('alimentos')
+    .update({ veces:(a.veces || 0) + 1, ultima_vez:new Date().toISOString() }).eq('id', id);
+  if(e2) console.log('alimentos:', e2.code, e2.message);
+  await refrescarDiaComida(fecha);
+}
+async function borrarComida(id){
+  const c = pesoComidas.find(x => x.id === id); if(!c) return;
+  if(!confirm('¿Quitar "' + c.nombre + '" del día?')) return;
+  const { error } = await sb.from('comidas').delete().eq('id', id);
+  if(error){ alert('No se pudo quitar: ' + (error.message || 'revisá la conexión')); return; }
+  await refrescarDiaComida(c.fecha);
+}
+
+// ---- Tarjeta del dia ----
+function pesoComidaHTML(){
+  const fecha    = pesoFechaActiva();
+  const delDia   = pesoComidasDe(fecha);
+  const total    = delDia.reduce((a, c) => a + Number(c.kcal), 0);
+  const objetivo = Math.round(pesoIngestaObjetivo());
+  const pasado   = total > objetivo;
+  const color    = pasado ? '#E5883F' : '#A8D45C';
+  const pct      = objetivo > 0 ? Math.min(100, Math.round(total / objetivo * 100)) : 0;
+
+  const cab = delDia.length
+    ? '<div class="peso-dato"><span class="peso-dato-lbl">' + delDia.length +
+          (delDia.length === 1 ? ' comida' : ' comidas') + '</span>' +
+        '<span class="peso-dato-val" style="color:' + color + ';">' + Math.round(total) +
+          ' / ' + objetivo + ' kcal</span></div>' +
+      '<div class="peso-kcal-barra"><div class="peso-kcal-relleno" style="width:' + pct +
+        '%;background:' + color + ';"></div></div>' +
+      (pasado ? '<div class="peso-nota">Te pasaste ' + (Math.round(total) - objetivo) + ' kcal del objetivo.</div>' : '')
+    : '<div class="peso-dato"><span class="peso-dato-lbl">Sin comidas cargadas</span>' +
+        '<span class="peso-dato-val">objetivo ' + objetivo + ' kcal</span></div>';
+
+  const filas = delDia.map(c => '<div class="peso-fila">' +
+      '<span class="peso-fila-kg" style="font-size:14px;">' + escHtmlAttr(c.nombre) + '</span>' +
+      '<span class="peso-fila-kcal">' + (c.cantidad ? escHtmlAttr(c.cantidad) + ' · ' : '') +
+        Math.round(Number(c.kcal)) + ' kcal</span>' +
+      '<button class="delete-btn" onclick="borrarComida(' + c.id + ')">🗑</button>' +
+    '</div>').join('');
+
+  const chips = pesoAlimentos.length
+    ? '<div class="peso-chips">' + pesoAlimentos.map(a =>
+        '<button class="peso-chip" onclick="agregarAlimentoGuardado(' + a.id + ')">' +
+          escHtmlAttr(a.etiqueta) + ' · ' + Math.round(Number(a.kcal)) + '</button>').join('') + '</div>'
+    : '';
+
+  // Modelo A: esto se MUESTRA junto al objetivo, pero no se suma ni se resta en
+  // ningun calculo. El gasto real ya lo mide la balanza en la recalibracion.
+  const gasto = gastoEjercicioDia(fecha);
+  const ejercicio = gasto > 0
+    ? '<div class="peso-dato"><span class="peso-dato-lbl">Ejercicio estimado</span>' +
+        '<span class="peso-dato-val" style="color:#8FCBF2;">' + gasto + ' kcal</span></div>' +
+      '<div class="peso-nota">Informativo: no se resta de tu déficit ni cambia la recalibración. ' +
+        'Tu gasto real ya se mide con la balanza.</div>'
+    : '';
+
+  return cab + ejercicio +
+    (filas ? '<div style="margin-top:8px;">' + filas + '</div>' : '') +
+    chips +
+    '<div style="margin-top:12px;"><label for="peso-texto">Qué comiste</label>' +
+      '<input type="text" id="peso-texto" placeholder="dos huevos fritos y un café con leche"></div>' +
+    '<div class="peso-acciones">' +
+      '<button class="peso-btn ghost" onclick="abrirFotoComida()">📷 Foto</button>' +
+      '<button class="peso-btn" onclick="calcularComidaTexto()">Calcular kcal</button>' +
+    '</div>' +
+    '<button class="peso-btn ghost" style="margin-top:8px;" onclick="cargarComidaAMano()">✏️ Cargar a mano</button>' +
+    '<div class="peso-cargando" id="peso-comida-estado"></div>';
 }
 
 // ---- Inicialización (aquí las variables ya existen) ----
@@ -6912,6 +7612,10 @@ loadCompras();
 loadLugares();
 loadEstudio();
 loadPeso();
+loadBici();
+// El reloj de la bici se rearma antes de que conteste la red: si quedo un trayecto
+// corriendo, lo primero que hay que ver al abrir la app es que sigue corriendo.
+restaurarBici();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
 // pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las
@@ -6949,6 +7653,7 @@ setInterval(()=>{ if(hayCronoEnCurso()) refrescarGrid(); }, 30000);
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState==='visible'){
     reanudarContadoresModulos();
+    restaurarBici();
     if(openMenus.has('compras')) detectarLugar(true);
     revisarTareasRecurrentes();
   } else {
