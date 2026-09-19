@@ -571,6 +571,34 @@
     .tar-prev-urg button[data-u="3"].on { background: rgba(250,199,117,0.24); border-color: rgba(250,199,117,0.55); }
     .tar-prev-urg button[data-u="4"].on { background: rgba(123,200,240,0.24); border-color: rgba(123,200,240,0.5); }
 
+    /* ===== MI PESO ===== */
+    .menu-icon.peso { background: rgba(139,195,74,0.2); }
+    .peso-cifras { border-radius: 12px; margin: 0 16px 10px; background: rgba(255,255,255,0.05); display: flex; overflow: hidden; }
+    .peso-cifra { flex: 1; text-align: center; padding: 16px 6px; min-width: 0; }
+    .peso-cifra-num { font-size: 25px; font-weight: 700; line-height: 1; color: #A8D45C; }
+    .peso-cifra-lbl { font-size: 11px; margin-top: 6px; color: rgba(255,255,255,0.4); line-height: 1.25; }
+    .peso-sep { width: 1px; background: rgba(255,255,255,0.1); margin: 14px 0; }
+    .peso-card { margin: 0 16px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; }
+    .peso-card label { font-size: 11px; color: rgba(255,255,255,0.45); display: block; margin-bottom: 5px; }
+    .peso-card input { width: 100%; padding: 11px 12px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .peso-form { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .peso-btn { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #7CB342; color: #fff; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .peso-btn:active { background: #5E8F2C; }
+    .peso-btn.ghost { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.65); }
+    .peso-aviso { margin: 0 16px 10px; background: rgba(139,195,74,0.12); border: 1px solid rgba(139,195,74,0.35); border-radius: 14px; padding: 13px 14px; }
+    .peso-aviso-tit { font-size: 14px; font-weight: 600; color: #C7E58A; }
+    .peso-aviso-txt { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px; line-height: 1.5; }
+    .peso-aviso-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 11px; }
+    .peso-dato { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13px; padding: 5px 0; }
+    .peso-dato-lbl { color: rgba(255,255,255,0.5); }
+    .peso-dato-val { color: #fff; font-weight: 600; text-align: right; }
+    .peso-fila { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .peso-fila:last-child { border-bottom: none; }
+    .peso-fila-fecha { font-size: 12px; color: rgba(255,255,255,0.45); width: 74px; flex-shrink: 0; }
+    .peso-fila-kg { font-size: 15px; font-weight: 600; color: #fff; }
+    .peso-fila-kcal { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.45); }
+    .peso-nota { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.45; margin-top: 8px; }
+
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
     .notif-banner-title { font-size: 14px; font-weight: 600; color: #FAC775; }
@@ -662,6 +690,64 @@
         <div class="gym-add-row">
           <button class="gym-add-full" onclick="openGymModal()">+ Registrar ejercicio</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MENÚ MI PESO ===== -->
+  <div class="menu-section" data-modulo="peso" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-peso" onclick="toggleMenu('peso')">
+      <div class="menu-icon peso">⚖️</div>
+      <div class="menu-title">
+        <h2>Mi Peso</h2>
+        <p>Tendencia y calorías</p>
+      </div>
+      <span class="menu-chevron" id="chevron-peso">▾</span>
+    </button>
+    <div class="menu-body" id="body-peso">
+      <div class="menu-inner">
+        <div class="peso-cifras">
+          <div class="peso-cifra">
+            <div class="peso-cifra-num" id="peso-hdr-actual">—</div>
+            <div class="peso-cifra-lbl">kg · promedio 7 d</div>
+          </div>
+          <div class="peso-sep"></div>
+          <div class="peso-cifra">
+            <div class="peso-cifra-num" id="peso-hdr-semana">—</div>
+            <div class="peso-cifra-lbl">esta semana</div>
+          </div>
+          <div class="peso-sep"></div>
+          <div class="peso-cifra">
+            <div class="peso-cifra-num" id="peso-hdr-ingesta">—</div>
+            <div class="peso-cifra-lbl">kcal objetivo</div>
+          </div>
+        </div>
+        <div id="peso-aviso-box"></div>
+        <p class="inner-title">Tendencia</p>
+        <div class="peso-card" id="peso-grafica"></div>
+        <p class="inner-title">Registro del día</p>
+        <div class="peso-card">
+          <div class="peso-form">
+            <div style="grid-column:span 2;">
+              <label for="peso-fecha">Fecha</label>
+              <input type="date" id="peso-fecha" onchange="prefillPeso()">
+            </div>
+            <div>
+              <label for="peso-kg">Peso (kg)</label>
+              <input type="number" id="peso-kg" inputmode="decimal" step="0.1" placeholder="94,0">
+            </div>
+            <div>
+              <label for="peso-kcal">Kcal del día</label>
+              <input type="number" id="peso-kcal" inputmode="numeric" step="10" placeholder="opcional">
+            </div>
+          </div>
+          <button class="peso-btn" style="margin-top:11px;" onclick="guardarPesoDia()">Guardar el día</button>
+          <div class="peso-nota">Una fila por fecha: si te volvés a pesar hoy, se corrige la de hoy.</div>
+        </div>
+        <p class="inner-title">Meta</p>
+        <div class="peso-card" id="peso-meta"></div>
+        <p class="inner-title">Últimos registros</p>
+        <div class="peso-card" id="peso-lista"></div>
       </div>
     </div>
   </div>
@@ -1235,6 +1321,13 @@ let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
 
+// Mi Peso: las pesadas y la config viven en la base, y la pantalla se dibuja siempre
+// con lo que ella devuelve. Se declaran aca arriba, con el resto del estado, porque
+// la pantalla Hoy las mira desde el primer segundo.
+let pesoRows = [];
+let pesoConfig = null;
+let pesoAvisoOculto = false;   // el "ahora no" del aviso dura hasta recargar la app
+
 // ===== MI DLC (antes "Mis Carnes") =====
 // El modulo lleva ahora la despensa entera, no solo lo que va al frigorifico. La tabla
 // sigue llamandose 'carnes': ahi estan los datos de siempre y renombrarla no cambiaria
@@ -1720,16 +1813,16 @@ function ordenarModulosPorUso(){ pintarTabs(); }
 // ---- Navegacion por pantallas (solo movil) ----
 // El escritorio tiene su propia maqueta y no pasa por aca. La direccion vive en el
 // hash, asi que el boton Atras de Android funciona solo, sin codigo extra.
-const MODULOS_APP = ['carnes','gym','ropa','lentes','estudio','tiempo','compras','tareas'];
+const MODULOS_APP = ['carnes','gym','peso','ropa','lentes','estudio','tiempo','compras','tareas'];
 const TABS_FIJAS  = ['tiempo','estudio'];
-const ICONO_MOD  = { carnes:'🥫', gym:'💪', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒', tareas:'📋' };
-const NOMBRE_MOD = { carnes:'Mi DLC', gym:'Mi Gym', ropa:'Mi Ropa', lentes:'Lentes de Contacto',
+const ICONO_MOD  = { carnes:'🥫', gym:'💪', peso:'⚖️', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒', tareas:'📋' };
+const NOMBRE_MOD = { carnes:'Mi DLC', gym:'Mi Gym', peso:'Mi Peso', ropa:'Mi Ropa', lentes:'Lentes de Contacto',
                      estudio:'Mi Estudio', tiempo:'Mi Tiempo', compras:'Lista de Compras', tareas:'Mis Tareas' };
-const SUB_MOD    = { carnes:'Fechas de caducidad', gym:'Rutinas y ejercicios', ropa:'Qué ponerte',
+const SUB_MOD    = { carnes:'Fechas de caducidad', gym:'Rutinas y ejercicios', peso:'Tendencia y calorías', ropa:'Qué ponerte',
                      lentes:'Cuándo cambiarlos', estudio:'Horas por tema',
                      tiempo:'En qué se te va el día', compras:'Dictada por voz',
                      tareas:'Pendientes por urgencia' };
-const CORTO_MOD  = { hoy:'Hoy', mas:'Más', carnes:'DLC', gym:'Gym', ropa:'Ropa',
+const CORTO_MOD  = { hoy:'Hoy', mas:'Más', carnes:'DLC', gym:'Gym', peso:'Peso', ropa:'Ropa',
                      lentes:'Lentes', estudio:'Estudio', tiempo:'Tiempo', compras:'Compras', tareas:'Tareas' };
 let pantallaActual = 'hoy';
 
@@ -1839,7 +1932,8 @@ function firmaHoy(){
           comprasItems.filter(i=>!i.comprado).length, crudos,
           getLentesData(), Math.round(minutosHoyTiempo()),
           tareas.filter(t=>!t.hecho).length,
-          tareas.filter(t=>!t.hecho && t.urgencia === 1).length].join('|');
+          tareas.filter(t=>!t.hecho && t.urgencia === 1).length,
+          pesoRows.length, (pesoRows[pesoRows.length - 1] || {}).peso_kg || 0].join('|');
 }
 let ultimaFirmaHoy = null;
 
@@ -1861,6 +1955,16 @@ function baldosasHoy(){
   const sinGym = fechasG.length ? Math.round((hoy0 - new Date(fechasG[0] + 'T00:00:00')) / 86400000) : null;
   b.push({ m:'gym', num: sinGym === null ? '—' : sinGym,
     lbl: sinGym === null ? 'sin registros' : 'días sin ir', alerta: sinGym !== null && sinGym > 4 });
+
+  // Lo que se muestra de peso es el promedio de 7 dias, igual que dentro del modulo:
+  // la pesada suelta de la mañana no es un dato, es ruido.
+  const pesoProm = pesoPromedio7d(pesoUltimaFecha());
+  const pesoSem  = pesoPerdidaEstaSemana();
+  b.push({ m:'peso', num: pesoProm === null ? '—' : pesoNum(pesoProm, 1),
+    lbl: pesoProm === null ? 'sin pesadas'
+       : pesoSem === null ? 'kg de promedio'
+       : (pesoSem > 0 ? '−' : '+') + pesoNum(Math.abs(pesoSem), 2) + ' kg esta semana',
+    alerta: pesoProm !== null && pesoSem !== null && pesoSem < 0 });
 
   b.push({ m:'ropa', num:ropaItems.length,
     lbl: ropaItems.length ? ropaItems.reduce((a, i) => a + (i.usos || 0), 0) + ' usos en total' : 'sin prendas' });
@@ -6465,10 +6569,349 @@ async function revisarTareasRecurrentes(){
   notificarRecordatorios();
 }
 
+// ===== MI PESO =====
+// Una pesada por dia y, si se anotaron, las kcal de ese dia. Todo lo que se ve
+// —promedio, tendencia, recalibracion y fecha de meta— se calcula sobre las filas
+// que devolvio la base, nunca sobre lo que quedo escrito en el formulario: si la
+// escritura no llego, la pantalla no puede decir que si.
+//
+// El peso de una mañana sube y baja con el agua y la sal, asi que ningun numero de
+// este modulo sale de la pesada suelta: el que manda es el promedio de 7 dias. Por
+// eso la fecha estimada de meta no se mueve cada mañana.
+const PESO_KCAL_POR_KG   = 7700;   // equivalente energetico de 1 kg de grasa
+const PESO_VENTANA_DIAS  = 7;      // el promedio movil que usa todo el modulo
+const PESO_DIAS_GRAFICA  = 60;
+const PESO_MIN_DIAS_KCAL = 7;      // kcal minimas dentro de las 2 semanas para recalibrar
+// Por debajo de este ritmo la "bajada" es el ruido de la balanza, no grasa. Sin este
+// piso, un promedio que cae 0,01 kg por semana daria una fecha de meta a 20 años: un
+// numero que parece una prediccion y no lo es.
+const PESO_MIN_RITMO = 0.05;       // kg por semana
+
+function pesoNum(n, dec){ const p = Math.pow(10, dec); return (Math.round(n * p) / p).toFixed(dec).replace('.', ','); }
+function pesoFechaMas(fechaISO, dias){
+  const d = new Date(fechaISO + 'T00:00:00');
+  d.setDate(d.getDate() + dias);
+  return fechaLocal(d);
+}
+function pesoDiasEntre(a, b){
+  return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+}
+function pesoFechaCorta(fechaISO){
+  return new Date(fechaISO + 'T12:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'short' });
+}
+// El "hoy" del modulo es el ultimo dia con pesada, no la fecha del reloj: saltarse
+// una mañana no puede dejar la cabecera en blanco.
+function pesoUltimaFecha(){ return pesoRows.length ? pesoRows[pesoRows.length - 1].fecha : null; }
+
+// Promedio movil de 7 dias terminado en 'fechaISO'. Se promedia lo que hay en la
+// ventana; los dias sin pesar no se rellenan, porque un peso inventado mueve la linea.
+function pesoPromedio7d(fechaISO){
+  if(!fechaISO) return null;
+  const desde = pesoFechaMas(fechaISO, -(PESO_VENTANA_DIAS - 1));
+  const v = pesoRows.filter(r => r.fecha >= desde && r.fecha <= fechaISO).map(r => Number(r.peso_kg));
+  if(!v.length) return null;
+  return v.reduce((a, b) => a + b, 0) / v.length;
+}
+function pesoConfigNum(campo, porDefecto){
+  const v = pesoConfig ? pesoConfig[campo] : null;
+  return (v === null || v === undefined || v === '') ? porDefecto : Number(v);
+}
+function pesoDeficit(){ return pesoConfigNum('deficit', 640); }
+function pesoTdee(){ return pesoConfigNum('tdee_objetivo', 2755); }
+function pesoIngestaObjetivo(){ return pesoTdee() - pesoDeficit(); }
+function pesoObjetivo(){
+  const v = pesoConfig ? pesoConfig.peso_objetivo : null;
+  return (v === null || v === undefined || v === '') ? null : Number(v);
+}
+
+// Lo bajado en la ultima semana, comparando dos ventanas de 7 dias que no se pisan.
+function pesoPerdidaEstaSemana(){
+  const ref = pesoUltimaFecha(); if(!ref) return null;
+  const ahora = pesoPromedio7d(ref), hace7 = pesoPromedio7d(pesoFechaMas(ref, -7));
+  if(ahora == null || hace7 == null) return null;
+  return hace7 - ahora;   // positivo = bajaste
+}
+// Ritmo semanal para la proyeccion. Con 2 semanas de historial se usa la ventana
+// larga (es la de la recalibracion y la que menos ruido arrastra); si todavia no
+// llega, se cae a la de una semana antes que dejar la meta sin fecha.
+function pesoPerdidaSemanal(){
+  const ref = pesoUltimaFecha(); if(!ref) return null;
+  const ahora = pesoPromedio7d(ref); if(ahora == null) return null;
+  const hace14 = pesoPromedio7d(pesoFechaMas(ref, -14));
+  if(hace14 != null) return (hace14 - ahora) / 2;
+  return pesoPerdidaEstaSemana();
+}
+
+// ---- Recalibracion del gasto (TDEE) ----
+// El gasto real se despeja de lo unico que se mide: lo que comiste y lo que bajaste.
+//   deficit_real = perdida_semanal * 7700 / 7      (kcal/dia)
+//   tdee_real    = ingesta_media + deficit_real
+// Con menos de 2 semanas no se calcula nada: a esa escala el ruido del agua corporal
+// es mas grande que la señal, y saldria un gasto inventado.
+function pesoRecalibracion(){
+  const ref = pesoUltimaFecha();
+  if(!ref) return { ok:false, motivo:'todavía no hay ninguna pesada.' };
+  const dias = pesoDiasEntre(pesoRows[0].fecha, ref) + 1;
+  if(dias < 14) return { ok:false, motivo:'hacen falta 2 semanas de historial y llevás ' + dias + (dias === 1 ? ' día.' : ' días.') };
+  const antes = pesoPromedio7d(pesoFechaMas(ref, -14));
+  const ahora = pesoPromedio7d(ref);
+  if(antes == null || ahora == null) return { ok:false, motivo:'faltan pesadas en alguna de las dos semanas que se comparan.' };
+  const desdeKcal = pesoFechaMas(ref, -13);
+  const kcal = pesoRows.filter(r => r.fecha >= desdeKcal && r.fecha <= ref && r.kcal_ingeridas != null)
+                       .map(r => Number(r.kcal_ingeridas));
+  if(kcal.length < PESO_MIN_DIAS_KCAL){
+    return { ok:false, motivo:'solo hay ' + kcal.length + (kcal.length === 1 ? ' día' : ' días') +
+                              ' con kcal en las últimas 2 semanas; con menos de ' + PESO_MIN_DIAS_KCAL + ' la media no dice nada.' };
+  }
+  const ingestaMedia   = kcal.reduce((a, b) => a + b, 0) / kcal.length;
+  const perdidaSemanal = (antes - ahora) / 2;
+  const deficitReal    = perdidaSemanal * PESO_KCAL_POR_KG / 7;
+  const tdeeReal       = ingestaMedia + deficitReal;
+  return { ok:true, ingestaMedia, perdidaSemanal, deficitReal, tdeeReal,
+           nuevaIngesta: tdeeReal - pesoDeficit(), diasKcal: kcal.length };
+}
+// Se propone cada 2 semanas, no cada vez que se abre el modulo: recalcular el gasto
+// mas seguido que eso es perseguir ruido. Y si el ajuste es de un puñado de kcal,
+// tampoco vale la pena molestar.
+function pesoTocaRecalibrar(){
+  if(pesoAvisoOculto) return false;
+  const r = pesoRecalibracion();
+  if(!r.ok) return false;
+  const ultima = pesoConfig && pesoConfig.recalibrado_at;
+  if(ultima && pesoDiasEntre(ultima, fechaLocal(new Date())) < 14) return false;
+  return Math.abs(r.tdeeReal - pesoTdee()) >= 25;
+}
+
+// ---- Meta ----
+// La cuenta va sobre el promedio movil, no sobre la pesada del dia: si no, la fecha
+// estimada saltaria semanas enteras cada mañana segun como amanezca la balanza.
+function pesoProyeccion(){
+  const objetivo = pesoObjetivo();
+  const actual   = pesoPromedio7d(pesoUltimaFecha());
+  if(objetivo == null) return { estado:'sin-meta', actual };
+  if(actual == null)   return { estado:'sin-datos', objetivo };
+  if(actual <= objetivo) return { estado:'alcanzada', actual, objetivo };
+  const perdida = pesoPerdidaSemanal();
+  if(perdida == null) return { estado:'sin-datos', actual, objetivo };
+  if(perdida <= PESO_MIN_RITMO) return { estado:'sin-bajada', actual, objetivo, perdida };
+  const semanas = (actual - objetivo) / perdida;
+  const fecha = new Date(); fecha.setDate(fecha.getDate() + Math.round(semanas * 7));
+  return { estado:'ok', actual, objetivo, perdida, semanas, fecha };
+}
+
+// ---- Base ----
+async function loadPeso(){
+  const { data, error } = await sb.from('peso').select('*').order('fecha');
+  if(error) console.log('peso:', error.code, error.message);
+  else pesoRows = data || [];
+  const cfg = await sb.from('peso_config').select('*').eq('id', 1).maybeSingle();
+  if(cfg.error) console.log('peso_config:', cfg.error.code, cfg.error.message);
+  else pesoConfig = cfg.data || null;
+  renderPeso(); renderDesktop();
+}
+// Upsert por fecha: volver a pesarse el mismo dia corrige esa fila, no agrega otra.
+// Despues se relee la base entera y se dibuja con eso; nada se pinta "por adelantado".
+async function guardarPesoDia(){
+  const elFecha = document.getElementById('peso-fecha');
+  const fecha   = (elFecha && elFecha.value) || fechaLocal(new Date());
+  const kgTxt   = document.getElementById('peso-kg').value.trim().replace(',', '.');
+  const kcalTxt = document.getElementById('peso-kcal').value.trim().replace(',', '.');
+  const kg = parseFloat(kgTxt);
+  if(!(kg > 0)){ alert('Falta el peso del día.'); return; }
+  if(kg > 400){ alert('Ese peso no parece de una persona. Revisalo.'); return; }
+  const kcal = kcalTxt === '' ? null : parseFloat(kcalTxt);
+  if(kcalTxt !== '' && !(kcal >= 0)){ alert('Las kcal no se entienden.'); return; }
+  const { error } = await sb.from('peso')
+    .upsert({ fecha, peso_kg:kg, kcal_ingeridas:kcal }, { onConflict:'fecha' });
+  if(error){ alert('No se pudo guardar: ' + (error.message || 'revisá la conexión')); return; }
+  await loadPeso();
+}
+async function borrarPesoDia(fecha){
+  if(!confirm('¿Borrar el registro del ' + pesoFechaCorta(fecha) + '?')) return;
+  const { error } = await sb.from('peso').delete().eq('fecha', fecha);
+  if(error){ alert('No se pudo borrar: ' + (error.message || 'revisá la conexión')); return; }
+  await loadPeso();
+}
+async function guardarPesoObjetivo(){
+  const el = document.getElementById('peso-objetivo'); if(!el) return;
+  const txt = el.value.trim().replace(',', '.');
+  const v = txt === '' ? null : parseFloat(txt);
+  if(txt !== '' && !(v > 0)){ alert('Esa meta no se entiende.'); return; }
+  const { error } = await sb.from('peso_config')
+    .upsert({ id:1, peso_objetivo:v, updated_at:new Date().toISOString() }, { onConflict:'id' });
+  if(error){ alert('No se pudo guardar la meta: ' + (error.message || 'revisá la conexión')); return; }
+  await loadPeso();
+}
+async function aceptarRecalibracion(){
+  const r = pesoRecalibracion();
+  if(!r.ok) return;
+  const fila = { id:1, tdee_objetivo:Math.round(r.tdeeReal), updated_at:new Date().toISOString(),
+                 recalibrado_at:fechaLocal(new Date()) };
+  let { error } = await sb.from('peso_config').upsert(fila, { onConflict:'id' });
+  if(error && /recalibrado_at/i.test((error.message || '') + (error.details || ''))){
+    // La columna la agrega setup-peso.sql; si esa parte no corrio, el gasto se guarda
+    // igual y lo unico que se pierde es el plazo: el aviso volvera a salir.
+    delete fila.recalibrado_at;
+    ({ error } = await sb.from('peso_config').upsert(fila, { onConflict:'id' }));
+  }
+  if(error){ alert('No se pudo guardar el nuevo gasto: ' + (error.message || 'revisá la conexión')); return; }
+  await loadPeso();
+}
+function posponerRecalibracion(){ pesoAvisoOculto = true; renderPeso(); }
+
+// ---- Pantalla ----
+// Puntos crudos (cada pesada) y encima la linea del promedio de 7 dias, que es la que
+// hay que mirar. La meta se dibuja punteada solo si cae cerca del rango visible.
+function pesoGraficaHTML(){
+  const vacio = '<div class="empty-msg" style="padding:16px 0;">Con dos pesadas empieza a dibujarse la tendencia.</div>';
+  if(pesoRows.length < 2) return vacio;
+  const ref   = pesoUltimaFecha();
+  const desde = pesoFechaMas(ref, -(PESO_DIAS_GRAFICA - 1));
+  const filas = pesoRows.filter(r => r.fecha >= desde);
+  if(filas.length < 2) return vacio;
+
+  const W = 340, H = 168, padL = 30, padR = 10, padT = 10, padB = 20;
+  const dTotal = Math.max(1, pesoDiasEntre(filas[0].fecha, ref));
+  const px = f => padL + (pesoDiasEntre(filas[0].fecha, f) / dTotal) * (W - padL - padR);
+
+  const media = filas.map(r => ({ fecha:r.fecha, v:pesoPromedio7d(r.fecha) })).filter(p => p.v != null);
+  const vals = filas.map(r => Number(r.peso_kg)).concat(media.map(m => m.v));
+  let min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  const obj = pesoObjetivo();
+  // La meta entra en el dibujo solo si esta cerca; si faltan 10 kg, meterla aplasta
+  // la linea contra el borde de arriba y ya no se ve nada de la tendencia.
+  const objVisible = obj != null && obj < max && (min - obj) <= 4;
+  if(objVisible) min = Math.min(min, obj);
+  if(max - min < 1){ const c = (max + min) / 2; min = c - 0.5; max = c + 0.5; }
+  const aire = (max - min) * 0.12; min -= aire; max += aire;
+  const py = v => padT + (max - v) / (max - min) * (H - padT - padB);
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;">';
+  [max, (max + min) / 2, min].forEach(v => {
+    const y = py(v);
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) +
+           '" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>' +
+           '<text x="0" y="' + (y + 3).toFixed(1) + '" font-size="9" fill="rgba(255,255,255,0.35)">' + pesoNum(v, 1) + '</text>';
+  });
+  if(objVisible){
+    const y = py(obj);
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) +
+           '" stroke="#7BC8F0" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.8"/>' +
+           '<text x="' + (W - padR) + '" y="' + (y - 4).toFixed(1) + '" font-size="9" fill="#7BC8F0" text-anchor="end">meta</text>';
+  }
+  filas.forEach(r => {
+    svg += '<circle cx="' + px(r.fecha).toFixed(1) + '" cy="' + py(Number(r.peso_kg)).toFixed(1) +
+           '" r="2.3" fill="rgba(255,255,255,0.35)"><title>' + pesoFechaCorta(r.fecha) + ': ' +
+           pesoNum(Number(r.peso_kg), 1) + ' kg</title></circle>';
+  });
+  if(media.length > 1){
+    svg += '<polyline fill="none" stroke="#A8D45C" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="' +
+           media.map(m => px(m.fecha).toFixed(1) + ',' + py(m.v).toFixed(1)).join(' ') + '"/>';
+  }
+  const ultima = media[media.length - 1];
+  if(ultima) svg += '<circle cx="' + px(ultima.fecha).toFixed(1) + '" cy="' + py(ultima.v).toFixed(1) + '" r="3.4" fill="#A8D45C"/>';
+  svg += '<text x="' + padL + '" y="' + (H - 4) + '" font-size="9" fill="rgba(255,255,255,0.35)">' + pesoFechaCorta(filas[0].fecha) + '</text>';
+  svg += '<text x="' + (W - padR) + '" y="' + (H - 4) + '" font-size="9" fill="rgba(255,255,255,0.35)" text-anchor="end">' + pesoFechaCorta(ref) + '</text>';
+  svg += '</svg><div class="peso-nota">Los puntos son cada pesada; la línea es el promedio de 7 días.</div>';
+  return svg;
+}
+function pesoMetaHTML(){
+  const p = pesoProyeccion();
+  const obj = pesoObjetivo();
+  let filas = '';
+  if(p.estado === 'sin-meta'){
+    filas = '<div class="peso-dato"><span class="peso-dato-lbl">Sin meta cargada</span>' +
+            '<span class="peso-dato-val">escribila acá abajo</span></div>';
+  } else if(p.estado === 'sin-datos'){
+    filas = '<div class="peso-dato"><span class="peso-dato-lbl">Falta historial</span>' +
+            '<span class="peso-dato-val">seguí pesándote</span></div>';
+  } else if(p.estado === 'alcanzada'){
+    filas = '<div class="peso-dato"><span class="peso-dato-lbl">Meta alcanzada</span>' +
+            '<span class="peso-dato-val" style="color:#A8D45C;">' + pesoNum(p.actual, 1) + ' kg</span></div>';
+  } else if(p.estado === 'sin-bajada'){
+    filas = '<div class="peso-dato"><span class="peso-dato-lbl">Te faltan</span><span class="peso-dato-val">' +
+              pesoNum(p.actual - p.objetivo, 1) + ' kg</span></div>' +
+            '<div class="peso-dato"><span class="peso-dato-lbl">Fecha estimada</span>' +
+              '<span class="peso-dato-val" style="color:#E5883F;">sin tendencia de bajada</span></div>';
+  } else {
+    const sem = Math.max(1, Math.round(p.semanas));
+    filas = '<div class="peso-dato"><span class="peso-dato-lbl">Te faltan</span><span class="peso-dato-val">' +
+              pesoNum(p.actual - p.objetivo, 1) + ' kg</span></div>' +
+            '<div class="peso-dato"><span class="peso-dato-lbl">Al ritmo de</span><span class="peso-dato-val">' +
+              pesoNum(p.perdida, 2) + ' kg / semana</span></div>' +
+            '<div class="peso-dato"><span class="peso-dato-lbl">Fecha estimada</span><span class="peso-dato-val" style="color:#A8D45C;">' +
+              p.fecha.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }) + '</span></div>' +
+            '<div class="peso-dato"><span class="peso-dato-lbl">Quedan</span><span class="peso-dato-val">' +
+              sem + (sem === 1 ? ' semana' : ' semanas') + '</span></div>';
+  }
+  return filas +
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:9px;align-items:end;margin-top:12px;">' +
+      '<div><label for="peso-objetivo">Peso objetivo (kg)</label>' +
+      '<input type="number" id="peso-objetivo" inputmode="decimal" step="0.1" placeholder="Ej: 84" value="' +
+        (obj == null ? '' : obj) + '"></div>' +
+      '<button class="peso-btn" style="width:auto;padding:12px 16px;" onclick="guardarPesoObjetivo()">Guardar</button>' +
+    '</div>' +
+    '<div class="peso-nota">La fecha sale del promedio de 7 días, no de la pesada de hoy: por eso no salta cada mañana.</div>';
+}
+function renderPeso(){
+  const elA = document.getElementById('peso-hdr-actual'); if(!elA) return;
+  const ref    = pesoUltimaFecha();
+  const actual = pesoPromedio7d(ref);
+  const semana = pesoPerdidaEstaSemana();
+
+  elA.textContent = actual == null ? '—' : pesoNum(actual, 1);
+  const elS = document.getElementById('peso-hdr-semana');
+  elS.textContent = semana == null ? '—'
+    : (semana > 0 ? '−' : semana < 0 ? '+' : '') + pesoNum(Math.abs(semana), 2) + ' kg';
+  elS.style.color = semana == null ? 'rgba(255,255,255,0.45)' : (semana > 0 ? '#A8D45C' : '#E5883F');
+  document.getElementById('peso-hdr-ingesta').textContent = Math.round(pesoIngestaObjetivo());
+
+  const r = pesoRecalibracion();
+  document.getElementById('peso-aviso-box').innerHTML = pesoTocaRecalibrar()
+    ? '<div class="peso-aviso">' +
+        '<div class="peso-aviso-tit">⚖️ Toca recalibrar tu gasto</div>' +
+        '<div class="peso-aviso-txt">En estas 2 semanas comiste <b>' + Math.round(r.ingestaMedia) + ' kcal</b> al día de media (' +
+          r.diasKcal + ' días anotados) y el promedio bajó <b>' + pesoNum(r.perdidaSemanal, 2) + ' kg</b> por semana. ' +
+          'Eso da un gasto real de <b>' + Math.round(r.tdeeReal) + ' kcal</b>, y hoy tenés guardado ' + Math.round(pesoTdee()) + '. ' +
+          'Tu ingesta objetivo pasaría a <b>' + Math.round(r.nuevaIngesta) + ' kcal</b>.</div>' +
+        '<div class="peso-aviso-btns">' +
+          '<button class="peso-btn ghost" onclick="posponerRecalibracion()">Ahora no</button>' +
+          '<button class="peso-btn" onclick="aceptarRecalibracion()">Aplicar</button>' +
+        '</div>' +
+      '</div>'
+    : '';
+
+  document.getElementById('peso-grafica').innerHTML = pesoGraficaHTML();
+  document.getElementById('peso-meta').innerHTML = pesoMetaHTML();
+
+  const ultimos = pesoRows.slice(-14).reverse();
+  document.getElementById('peso-lista').innerHTML = ultimos.length
+    ? ultimos.map(f => '<div class="peso-fila">' +
+          '<span class="peso-fila-fecha">' + pesoFechaCorta(f.fecha) + '</span>' +
+          '<span class="peso-fila-kg">' + pesoNum(Number(f.peso_kg), 1) + ' kg</span>' +
+          '<span class="peso-fila-kcal">' + (f.kcal_ingeridas == null ? 'sin kcal' : Math.round(Number(f.kcal_ingeridas)) + ' kcal') + '</span>' +
+          '<button class="delete-btn" onclick="borrarPesoDia(&quot;' + f.fecha + '&quot;)">🗑</button>' +
+        '</div>').join('') +
+      (r.ok ? '' : '<div class="peso-nota">Recalibración: ' + r.motivo + '</div>')
+    : '<div class="empty-msg" style="padding:16px 0;">Todavía no registraste ninguna pesada.</div>';
+
+  prefillPeso();
+}
+// El formulario arranca mostrando lo que la base ya tiene para esa fecha: asi se ve
+// de entrada si el dia esta cargado, y guardar de nuevo es corregir, no duplicar.
+function prefillPeso(){
+  const inFecha = document.getElementById('peso-fecha'); if(!inFecha) return;
+  if(!inFecha.value) inFecha.value = fechaLocal(new Date());
+  const fila = pesoRows.find(r => r.fecha === inFecha.value);
+  document.getElementById('peso-kg').value   = fila ? Number(fila.peso_kg) : '';
+  document.getElementById('peso-kcal').value = (fila && fila.kcal_ingeridas != null) ? Math.round(Number(fila.kcal_ingeridas)) : '';
+}
+
 // ---- Inicialización (aquí las variables ya existen) ----
 loadCompras();
 loadLugares();
 loadEstudio();
+loadPeso();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
 // pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las
