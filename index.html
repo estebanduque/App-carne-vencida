@@ -600,6 +600,8 @@
     .peso-nota { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.45; margin-top: 8px; }
 
     /* Diario de comidas */
+    .peso-kcal-auto { width: 100%; padding: 11px 12px; font-size: 15px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.75); }
+    .peso-kcal-auto .peso-kcal-fuente { font-size: 10px; color: rgba(255,255,255,0.35); display: block; margin-top: 2px; }
     .peso-kcal-barra { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 9px; }
     .peso-kcal-relleno { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
     .peso-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
@@ -613,7 +615,7 @@
     .peso-prev-row input { width: 100%; padding: 9px 10px; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); border-radius: 9px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
     .peso-prev-x { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 16px; cursor: pointer; padding: 0 0 10px; font-family: inherit; }
 
-    /* Ejercicio: resumen, progreso y bici */
+    /* Ejercicio: resumen y progreso */
     .gym-resumen { margin: 0 16px 12px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; overflow: hidden; }
     .gym-res-item { flex: 1; text-align: center; padding: 14px 6px; min-width: 0; }
     .gym-res-num { font-size: 22px; font-weight: 700; line-height: 1; }
@@ -625,26 +627,6 @@
     .gym-prog-nombre { font-size: 14px; font-weight: 600; color: #fff; }
     .gym-prog-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
     .gym-prog-delta { font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
-
-    /* Bici: se usa con una mano y en la calle, asi que el reloj y los botones son
-       lo mas grande del modulo. */
-    .bici-box { margin: 0 16px 12px; background: rgba(26,122,181,0.10); border: 1px solid rgba(26,122,181,0.30); border-radius: 16px; padding: 16px 14px; text-align: center; }
-    .bici-display { font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: 1px; color: #8FCBF2; font-variant-numeric: tabular-nums; }
-    .bici-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 7px; line-height: 1.35; }
-    .bici-chips { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
-    .bici-chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 6px 12px; font-size: 12px; color: rgba(255,255,255,0.55); font-family: inherit; cursor: pointer; }
-    .bici-chip.on { background: rgba(26,122,181,0.28); border-color: rgba(26,122,181,0.6); color: #8FCBF2; font-weight: 600; }
-    .bici-km { width: 100%; padding: 12px; margin-top: 12px; font-size: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.15); border-radius: 11px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
-    .bici-btns { display: grid; gap: 9px; margin-top: 12px; }
-    .bici-btn { width: 100%; padding: 17px; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; color: #fff; }
-    .bici-btn.go { background: #1a7ab5; }
-    .bici-btn.go:active { background: #145E8C; }
-    .bici-btn.stop { background: #E24B4A; }
-    .bici-btn.stop:active { background: #B03A39; }
-    .bici-btn.ghost { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600; padding: 12px; }
-    .bici-lista { margin-top: 14px; text-align: left; }
-    .bici-fila { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.07); font-size: 12px; color: rgba(255,255,255,0.5); }
-    .bici-fila-dur { font-size: 13px; font-weight: 600; color: #fff; }
 
     .notif-banner { margin: 12px 16px 0; background: rgba(239,159,39,0.15); border: 1px solid rgba(239,159,39,0.3); border-radius: 14px; padding: 13px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .notif-banner-text { flex: 1; }
@@ -732,8 +714,6 @@
           </div>
           <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">Se registra en Mi Tiempo → Deporte</div>
         </div>
-        <p class="inner-title">Bici · transporte</p>
-        <div class="bici-box" id="bici-box"></div>
         <p class="inner-title">Últimas sesiones</p>
         <div id="gym-groups-list"></div>
         <button id="gym-ver-mas-btn" onclick="toggleVerMasGym()" style="display:none;width:100%;margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;font-size:13px;color:rgba(255,255,255,0.6);font-family:inherit;cursor:pointer;">Ver todas las sesiones</button>
@@ -789,13 +769,15 @@
               <input type="number" id="peso-kg" inputmode="decimal" step="0.1" placeholder="94,0">
             </div>
             <div>
-              <label for="peso-kcal">Kcal del día</label>
-              <input type="number" id="peso-kcal" inputmode="numeric" step="10" placeholder="opcional">
+              <label>Kcal del día</label>
+              <div class="peso-kcal-auto" id="peso-kcal-auto">—</div>
             </div>
           </div>
           <button class="peso-btn" style="margin-top:11px;" onclick="guardarPesoDia()">Guardar el día</button>
           <div class="peso-nota">Una fila por fecha: si te volvés a pesar hoy, se corrige la de hoy.</div>
         </div>
+        <p class="inner-title">Balance del día</p>
+        <div class="peso-card" id="peso-balance"></div>
         <p class="inner-title">Comida del día</p>
         <div class="peso-card" id="peso-comida"></div>
         <input type="file" id="peso-foto-input" accept="image/*" capture="environment"
@@ -1395,11 +1377,6 @@ let gymEditId = null;
 let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
-// Bici de transporte. 'biciInicio' es el timestamp del arranque (el mismo que vive en
-// localStorage) y 'biciTick' el intervalo que refresca el display.
-let biciRows = [];
-let biciInicio = null;
-let biciTick = null;
 
 // Mi Peso: las pesadas y la config viven en la base, y la pantalla se dibuja siempre
 // con lo que ella devuelve. Se declaran aca arriba, con el resto del estado, porque
@@ -1700,9 +1677,8 @@ function toggleMes(m){if(openMeses.has(m))openMeses.delete(m);else openMeses.add
 
 function renderGym(){
   // Lo nuevo se dibuja antes que nada: mas abajo hay un return temprano cuando no hay
-  // ejercicios cargados, y el cronometro de la bici tiene que verse igual.
+  // ejercicios cargados, y el resumen tiene que verse igual.
   renderEjercicioResumen();
-  renderBici();
   renderProgresoFuerza();
   // Contador días sin ir - móvil
   const hoyM = new Date(); hoyM.setHours(0,0,0,0);
@@ -6746,21 +6722,6 @@ function fmtTonelaje(kg){
   return kg >= 1000 ? (kg / 1000).toFixed(1).replace('.', ',') + ' t' : Math.round(kg) + ' kg';
 }
 
-// ---- Gasto estimado del dia (informativo) ----
-// Cardio + bici. Si la columna kcal_est todavia no existe en 'gym', se calcula al
-// vuelo con la misma formula para no mostrar un cero que parece un dato.
-function gastoEjercicioDia(fecha){
-  const cardio = gymDelDia(fecha)
-    .filter(e => e.grupo === 'Cardio')
-    .reduce((a, e) => a + (e.kcal_est != null ? Number(e.kcal_est)
-                                              : kcalPorMet(metDeActividad(e.maquina), e.tiempo)), 0);
-  const rodado = biciRows
-    .filter(b => b.fecha === fecha)
-    .reduce((a, b) => a + (b.kcal_est != null ? Number(b.kcal_est)
-                                              : kcalPorMet(MET_BICI_MODERADA, (b.duracion_seg || 0) / 60)), 0);
-  return Math.round(cardio + rodado);
-}
-
 // ---- Progreso por ejercicio ----
 // El ultimo entreno de cada ejercicio, su mejor marca y si el tonelaje subio o bajo
 // respecto de la vez anterior. Contesta "¿estoy progresando?" sin leer la lista de
@@ -6788,9 +6749,12 @@ function progresoFuerza(){
 
 function renderEjercicioResumen(){
   const cont = document.getElementById('gym-resumen'); if(!cont) return;
-  const hoy   = fechaLocal(new Date());
-  const ton   = tonelajeDe(gymDelDia(hoy));
-  const gasto = gastoEjercicioDia(hoy);
+  // Mi Gym mide entrenamiento, no calorias: el gasto vive en Mi Peso y sale de las
+  // horas de Mi Tiempo, que es donde el cronometro de Gym ya deja su sesion.
+  const hoy = fechaLocal(new Date());
+  const ton = tonelajeDe(gymDelDia(hoy));
+  let semana = 0;
+  for(let i = 0; i < 7; i++) semana += tonelajeDe(gymDelDia(pesoFechaMas(hoy, -i)));
   cont.innerHTML =
     '<div class="gym-res-item">' +
       '<div class="gym-res-num" style="color:' + (ton ? '#E5883F' : 'rgba(255,255,255,0.5)') + ';">' +
@@ -6798,9 +6762,9 @@ function renderEjercicioResumen(){
       '<div class="gym-res-lbl">tonelaje de hoy</div></div>' +
     '<div style="width:1px;background:rgba(255,255,255,0.1);margin:12px 0;"></div>' +
     '<div class="gym-res-item">' +
-      '<div class="gym-res-num" style="color:' + (gasto ? '#8FCBF2' : 'rgba(255,255,255,0.5)') + ';">' +
-        (gasto || '—') + '</div>' +
-      '<div class="gym-res-lbl">kcal estimadas hoy</div></div>';
+      '<div class="gym-res-num" style="color:' + (semana ? '#E5883F' : 'rgba(255,255,255,0.5)') + ';">' +
+        fmtTonelaje(semana) + '</div>' +
+      '<div class="gym-res-lbl">tonelaje de 7 días</div></div>';
 }
 function renderProgresoFuerza(){
   const cont = document.getElementById('gym-progreso'); if(!cont) return;
@@ -6828,151 +6792,6 @@ function renderProgresoFuerza(){
         '</div>' + delta +
       '</div>';
   }).join('');
-}
-
-// ---- Bici: cronometro de transporte ----
-// El arranque vive en el navegador y no en la base, al reves que el cronometro de
-// Mi Tiempo. Es a proposito: un trayecto en bici se mide en el telefono que llevas
-// encima y lo que tiene que sobrevivir es que el sistema cierre la app a mitad de
-// camino, no que quieras verlo desde la computadora.
-const BICI_INICIO_KEY     = 'bici_inicio';
-const BICI_INTENSIDAD_KEY = 'bici_intensidad';
-
-async function loadBici(){
-  // Un mes de trayectos: alcanza para el resumen del dia y para la lista reciente.
-  const desde = pesoFechaMas(fechaLocal(new Date()), -29);
-  const { data, error } = await sb.from('bici').select('*').gte('fecha', desde)
-                                  .order('inicio', { ascending:false });
-  if(error){ console.log('bici:', error.code, error.message); biciRows = []; }
-  else biciRows = data || [];
-  renderBici();
-}
-function biciIntensidad(){
-  try{ return localStorage.getItem(BICI_INTENSIDAD_KEY) === 'tranquila' ? 'tranquila' : 'moderada'; }
-  catch(e){ return 'moderada'; }
-}
-function ponerBiciIntensidad(v){
-  try{ localStorage.setItem(BICI_INTENSIDAD_KEY, v); }catch(e){}
-  renderBici();
-}
-function metBici(){ return biciIntensidad() === 'tranquila' ? MET_BICI_TRANQUILA : MET_BICI_MODERADA; }
-
-function leerBiciInicio(){
-  try{
-    const t = Number(localStorage.getItem(BICI_INICIO_KEY));
-    return Number.isFinite(t) && t > 0 ? t : null;
-  }catch(e){ return null; }
-}
-function segundosBici(){ return biciInicio ? Math.max(0, Math.floor((Date.now() - biciInicio) / 1000)) : 0; }
-function latirBici(){
-  detenerLatidoBici();
-  biciTick = setInterval(()=>{
-    const d = document.getElementById('bici-display');
-    if(d) d.textContent = formatCrono(segundosBici());
-  }, 1000);
-}
-function detenerLatidoBici(){ if(biciTick){ clearInterval(biciTick); biciTick = null; } }
-// Al abrir la app (y al volver a ella) el reloj se rearma desde el timestamp guardado:
-// el tiempo lo lleva el reloj del sistema, no un contador que se muere con la pestaña.
-function restaurarBici(){
-  biciInicio = leerBiciInicio();
-  if(biciInicio) latirBici(); else detenerLatidoBici();
-  renderBici();
-}
-function arrancarBici(){
-  biciInicio = Date.now();
-  try{ localStorage.setItem(BICI_INICIO_KEY, String(biciInicio)); }catch(e){}
-  latirBici();
-  renderBici();
-}
-async function pararBici(){
-  if(!biciInicio) return;
-  const inicio = biciInicio, fin = Date.now();
-  const seg = Math.max(1, Math.round((fin - inicio) / 1000));
-  const el = document.getElementById('bici-km');
-  const kmTxt = el ? el.value.trim().replace(',', '.') : '';
-  const km = kmTxt === '' ? null : parseFloat(kmTxt);
-  if(kmTxt !== '' && !(km >= 0)){ alert('Esos km no se entienden.'); return; }
-  const fila = {
-    fecha: fechaLocal(new Date(inicio)),
-    inicio: new Date(inicio).toISOString(),
-    fin: new Date(fin).toISOString(),
-    duracion_seg: seg,
-    distancia_km: km,
-    kcal_est: kcalPorMet(metBici(), seg / 60),
-  };
-  const { error } = await sb.from('bici').insert([fila]);
-  if(error){
-    // El arranque NO se borra: sin fila guardada, borrarlo perderia el trayecto entero.
-    alert('No se pudo guardar el trayecto: ' + (error.message || 'revisá la conexión') +
-          '\n\nEl cronómetro sigue corriendo, no se pierde nada. Probá de nuevo.');
-    return;
-  }
-  biciInicio = null;
-  try{ localStorage.removeItem(BICI_INICIO_KEY); }catch(e){}
-  detenerLatidoBici();
-  if(el) el.value = '';
-  await loadBici();          // la lista y el gasto salen de lo que devolvio la base
-  renderEjercicioResumen();
-  renderPeso();              // el gasto estimado del dia cambio
-}
-function descartarBici(){
-  if(!biciInicio) return;
-  if(!confirm('¿Descartar este trayecto sin guardarlo?')) return;
-  biciInicio = null;
-  try{ localStorage.removeItem(BICI_INICIO_KEY); }catch(e){}
-  detenerLatidoBici();
-  renderBici();
-}
-function fmtDuracionBici(seg){
-  const m = Math.round((Number(seg) || 0) / 60);
-  if(m < 60) return m + ' min';
-  return Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
-}
-function renderBici(){
-  const cont = document.getElementById('bici-box'); if(!cont) return;
-  const corriendo = !!biciInicio;
-  const hoy     = fechaLocal(new Date());
-  const delDia  = biciRows.filter(b => b.fecha === hoy);
-  const kmHoy   = delDia.reduce((a, b) => a + (Number(b.distancia_km) || 0), 0);
-  const kcalHoy = delDia.reduce((a, b) => a + (Number(b.kcal_est) || 0), 0);
-  const inten   = biciIntensidad();
-
-  const chips =
-    '<div class="bici-chips">' +
-      '<button class="bici-chip' + (inten === 'tranquila' ? ' on' : '') + '" onclick="ponerBiciIntensidad(\'tranquila\')">🚲 tranquila</button>' +
-      '<button class="bici-chip' + (inten === 'moderada' ? ' on' : '') + '" onclick="ponerBiciIntensidad(\'moderada\')">🚴 moderada</button>' +
-    '</div>';
-
-  const botones = corriendo
-    ? '<input type="number" class="bici-km" id="bici-km" inputmode="decimal" step="0.1" min="0" placeholder="km recorridos (opcional)">' +
-      '<div class="bici-btns">' +
-        '<button class="bici-btn stop" onclick="pararBici()">■ Llegué</button>' +
-        '<button class="bici-btn ghost" onclick="descartarBici()">Descartar</button>' +
-      '</div>'
-    : '<div class="bici-btns"><button class="bici-btn go" onclick="arrancarBici()">▶ Salgo en bici</button></div>';
-
-  const recientes = biciRows.slice(0, 4);
-  const lista = recientes.length
-    ? '<div class="bici-lista">' + recientes.map(b => '<div class="bici-fila">' +
-          '<span class="bici-fila-dur">' + fmtDuracionBici(b.duracion_seg) + '</span>' +
-          '<span>' + pesoFechaCorta(b.fecha) + '</span>' +
-          '<span style="margin-left:auto;">' +
-            (b.distancia_km != null ? Number(b.distancia_km) + ' km · ' : '') +
-            Math.round(Number(b.kcal_est) || 0) + ' kcal</span>' +
-        '</div>').join('') + '</div>'
-    : '';
-
-  cont.innerHTML =
-    '<div class="bici-display" id="bici-display">' + formatCrono(segundosBici()) + '</div>' +
-    '<div class="bici-sub">' + (corriendo
-        ? 'en camino · ' + Math.round(kcalPorMet(metBici(), segundosBici() / 60)) + ' kcal estimadas'
-        : (delDia.length
-            ? delDia.length + (delDia.length === 1 ? ' trayecto hoy · ' : ' trayectos hoy · ') +
-              (kmHoy ? Number(kmHoy.toFixed(1)) + ' km · ' : '') + Math.round(kcalHoy) + ' kcal'
-            : 'sin trayectos hoy')) + '</div>' +
-    chips + botones + lista +
-    '<div class="bici-sub" style="margin-top:12px;">El cronómetro sigue corriendo aunque cierres la app.</div>';
 }
 
 // ===== MI PESO =====
@@ -7024,6 +6843,8 @@ function pesoConfigNum(campo, porDefecto){
 }
 function pesoDeficit(){ return pesoConfigNum('deficit', 640); }
 function pesoTdee(){ return pesoConfigNum('tdee_objetivo', 2755); }
+// Queda para los dias viejos y como respaldo si algo pregunta sin fecha; el numero
+// que se muestra es el del dia, que depende de cuanto te moviste (pesoIngestaObjetivoDia).
 function pesoIngestaObjetivo(){ return pesoTdee() - pesoDeficit(); }
 function pesoObjetivo(){
   const v = pesoConfig ? pesoConfig.peso_objetivo : null;
@@ -7046,6 +6867,128 @@ function pesoPerdidaSemanal(){
   const hace14 = pesoPromedio7d(pesoFechaMas(ref, -14));
   if(hace14 != null) return (hace14 - ahora) / 2;
   return pesoPerdidaEstaSemana();
+}
+
+// ---- Balance energetico del dia (Modelo aditivo) ----
+// El gasto de un dia es el metabolismo basal por un factor de vida sedentaria, mas lo
+// que costaron las actividades que registraste en Mi Tiempo. El deficit del dia es ese
+// gasto menos lo que comiste. Y al final, lo que predijo ese modelo se contrasta con lo
+// que hizo la balanza, que es el unico juez.
+//
+// Mi Tiempo es la UNICA fuente del gasto por actividad. Mi Gym mide entrenamiento
+// (tonelaje, marcas), no calorias: el cronometro de Gym ya escribe su sesion en
+// Mi Tiempo como Deporte › Gym, asi que cobrarla en los dos lados seria contarla dos
+// veces. Por eso tampoco hay un cronometro de bici propio: la bici se registra donde
+// ya se registraba, en Transporte › Bicicleta.
+//
+// Las actividades se cobran NETAS: (MET - 1) × peso × horas. Un MET es el gasto en
+// reposo, y esa hora en reposo ya esta dentro del basal; cobrar el MET entero seria
+// sumar el reposo dos veces. Una hora de bici de ciudad a 95 kg son (4-1) × 95 = 285
+// kcal, no 380.
+
+// Los MET salen del Compendium of Physical Activities. La bici de transporte es 4,0
+// (menos de 16 km/h, ir a algun lado), no la de 6,0 que es salir a rodar en serio.
+const MET_ACTIVIDADES = [
+  { cat:'Transporte',       sub:/bici|velo|cicl/,            met:4.0 },
+  { cat:'Transporte',       sub:/camin|a pie|marcha/,        met:3.5 },
+  { cat:'Deporte',          sub:/gym|pesas|fuerza|muscul/,   met:5.0 },
+  { cat:'Deporte',          sub:/corr|runn|trot|footing/,    met:9.8 },
+  { cat:'Deporte',          sub:/nad|pisc|natac/,            met:6.0 },
+  { cat:'Deporte',          sub:null,                        met:6.0 },
+  { cat:'Hogar',            sub:/carga|pesad|mudan|mueble/,  met:5.0 },
+  { cat:'Hogar',            sub:/limpi|barr|fregar|aspir/,   met:3.3 },
+  { cat:'Hogar',            sub:/compra/,                    met:2.3 },
+  { cat:'Hogar',            sub:null,                        met:2.0 },
+  { cat:'Cuidado personal', sub:null,                        met:2.0 },
+];
+// Por debajo de esto la actividad no se distingue de estar sentado, y sumar decimales
+// de un viaje en tren solo mete ruido. Lo que no esta en la tabla no cuenta: inventar
+// gasto para 'Ocio' o 'Trabajo' seria adivinar.
+const MET_MINIMO_QUE_CUENTA = 1.5;
+
+function metDeTiempo(categoria, subcategoria){
+  const sub = sinAcentos(subcategoria || '');
+  for(const r of MET_ACTIVIDADES){
+    if(r.cat !== categoria) continue;
+    if(r.sub === null || r.sub.test(sub)) return r.met;
+  }
+  return 0;
+}
+// Mifflin-St Jeor, la formula que menos se equivoca en poblacion general. El peso que
+// entra es el promedio de 7 dias, asi que el basal baja solo a medida que bajas vos.
+function pesoBMR(){
+  const kg   = pesoParaMet();
+  const cm   = pesoConfigNum('altura_cm', 180);
+  const edad = pesoConfigNum('edad', 34);
+  return 10 * kg + 6.25 * cm - 5 * edad + 5;
+}
+function pesoFactorBase(){ return pesoConfigNum('factor_base', 1.2); }
+// El gasto de un dia sin nada registrado: basal + la vida de estar despierto (comer,
+// ducharse, caminar por casa). Si una recalibracion medida fue aceptada, manda ese
+// numero: sale de lo que hizo la balanza y le gana a cualquier formula.
+function pesoBaseDiaria(){
+  const v = pesoConfig ? pesoConfig.base_kcal : null;
+  return (v != null && v !== '') ? Number(v) : pesoBMR() * pesoFactorBase();
+}
+function pesoBaseEsMedida(){
+  const v = pesoConfig ? pesoConfig.base_kcal : null;
+  return v != null && v !== '';
+}
+
+// Lo que costaron las actividades de un dia, agrupadas para poder mostrarlas.
+function detalleActividadDia(fecha){
+  const kg = pesoParaMet();
+  const por = {};
+  tiempoItems.forEach(i => {
+    const met = metDeTiempo(i.categoria, i.subcategoria);
+    if(met <= MET_MINIMO_QUE_CUENTA) return;
+    const min = minutosItemEnDia(i, fecha);
+    if(min <= 0) return;
+    const clave = i.categoria + ' › ' + (i.subcategoria || 'General');
+    if(!por[clave]) por[clave] = { etiqueta:clave, met, minutos:0, kcal:0 };
+    por[clave].minutos += min;
+    por[clave].kcal    += (met - 1) * kg * (min / 60);
+  });
+  return Object.values(por)
+    .map(x => ({ etiqueta:x.etiqueta, met:x.met, minutos:Math.round(x.minutos), kcal:Math.round(x.kcal) }))
+    .sort((a, b) => b.kcal - a.kcal);
+}
+function kcalActividadDia(fecha){
+  return detalleActividadDia(fecha).reduce((a, x) => a + x.kcal, 0);
+}
+function pesoGastoDia(fecha){ return Math.round(pesoBaseDiaria() + kcalActividadDia(fecha)); }
+// El deficit del dia: lo que gastaste menos lo que comiste. Sin comidas cargadas no
+// hay deficit que mostrar, y un cero seria mentira.
+function pesoDeficitDia(fecha){
+  const comido = pesoKcalDia(fecha);
+  if(comido == null) return null;
+  return Math.round(pesoGastoDia(fecha) - comido);
+}
+// La ingesta objetivo ya no es un numero fijo: el dia que andas en bici podes comer
+// mas, porque gastaste mas. Eso es todo el punto del modelo aditivo.
+function pesoIngestaObjetivoDia(fecha){ return Math.round(pesoGastoDia(fecha) - pesoDeficit()); }
+
+// ---- El contraste: lo que predijo el modelo contra lo que dijo la balanza ----
+// 7700 kcal = 1 kg de grasa. Si el deficit acumulado dice -1,1 kg y la balanza dice
+// -0,6 kg, el modelo se esta pasando y hay que bajar la base (eso hace recalibrar).
+function pesoContraste(dias){
+  const ref = pesoUltimaFecha();
+  if(!ref) return null;
+  const ahora = pesoPromedio7d(ref), antes = pesoPromedio7d(pesoFechaMas(ref, -dias));
+  if(ahora == null || antes == null) return null;
+  let suma = 0, conDato = 0;
+  for(let i = 0; i < dias; i++){
+    const d = pesoDeficitDia(pesoFechaMas(ref, -i));
+    if(d != null){ suma += d; conDato++; }
+  }
+  if(!conDato) return null;
+  // Los dias sin comidas cargadas no se cuentan como cero: se proyecta la media de
+  // los que si tienen dato. Con la mitad de los dias en blanco esto es una pista, no
+  // una medicion, y por eso se dice cuantos dias entraron.
+  const proyectado = (suma / conDato) * dias;
+  return { dias, conDato, kcal:Math.round(proyectado),
+           kgEsperados: proyectado / PESO_KCAL_POR_KG,
+           kgReales: antes - ahora };
 }
 
 // ---- Recalibracion del gasto (TDEE) ----
@@ -7077,7 +7020,14 @@ function pesoRecalibracion(){
   const perdidaSemanal = (antes - ahora) / 2;
   const deficitReal    = perdidaSemanal * PESO_KCAL_POR_KG / 7;
   const tdeeReal       = ingestaMedia + deficitReal;
-  return { ok:true, ingestaMedia, perdidaSemanal, deficitReal, tdeeReal,
+  // El gasto medido incluye lo que te moviste esas 2 semanas. Lo que hay que guardar
+  // es la BASE: si no se le resta la actividad registrada, el dia que andes en bici se
+  // sumaria dos veces, una dentro del numero medido y otra como actividad del dia.
+  let actividad = 0;
+  for(let i = 0; i < 14; i++) actividad += kcalActividadDia(pesoFechaMas(ref, -i));
+  const actividadMedia = actividad / 14;
+  const baseReal = tdeeReal - actividadMedia;
+  return { ok:true, ingestaMedia, perdidaSemanal, deficitReal, tdeeReal, actividadMedia, baseReal,
            nuevaIngesta: tdeeReal - pesoDeficit(), diasKcal: kcal.length };
 }
 // Se propone cada 2 semanas, no cada vez que se abre el modulo: recalcular el gasto
@@ -7089,7 +7039,7 @@ function pesoTocaRecalibrar(){
   if(!r.ok) return false;
   const ultima = pesoConfig && pesoConfig.recalibrado_at;
   if(ultima && pesoDiasEntre(ultima, fechaLocal(new Date())) < 14) return false;
-  return Math.abs(r.tdeeReal - pesoTdee()) >= 25;
+  return Math.abs(r.baseReal - pesoBaseDiaria()) >= 25;
 }
 
 // ---- Meta ----
@@ -7126,16 +7076,14 @@ async function guardarPesoDia(){
   const elFecha = document.getElementById('peso-fecha');
   const fecha   = (elFecha && elFecha.value) || fechaLocal(new Date());
   const kgTxt   = document.getElementById('peso-kg').value.trim().replace(',', '.');
-  const kcalTxt = document.getElementById('peso-kcal').value.trim().replace(',', '.');
   const kg = parseFloat(kgTxt);
   if(!(kg > 0)){ alert('Falta el peso del día.'); return; }
   if(kg > 400){ alert('Ese peso no parece de una persona. Revisalo.'); return; }
-  // Con comidas cargadas ese dia, las kcal son su suma y el campo esta bloqueado:
-  // dos fuentes para el mismo numero es la forma segura de que una quede vieja.
-  const hayComidas = pesoComidasDe(fecha).length > 0;
-  const kcal = hayComidas ? Math.round(pesoKcalDia(fecha))
-             : (kcalTxt === '' ? null : parseFloat(kcalTxt));
-  if(!hayComidas && kcalTxt !== '' && !(kcal >= 0)){ alert('Las kcal no se entienden.'); return; }
+  // Las kcal no se escriben en ningun lado: son la suma de las comidas del dia. Lo
+  // unico que se teclea en este formulario es el peso. Para un dia viejo cargado a
+  // mano, pesoKcalDia devuelve ese valor y guardarlo de nuevo no lo pisa.
+  const v = pesoKcalDia(fecha);
+  const kcal = v == null ? null : Math.round(v);
   const { error } = await sb.from('peso')
     .upsert({ fecha, peso_kg:kg, kcal_ingeridas:kcal }, { onConflict:'fecha' });
   if(error){ alert('No se pudo guardar: ' + (error.message || 'revisá la conexión')); return; }
@@ -7160,13 +7108,15 @@ async function guardarPesoObjetivo(){
 async function aceptarRecalibracion(){
   const r = pesoRecalibracion();
   if(!r.ok) return;
-  const fila = { id:1, tdee_objetivo:Math.round(r.tdeeReal), updated_at:new Date().toISOString(),
-                 recalibrado_at:fechaLocal(new Date()) };
+  // Se guarda la base medida, no el total: el total de hoy se arma sumandole la
+  // actividad de hoy. 'tdee_objetivo' queda por compatibilidad con los dias viejos.
+  const fila = { id:1, base_kcal:Math.round(r.baseReal), tdee_objetivo:Math.round(r.tdeeReal),
+                 updated_at:new Date().toISOString(), recalibrado_at:fechaLocal(new Date()) };
   let { error } = await sb.from('peso_config').upsert(fila, { onConflict:'id' });
-  if(error && /recalibrado_at/i.test((error.message || '') + (error.details || ''))){
-    // La columna la agrega setup-peso.sql; si esa parte no corrio, el gasto se guarda
-    // igual y lo unico que se pierde es el plazo: el aviso volvera a salir.
-    delete fila.recalibrado_at;
+  if(error && /recalibrado_at|base_kcal/i.test((error.message || '') + (error.details || ''))){
+    // Las columnas las agregan setup-peso.sql y setup-balance.sql; si alguna no corrio,
+    // se guarda lo que se pueda en vez de perder la medicion entera.
+    delete fila.recalibrado_at; delete fila.base_kcal;
     ({ error } = await sb.from('peso_config').upsert(fila, { onConflict:'id' }));
   }
   if(error){ alert('No se pudo guardar el nuevo gasto: ' + (error.message || 'revisá la conexión')); return; }
@@ -7230,6 +7180,76 @@ function pesoGraficaHTML(){
   svg += '</svg><div class="peso-nota">Los puntos son cada pesada; la línea es el promedio de 7 días.</div>';
   return svg;
 }
+// El dia entero en una cuenta: lo que gastaste (base + lo que te moviste), lo que
+// comiste, y la diferencia. Es la tarjeta que contesta "¿hoy voy bien?".
+function pesoBalanceHTML(){
+  const fecha  = pesoFechaActiva();
+  const base   = Math.round(pesoBaseDiaria());
+  const acts   = detalleActividadDia(fecha);
+  const act    = acts.reduce((a, x) => a + x.kcal, 0);
+  const gasto  = pesoGastoDia(fecha);
+  const comido = pesoKcalDia(fecha);
+  const def    = pesoDeficitDia(fecha);
+  const meta   = pesoDeficit();
+
+  const lineas =
+    '<div class="peso-dato"><span class="peso-dato-lbl">Gasto base' +
+      (pesoBaseEsMedida() ? ' (medido)' : ' (fórmula)') + '</span>' +
+      '<span class="peso-dato-val">' + base + ' kcal</span></div>' +
+    acts.map(a => '<div class="peso-dato" style="padding-left:10px;">' +
+        '<span class="peso-dato-lbl">' + escHtmlAttr(a.etiqueta) + ' · ' + a.minutos + ' min</span>' +
+        '<span class="peso-dato-val" style="color:#8FCBF2;font-weight:500;">+' + a.kcal + '</span></div>').join('') +
+    (act ? '' : '<div class="peso-dato" style="padding-left:10px;">' +
+        '<span class="peso-dato-lbl">sin actividad registrada</span>' +
+        '<span class="peso-dato-val" style="color:rgba(255,255,255,0.35);">+0</span></div>') +
+    '<div class="peso-dato" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;padding-top:8px;">' +
+      '<span class="peso-dato-lbl">Gastaste</span>' +
+      '<span class="peso-dato-val">' + gasto + ' kcal</span></div>' +
+    '<div class="peso-dato"><span class="peso-dato-lbl">Comiste</span>' +
+      '<span class="peso-dato-val">' + (comido == null ? '—' : Math.round(comido) + ' kcal') + '</span></div>';
+
+  if(def == null){
+    return lineas + '<div class="peso-nota">Cargá lo que comiste y acá sale el déficit del día.</div>';
+  }
+  // Un deficit positivo es el que adelgaza. Se pinta verde si llega a la meta, naranja
+  // si se queda corto y rojo si el dia fue en superavit.
+  const color = def >= meta ? '#A8D45C' : def > 0 ? '#E5883F' : '#F09595';
+  const kg = def / PESO_KCAL_POR_KG;
+  return lineas +
+    '<div class="peso-dato" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;padding-top:8px;">' +
+      '<span class="peso-dato-lbl">Déficit del día</span>' +
+      '<span class="peso-dato-val" style="color:' + color + ';font-size:16px;">' +
+        (def > 0 ? '−' : '+') + Math.abs(def) + ' kcal</span></div>' +
+    '<div class="peso-dato"><span class="peso-dato-lbl">Meta ' + Math.round(meta) + ' kcal/día</span>' +
+      '<span class="peso-dato-val" style="color:rgba(255,255,255,0.6);font-weight:500;">' +
+        (kg >= 0 ? '−' : '+') + pesoNum(Math.abs(kg), 3) + ' kg</span></div>' +
+    '<div class="peso-nota">Objetivo de hoy: comer ' + pesoIngestaObjetivoDia(fecha) + ' kcal. ' +
+      'Sube si te movés más.</div>';
+}
+// Lo que predijo el modelo contra lo que dijo la balanza. Si no coinciden, el que
+// tiene razon es la balanza, y para eso esta el aviso de recalibrar.
+function pesoContrasteHTML(){
+  const c = pesoContraste(14);
+  if(!c) return '';
+  const dif = c.kgReales - c.kgEsperados;
+  const fiable = c.conDato >= 10;
+  const color = Math.abs(dif) < 0.4 ? '#A8D45C' : '#E5883F';
+  return '<div class="peso-dato" style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;">' +
+      '<span class="peso-dato-lbl">El modelo dice (14 d)</span>' +
+      '<span class="peso-dato-val">' + (c.kgEsperados >= 0 ? '−' : '+') +
+        pesoNum(Math.abs(c.kgEsperados), 2) + ' kg</span></div>' +
+    '<div class="peso-dato"><span class="peso-dato-lbl">La balanza dice</span>' +
+      '<span class="peso-dato-val" style="color:' + color + ';">' + (c.kgReales >= 0 ? '−' : '+') +
+        pesoNum(Math.abs(c.kgReales), 2) + ' kg</span></div>' +
+    '<div class="peso-nota">' + (fiable
+      ? (Math.abs(dif) < 0.4
+          ? 'El modelo le está achuntando: podés confiar en el déficit del día.'
+          : (dif < 0
+              ? 'El modelo te da más déficit del que hace la balanza: tu gasto base es menor. Recalibrá cuando te lo ofrezca.'
+              : 'Estás bajando más de lo que predice: tu gasto base es mayor. Recalibrá cuando te lo ofrezca.'))
+      : 'Solo ' + c.conDato + ' de 14 días tienen comidas cargadas, así que esto es una pista, no una medición.') +
+    '</div>';
+}
 function pesoMetaHTML(){
   const p = pesoProyeccion();
   const obj = pesoObjetivo();
@@ -7282,7 +7302,7 @@ function renderPeso(){
   elS.textContent = semana == null ? '—'
     : (semana > 0 ? '−' : semana < 0 ? '+' : '') + pesoNum(Math.abs(semana), 2) + ' kg';
   elS.style.color = semana == null ? 'rgba(255,255,255,0.45)' : (semana > 0 ? '#A8D45C' : '#E5883F');
-  document.getElementById('peso-hdr-ingesta').textContent = Math.round(pesoIngestaObjetivo());
+  document.getElementById('peso-hdr-ingesta').textContent = pesoIngestaObjetivoDia(pesoFechaActiva());
 
   const r = pesoRecalibracion();
   document.getElementById('peso-aviso-box').innerHTML = pesoTocaRecalibrar()
@@ -7290,8 +7310,9 @@ function renderPeso(){
         '<div class="peso-aviso-tit">⚖️ Toca recalibrar tu gasto</div>' +
         '<div class="peso-aviso-txt">En estas 2 semanas comiste <b>' + Math.round(r.ingestaMedia) + ' kcal</b> al día de media (' +
           r.diasKcal + ' días anotados) y el promedio bajó <b>' + pesoNum(r.perdidaSemanal, 2) + ' kg</b> por semana. ' +
-          'Eso da un gasto real de <b>' + Math.round(r.tdeeReal) + ' kcal</b>, y hoy tenés guardado ' + Math.round(pesoTdee()) + '. ' +
-          'Tu ingesta objetivo pasaría a <b>' + Math.round(r.nuevaIngesta) + ' kcal</b>.</div>' +
+          'Eso da un gasto real de <b>' + Math.round(r.tdeeReal) + ' kcal</b> al día; descontando las ' +
+          Math.round(r.actividadMedia) + ' kcal de actividad que registraste, tu gasto base medido es <b>' +
+          Math.round(r.baseReal) + ' kcal</b> y ahora uso ' + Math.round(pesoBaseDiaria()) + '.</div>' +
         '<div class="peso-aviso-btns">' +
           '<button class="peso-btn ghost" onclick="posponerRecalibracion()">Ahora no</button>' +
           '<button class="peso-btn" onclick="aceptarRecalibracion()">Aplicar</button>' +
@@ -7300,6 +7321,7 @@ function renderPeso(){
     : '';
 
   document.getElementById('peso-grafica').innerHTML = pesoGraficaHTML();
+  document.getElementById('peso-balance').innerHTML = pesoBalanceHTML() + pesoContrasteHTML();
   document.getElementById('peso-comida').innerHTML = pesoComidaHTML();
   document.getElementById('peso-meta').innerHTML = pesoMetaHTML();
 
@@ -7323,13 +7345,19 @@ function prefillPeso(){
   if(!inFecha.value) inFecha.value = fechaLocal(new Date());
   const fila = pesoRows.find(r => r.fecha === inFecha.value);
   document.getElementById('peso-kg').value = fila ? Number(fila.peso_kg) : '';
-  const hayComidas = pesoComidasDe(inFecha.value).length > 0;
+  // Las kcal del dia se muestran, no se piden: salen de las comidas cargadas. Un dia
+  // viejo puede traerlas de cuando se escribian a mano, y se dice de donde vienen
+  // para que nunca haya dudas sobre que numero esta contando.
+  const nComidas = pesoComidasDe(inFecha.value).length;
   const v = pesoKcalDia(inFecha.value);
-  const elK = document.getElementById('peso-kcal');
-  elK.value = v == null ? '' : Math.round(v);
-  // Con comidas cargadas el campo es un espejo de la suma, no una entrada.
-  elK.disabled = hayComidas;
-  elK.placeholder = hayComidas ? 'sale de tus comidas' : 'opcional';
+  const elK = document.getElementById('peso-kcal-auto');
+  if(elK){
+    elK.innerHTML = v == null
+      ? '—<span class="peso-kcal-fuente">cargá lo que comiste</span>'
+      : Math.round(v) + '<span class="peso-kcal-fuente">' +
+          (nComidas ? 'suma de ' + nComidas + (nComidas === 1 ? ' comida' : ' comidas')
+                    : 'cargado a mano en su día') + '</span>';
+  }
 }
 
 // ---- Diario de comidas ----
@@ -7555,7 +7583,7 @@ function pesoComidaHTML(){
   const fecha    = pesoFechaActiva();
   const delDia   = pesoComidasDe(fecha);
   const total    = delDia.reduce((a, c) => a + Number(c.kcal), 0);
-  const objetivo = Math.round(pesoIngestaObjetivo());
+  const objetivo = pesoIngestaObjetivoDia(fecha);
   const pasado   = total > objetivo;
   const color    = pasado ? '#E5883F' : '#A8D45C';
   const pct      = objetivo > 0 ? Math.min(100, Math.round(total / objetivo * 100)) : 0;
@@ -7584,17 +7612,7 @@ function pesoComidaHTML(){
           escHtmlAttr(a.etiqueta) + ' · ' + Math.round(Number(a.kcal)) + '</button>').join('') + '</div>'
     : '';
 
-  // Modelo A: esto se MUESTRA junto al objetivo, pero no se suma ni se resta en
-  // ningun calculo. El gasto real ya lo mide la balanza en la recalibracion.
-  const gasto = gastoEjercicioDia(fecha);
-  const ejercicio = gasto > 0
-    ? '<div class="peso-dato"><span class="peso-dato-lbl">Ejercicio estimado</span>' +
-        '<span class="peso-dato-val" style="color:#8FCBF2;">' + gasto + ' kcal</span></div>' +
-      '<div class="peso-nota">Informativo: no se resta de tu déficit ni cambia la recalibración. ' +
-        'Tu gasto real ya se mide con la balanza.</div>'
-    : '';
-
-  return cab + ejercicio +
+  return cab +
     (filas ? '<div style="margin-top:8px;">' + filas + '</div>' : '') +
     chips +
     '<div style="margin-top:12px;"><label for="peso-texto">Qué comiste</label>' +
@@ -7612,10 +7630,6 @@ loadCompras();
 loadLugares();
 loadEstudio();
 loadPeso();
-loadBici();
-// El reloj de la bici se rearma antes de que conteste la red: si quedo un trayecto
-// corriendo, lo primero que hay que ver al abrir la app es que sigue corriendo.
-restaurarBici();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
 // pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las
@@ -7653,7 +7667,6 @@ setInterval(()=>{ if(hayCronoEnCurso()) refrescarGrid(); }, 30000);
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState==='visible'){
     reanudarContadoresModulos();
-    restaurarBici();
     if(openMenus.has('compras')) detectarLugar(true);
     revisarTareasRecurrentes();
   } else {
