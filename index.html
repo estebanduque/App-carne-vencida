@@ -4180,6 +4180,9 @@ const SUBCAT_SUGERIDAS = {
   'Hogar': ['Limpieza del hogar','Hacer compras','Cocinar','Lavar platos'],
   'Cuidado personal': ['Ducha','Higiene personal'],
   'Deporte': ['Gym'],
+  // Transporte: los cuatro modos habituales quedan como botones listos, para que
+  // arrancar un viaje sea un toque y no obligue a escribir de memoria cada vez.
+  'Transporte': ['Bicicleta','Tren','Carro','A pie'],
 };
 function categoriaInfo(nombre){ return CATEGORIAS_TIEMPO.find(c=>c.nombre===nombre) || { nombre:nombre||'—', color:'#999', bg:'rgba(153,153,153,0.15)', bd:'rgba(153,153,153,0.35)' }; }
 
@@ -4768,7 +4771,19 @@ function animarReorden(cont, antes){
 function renderCategoriaBlockHTML(c){
     const st = statsCategoria(c.nombre, clavePeriodoActual());
     const isOpen = openCategorias.has(c.nombre);
-    const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
+    // Las subcats sugeridas aparecen como filas aunque todavia no tengan sesiones:
+    // asi Transporte muestra Bicicleta, Tren, Carro y A pie desde el primer dia,
+    // listas para arrancar el cronometro sin escribir nada.
+    const sugeridas = SUBCAT_SUGERIDAS[c.nombre] || [];
+    const subsConSug = Object.assign({}, st.subs);
+    sugeridas.forEach(s=>{ if(!subsConSug[s]) subsConSug[s] = { min:0, count:0, sesiones:[] }; });
+    const ordenSug = new Map(sugeridas.map((s,i)=>[s,i]));
+    const subsEntries = Object.entries(subsConSug).sort((a,b)=>{
+      if(b[1].min !== a[1].min) return b[1].min - a[1].min;
+      const ia = ordenSug.has(a[0]) ? ordenSug.get(a[0]) : 999;
+      const ib = ordenSug.has(b[0]) ? ordenSug.get(b[0]) : 999;
+      return ia - ib || a[0].localeCompare(b[0]);
+    });
     const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
       const subKey = c.nombre+'||'+sname;
       const subOpen = openSubcats.has(subKey);
