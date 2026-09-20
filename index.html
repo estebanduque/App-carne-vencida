@@ -360,6 +360,19 @@
   .cmp-prev { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); }
   .cmp-prev select { flex-shrink: 0; width: auto; padding: 5px 7px; font-size: 12px; }
   .cmp-lugar-row { display: flex; align-items: center; gap: 9px; padding: 9px 13px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 13px; color: rgba(255,255,255,0.75); }
+  /* Sugerencias venidas del DLC (lo que consumiste y podrias querer volver a comprar). */
+  .cmp-sug { margin: 0 16px 10px; border: 1px dashed rgba(245,179,122,0.45); border-radius: 14px; overflow: hidden; background: rgba(245,179,122,0.06); }
+  .cmp-sug-head { padding: 10px 13px; font-size: 12px; font-weight: 600; color: #F5B37A; display: flex; align-items: center; gap: 8px; }
+  .cmp-sug-head-txt { flex: 1; min-width: 0; }
+  .cmp-sug-row { display: flex; align-items: center; gap: 8px; padding: 8px 13px; border-top: 1px solid rgba(245,179,122,0.14); }
+  .cmp-sug-nom { flex: 1; min-width: 0; font-size: 14px; color: #fff; }
+  .cmp-sug-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .cmp-sug-add, .cmp-sug-quit { border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; flex-shrink: 0; }
+  .cmp-sug-add { background: rgba(0,150,136,0.25); color: #7FD8CE; border: 1px solid rgba(0,150,136,0.55); }
+  .cmp-sug-quit { background: none; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
+  /* Boton de foto de DLC sobre un articulo ya comprado (para capturar su vencimiento). */
+  .cmp-foto-btn { background: none; border: 1px solid rgba(29,158,117,0.45); color: #5DCAA5; font-size: 13px; padding: 3px 8px; border-radius: 8px; cursor: pointer; font-family: inherit; flex-shrink: 0; }
+  .cmp-foto-btn:active { background: rgba(29,158,117,0.18); }
   .crono-box { background: rgba(214,71,143,0.08); border: 1px solid rgba(214,71,143,0.22); border-radius: 14px; padding: 14px; margin: 0 16px 14px; text-align: center; }
   .crono-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; line-height: 1; margin-bottom: 12px; }
   .crono-sub { width: 100%; margin: 10px 0; padding: 11px 13px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
@@ -1259,6 +1272,9 @@ async function loadItems() {
   items = data || [];
   if(!sinColumnaDestino) await loadSalidas();
   render(); renderDesktop();
+  // El bloque de sugerencias de compras se arma con lo que salio del DLC: si eso
+  // llego despues, hay que redibujar compras para que aparezca.
+  if(typeof renderCompras === 'function' && document.getElementById('cmp-lista')) renderCompras();
 }
 // Historial acotado: lo que salio en los ultimos 60 dias. Sin tope, esta lista crece
 // para siempre y nadie mira una salida de hace medio año.
@@ -5103,6 +5119,105 @@ function chipsCategoriasHTML(seleccionadas, alTocar){
   }).join('');
 }
 
+// ---- Puentes con Mi DLC ----
+// Un producto salido de la despensa cruza a la lista de compras: si lo consumiste,
+// se propone volver a comprarlo; si lo comprás y era alimento, se ofrece tomarle
+// la foto del vencimiento y sumarlo al inventario.
+const TIENDAS_ALIMENTO = ['supermercado','panaderia','carniceria','verduleria'];
+function esAlimentoCompra(item){
+  return categoriasDe(item).some(c => TIENDAS_ALIMENTO.includes(c));
+}
+// Cada tipo del DLC dice donde se consigue: la carne al carnicero o al super, la
+// verdura al verdulero o al super. Todo lo demas cae en supermercado por defecto.
+const TIENDAS_POR_TIPO_DLC = {
+  'Res / ternera':      ['carniceria','supermercado'],
+  'Pollo':              ['carniceria','supermercado'],
+  'Cerdo':              ['carniceria','supermercado'],
+  'Pescado':            ['carniceria','supermercado'],
+  'Mariscos':           ['carniceria','supermercado'],
+  'Embutidos':          ['carniceria','supermercado'],
+  'Frutas y verduras':  ['verduleria','supermercado'],
+  'Pan y panadería':    ['panaderia','supermercado'],
+};
+function tiendasParaTipoDlc(tipo){ return TIENDAS_POR_TIPO_DLC[tipo] || ['supermercado']; }
+function nombreParaCompra(it){ return (it.desc && it.desc.trim()) || it.tipo || 'artículo'; }
+// El navegador guarda que sugerencias ya resolviste (agregada o descartada) para no
+// volver a proponer lo mismo. Por dispositivo: aca no hace falta llegar a la nube.
+const SUG_COMPRAS_KEY = 'sugerencias_compras_resueltas';
+function sugerenciasResueltas(){
+  try { return new Set(JSON.parse(localStorage.getItem(SUG_COMPRAS_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function marcarSugerenciaResuelta(dlcId){
+  const s = sugerenciasResueltas(); s.add(dlcId);
+  try { localStorage.setItem(SUG_COMPRAS_KEY, JSON.stringify([...s])); } catch(e){}
+}
+function normalizarNombre(s){ return sinAcentos(String(s||'')).toLowerCase().replace(/\s+/g,' ').trim(); }
+function nombreYaEnCompras(nombre){
+  const n = normalizarNombre(nombre);
+  return comprasItems.some(i => !i.comprado && normalizarNombre(i.nombre) === n);
+}
+// Consumido en los ultimos 30 dias, no resuelto y todavia no anotado.
+function sugerenciasDeDlc(){
+  if(!Array.isArray(itemsSalidos) || !itemsSalidos.length) return [];
+  const desde = Date.now() - 30*86400000;
+  const ya = sugerenciasResueltas();
+  return itemsSalidos.filter(i =>
+    i.destino === 'consumido' &&
+    i.destino_at && new Date(i.destino_at).getTime() >= desde &&
+    !ya.has(i.id) &&
+    !nombreYaEnCompras(nombreParaCompra(i))
+  );
+}
+function bloqueSugerenciasHTML(){
+  const sugs = sugerenciasDeDlc();
+  if(!sugs.length) return '';
+  const filas = sugs.map(it=>{
+    const nombre = nombreParaCompra(it);
+    const emojiTipo = EMOJIS[it.tipo] || '🍽️';
+    const cuando = it.destino_at
+      ? new Date(it.destino_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '';
+    return `<div class="cmp-sug-row">
+      <span style="font-size:18px;">${emojiTipo}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="cmp-sug-nom" ${attrsNombreLargo(nombre)}>${escHtmlAttr(nombre)}</div>
+        <div class="cmp-sug-sub">Consumiste ${cuando ? 'el '+cuando : 'hace poco'}</div>
+      </div>
+      <button class="cmp-sug-add" onclick="aceptarSugerenciaCompra(${it.id})" title="Sumar a la lista">＋ Agregar</button>
+      <button class="cmp-sug-quit" onclick="descartarSugerenciaCompra(${it.id})" title="No hace falta comprarlo">✕</button>
+    </div>`;
+  }).join('');
+  return `<div class="cmp-sug">
+    <div class="cmp-sug-head"><span>💡</span>
+      <span class="cmp-sug-head-txt">Volviste a acabar esto — ¿lo sumás a la lista?</span>
+    </div>
+    ${filas}
+  </div>`;
+}
+async function aceptarSugerenciaCompra(dlcId){
+  const it = (itemsSalidos || []).find(i => i.id === dlcId);
+  if(!it) return;
+  marcarSugerenciaResuelta(dlcId);
+  const cats = tiendasParaTipoDlc(it.tipo);
+  const ok = await agregarCompras([{
+    nombre: nombreParaCompra(it),
+    cantidad: null,
+    categoria: cats[0],
+    categorias: cats,
+    nota: 'Salió del DLC',
+  }]);
+  if(!ok){
+    // El insert fallo: dejar la sugerencia disponible para reintentar la proxima vez.
+    const s = sugerenciasResueltas(); s.delete(dlcId);
+    try { localStorage.setItem(SUG_COMPRAS_KEY, JSON.stringify([...s])); } catch(e){}
+  }
+  renderCompras();
+}
+function descartarSugerenciaCompra(dlcId){
+  marcarSugerenciaResuelta(dlcId);
+  renderCompras();
+}
+
 let comprasItems = [];
 let lugares = [];
 let lugarActual = null;      // { lugar, distancia, guardado:bool }
@@ -5388,7 +5503,10 @@ function bannerHTML(){
 function listaComprasHTML(){
   const pendientes = comprasItems.filter(i=>!i.comprado);
   const compradas = comprasItems.filter(i=>i.comprado);
-  if(!comprasItems.length) return '<div class="cmp-vacio">La lista está vacía.<br>Dictá una nota de voz para llenarla.</div>';
+  const sugerencias = bloqueSugerenciasHTML();
+  if(!comprasItems.length){
+    return sugerencias || '<div class="cmp-vacio">La lista está vacía.<br>Dictá una nota de voz para llenarla.</div>';
+  }
 
   const aqui = lugarActual ? categoriasQueCubre(lugarActual.lugar.categoria) : [];
   // Lo que se consigue donde estás va primero; el resto, por cantidad.
@@ -5414,6 +5532,7 @@ function listaComprasHTML(){
   }).join('');
 
   if(!pendientes.length) html = '<div class="cmp-vacio">✅ No falta nada.</div>';
+  html = sugerencias + html;
   if(compradas.length){
     html += `<div style="padding:0 16px 6px;">
       <button class="tema-add" style="width:100%;margin:0;" onclick="mostrarCompradas=!mostrarCompradas;renderCompras();">✓ Ya compradas (${compradas.length}) ${mostrarCompradas?'▴':'▾'}</button>
@@ -5427,12 +5546,38 @@ function listaComprasHTML(){
   return html;
 }
 function filaCompraHTML(i){
+  // Si ya lo compraste y es alimento, aparece el atajo para tomarle la foto del
+  // vencimiento y mandarlo al DLC — asi no vuelve a olvidarse la fecha en la nevera.
+  const foto = (i.comprado && esAlimentoCompra(i))
+    ? `<button class="cmp-foto-btn" onclick="abrirFotoDesdeCompra(${i.id})" title="Tomarle la foto del vencimiento y guardarlo en el DLC">📷 DLC</button>`
+    : '';
   return `<div class="cmp-row">
     <button class="cmp-check ${i.comprado?'on':''}" onclick="toggleComprado(${i.id})" aria-label="${i.comprado?'Desmarcar':'Marcar como comprado'}">${i.comprado?'✓':''}</button>
     <span class="cmp-nom ${i.comprado?'listo':''}" ${attrsNombreLargo(i.nombre)}>${escHtmlAttr(i.nombre)}</span>
     ${i.cantidad ? `<span class="cmp-cant">${escHtmlAttr(i.cantidad)}</span>` : ''}
+    ${foto}
     <button class="delete-btn" onclick="delCompra(${i.id})" aria-label="Eliminar">🗑</button>
   </div>`;
+}
+// Al tocar 📷 en una compra ya comprada, se abre el modal de escaneo del DLC con la
+// descripcion adelantada. La foto misma sigue el mismo flujo de siempre: la lee la IA,
+// vos revisas y guardas.
+function abrirFotoDesdeCompra(idCompra){
+  const it = comprasItems.find(i => i.id === idCompra);
+  if(!it) return;
+  openPhotoModal();
+  const desc = document.getElementById('p-desc');
+  if(desc) desc.value = it.nombre;
+  // Un empujon al tipo, si la tienda del articulo lo insinua.
+  const cats = categoriasDe(it);
+  const tipoSel = document.getElementById('p-tipo');
+  const guess = cats.includes('panaderia')  ? 'Pan y panadería'
+              : cats.includes('carniceria') ? 'Res / ternera'
+              : cats.includes('verduleria') ? 'Frutas y verduras'
+              : null;
+  if(tipoSel && guess){
+    for(const o of tipoSel.options){ if(o.value === guess){ tipoSel.value = guess; break; } }
+  }
 }
 function lugaresHTML(){
   if(!lugares.length) return '<div class="cmp-vacio" style="padding:14px;">Ninguna tienda guardada todavía.<br>Cuando estés en una, tocá 💾 en la franja de arriba.</div>';
