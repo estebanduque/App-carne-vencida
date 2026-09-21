@@ -12,11 +12,20 @@ create table if not exists compras (
   created_at  timestamptz not null default now(),
   nombre      text not null,                      -- 'leche entera'
   cantidad    text,                               -- '2 litros', '1 caja'
-  categoria   text not null default 'supermercado', -- donde se compra
+  categoria   text not null default 'supermercado', -- tienda principal (retro-compatible)
+  categorias  text[] not null default array['supermercado']::text[], -- todas las tiendas donde se consigue
   nota        text,                               -- la frase dictada de la que salio
   comprado    boolean not null default false,
   comprado_at timestamptz
 );
+
+-- Un articulo suele conseguirse en mas de un lado: el pan brioche en la panaderia y
+-- en el super, el pegamento instantaneo en la ferreteria y en el super. 'categorias'
+-- guarda esa lista; 'categoria' queda como la principal, por compatibilidad con
+-- filas viejas y con la version anterior de la app.
+alter table public.compras add column if not exists categorias text[];
+update public.compras set categorias = array[categoria]
+  where categorias is null or cardinality(categorias) = 0;
 
 create index if not exists compras_pendientes_idx
   on compras (comprado, categoria);
