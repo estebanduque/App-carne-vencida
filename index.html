@@ -599,6 +599,17 @@
     .peso-fila-kcal { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.45); }
     .peso-nota { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.45; margin-top: 8px; }
 
+    /* Pasos: una tarjeta chica, fuera de la ecuacion del balance */
+    .pasos-box { margin: 0 16px 12px; background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.25); border-radius: 14px; padding: 12px 14px; }
+    .pasos-cifras { display: flex; }
+    .pasos-item { flex: 1; text-align: center; padding: 4px 6px; min-width: 0; }
+    .pasos-num { font-size: 23px; font-weight: 700; line-height: 1; }
+    .pasos-lbl { font-size: 11px; margin-top: 5px; color: rgba(255,255,255,0.4); line-height: 1.25; }
+    .pasos-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
+    .pasos-form input { width: 100%; padding: 11px 12px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .pasos-btn { padding: 11px 16px; border: none; border-radius: 10px; background: #C9A227; color: #1a1a1a; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .pasos-btn:active { background: #A8851C; }
+
     /* Diario de comidas */
     .peso-kcal-auto { width: 100%; padding: 11px 12px; font-size: 15px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.75); }
     .peso-kcal-auto .peso-kcal-fuente { font-size: 10px; color: rgba(255,255,255,0.35); display: block; margin-top: 2px; }
@@ -713,6 +724,14 @@
             <button class="crono-btn crono-reset" onclick="gymReset()" title="Reiniciar">↺</button>
           </div>
           <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">Se registra en Mi Tiempo → Deporte</div>
+        </div>
+        <p class="inner-title">Pasos del día</p>
+        <div class="pasos-box" id="pasos-box-wrap">
+          <div id="pasos-box"></div>
+          <div class="pasos-form">
+            <input type="text" id="pasos-input" inputmode="numeric" placeholder="p. ej. 8400">
+            <button class="pasos-btn" onclick="guardarPasos()">Guardar</button>
+          </div>
         </div>
         <p class="inner-title">Últimas sesiones</p>
         <div id="gym-groups-list"></div>
@@ -1007,6 +1026,7 @@
         <div id="cmp-lista"></div>
         <div class="add-row">
           <button class="add-btn primary" style="background:#009688;border-color:#009688;" onclick="openVozModal()">🎤 Nota de voz</button>
+          <button class="add-btn" style="background:#1a7ab5;border-color:#1a7ab5;" onclick="openCompraPhotoModal()">📷 Foto de producto</button>
           <button class="add-btn" onclick="openCompraModal()">✏️ Manual</button>
         </div>
         <div style="padding:0 16px 14px;">
@@ -1115,6 +1135,31 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
       <button class="btn-save-green" style="background:#009688;" onclick="guardarCompraManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal foto producto (lista de compras) -->
+<div class="modal-overlay" id="modal-compra-foto">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📷 Escanear producto</h2>
+    <div class="ai-badge">✨ Lectura automática con IA</div>
+    <input type="file" id="cmp-foto-input" accept="image/*" capture="environment">
+    <div class="photo-zone" id="cmp-photo-zone" onclick="document.getElementById('cmp-foto-input').click()">
+      <div id="cmp-photo-icon" style="font-size:36px;">📷</div>
+      <img id="cmp-photo-preview" alt="Vista previa">
+      <p class="photo-hint" id="cmp-photo-hint">Toca para tomar foto o elegir de galería</p>
+    </div>
+    <div class="scanning-msg" id="cmp-scanning-msg">⏳ Analizando producto con IA…</div>
+    <div class="prefilled-msg" id="cmp-prefilled-msg">✅ IA detectó el producto — revisa y confirma</div>
+    <div class="form-row"><label>Producto</label><input type="text" id="cmp-foto-nombre" placeholder="Nombre del producto"></div>
+    <div class="form-row"><label>Cantidad</label><input type="text" id="cmp-foto-cantidad" placeholder="Ej: 1 unidad, 500g, 2L…"></div>
+    <div class="form-row"><label>Fecha de vencimiento (opcional)</label><input type="date" id="cmp-foto-fecha"></div>
+    <div class="form-row"><label>Dónde se consigue (podés marcar varias)</label><div class="cmp-cats" id="cmp-foto-categoria"></div></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" style="background:#009688;" onclick="guardarCompraFoto()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1292,6 +1337,22 @@
   </div>
 </div>
 
+<!-- Modal consulta compra (artículo consumido) -->
+<div class="modal-overlay" id="modal-compra-consumido">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>✅ ¿Lo compraste?</h2>
+    <div id="compra-consumido-info"></div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:15px 0;">
+      ¿Querés agregar este artículo a tu lista de compras?
+    </p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">No, gracias</button>
+      <button class="btn-save-green" style="background:#009688;" onclick="confirmarAgregarACompras()">Sí, agregarlo</button>
+    </div>
+  </div>
+</div>
+
 <!-- Popover de la grilla semanal de Mi Tiempo -->
 <div id="grid-popover" class="grid-popover" style="display:none;"></div>
 
@@ -1377,6 +1438,8 @@ let gymEditId = null;
 let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
+// Pasos del dia: se teclean a mano y solo se muestran. No se convierten a kcal.
+let pasosRows = [];
 
 // Mi Peso: las pesadas y la config viven en la base, y la pantalla se dibuja siempre
 // con lo que ella devuelve. Se declaran aca arriba, con el resto del estado, porque
@@ -1585,6 +1648,9 @@ const DESTINOS = {
 };
 const AVISO_DESTINO = 'Falta la columna destino en la tabla carnes: corré supabase/setup-dlc.sql en el SQL Editor.\n\nMientras tanto, consumir y tirar harían lo mismo (borrar), que es justo lo que este botón vino a distinguir.';
 
+// Item temporal para el modal de compra
+let itemParaCompraConsumido = null;
+
 async function marcarSalida(id, destino){
   if(sinColumnaDestino){ alert(AVISO_DESTINO); return; }
   const it = items.find(i=>i.id===id); if(!it) return;
@@ -1599,18 +1665,93 @@ async function marcarSalida(id, destino){
   items = items.filter(i=>i.id!==id);
   itemsSalidos.unshift(it);
   if(navigator.vibrate) navigator.vibrate(15);
+
+  if(destino === 'consumido'){
+    // En lugar de agregar automáticamente, mostrar modal para confirmar
+    itemParaCompraConsumido = it;
+    mostrarModalCompraConsumido();
+  } else {
+    // Si es tirado, no hacer nada con la lista de compras
+  }
+  render(); renderDesktop();
+}
+
+function mostrarModalCompraConsumido(){
+  if(!itemParaCompraConsumido) return;
+
+  const nombre = nombreParaCompras(itemParaCompraConsumido);
+  const infoDiv = document.getElementById('compra-consumido-info');
+  infoDiv.innerHTML = `
+    <div style="font-size:16px;font-weight:bold;margin-bottom:10px;">${nombre}</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:15px;">
+      Acabas de marcar esto como consumido
+    </div>
+  `;
+
+  document.getElementById('modal-compra-consumido').classList.add('open');
+}
+
+async function confirmarAgregarACompras(){
+  if(itemParaCompraConsumido){
+    agregarConsumidoACompras(itemParaCompraConsumido);
+    itemParaCompraConsumido = null;
+  }
+  closeModals();
   render(); renderDesktop();
 }
 // Sin confirmacion al salir: con deshacer a un toque, preguntar en cada comida molesta
 // mas de lo que protege.
 async function deshacerSalida(id){
   const it = itemsSalidos.find(i=>i.id===id); if(!it) return;
+  const eraConsumido = it.destino === 'consumido';
   const {error} = await sb.from('carnes').update({ destino:null, destino_at:null }).eq('id', id);
   if(error){ alert('No se pudo deshacer: ' + error.message); return; }
   delete it.destino; delete it.destino_at;
   itemsSalidos = itemsSalidos.filter(i=>i.id!==id);
   items.push(it);
+  if(eraConsumido) quitarConsumidoDeCompras(it);
   render(); renderDesktop();
+}
+
+// Lo consumido tiene que reponerse: entra solo en la lista de compras. Si ya hay
+// una linea pendiente con ese nombre no se duplica —al final es un pedido, no un
+// contador— y si el consumo se deshace se retira, siempre que no se haya comprado.
+// Los errores de la lista de compras no rompen el marcado: es un extra, no el acto.
+const MARCA_CONSUMIDO_COMPRAS = 'Consumido de Mi DLC';
+function nombreParaCompras(it){
+  const tipo = (it.tipo || '').trim();
+  const desc = (it.desc || '').trim();
+  return desc ? tipo + ' · ' + desc : tipo;
+}
+async function agregarConsumidoACompras(it){
+  const nombre = nombreParaCompras(it);
+  if(!nombre) return;
+  const yaPendiente = comprasItems.some(c =>
+    !c.comprado && (c.nombre||'').toLowerCase() === nombre.toLowerCase());
+  if(yaPendiente) return;
+  const fila = { nombre, categoria:'supermercado', categorias:['supermercado'], nota:MARCA_CONSUMIDO_COMPRAS };
+  let {data,error} = await sb.from('compras').insert([fila]).select();
+  if(error && /categorias/i.test((error.message||'') + (error.details||''))){
+    const g = Object.assign({}, fila); delete g.categorias;
+    ({data,error} = await sb.from('compras').insert([g]).select());
+  }
+  if(error){ console.log('compras auto-add:', error.code, error.message); return; }
+  comprasItems.push(...(data||[]));
+  renderCompras();
+}
+async function quitarConsumidoDeCompras(it){
+  const nombre = nombreParaCompras(it);
+  if(!nombre) return;
+  // La ultima linea pendiente que dejo un consumo, para que deshacer justo despues
+  // no arrastre una compra vieja con el mismo nombre.
+  const objetivo = [...comprasItems].reverse().find(c =>
+    !c.comprado && c.nota === MARCA_CONSUMIDO_COMPRAS
+    && (c.nombre||'').toLowerCase() === nombre.toLowerCase());
+  if(!objetivo) return;
+  const {error} = await sb.from('compras').delete().eq('id', objetivo.id);
+  if(error){ console.log('compras auto-remove:', error.code, error.message); return; }
+  comprasItems = comprasItems.filter(c => c.id !== objetivo.id);
+  renderCompras();
 }
 function delItem(id){ if(confirm('¿Borrar del historial? Esto no deja rastro.')) deleteItem(id); }
 
@@ -1679,6 +1820,7 @@ function renderGym(){
   // Lo nuevo se dibuja antes que nada: mas abajo hay un return temprano cuando no hay
   // ejercicios cargados, y el resumen tiene que verse igual.
   renderEjercicioResumen();
+  renderPasos();
   renderProgresoFuerza();
   // Contador días sin ir - móvil
   const hoyM = new Date(); hoyM.setHours(0,0,0,0);
@@ -2218,7 +2360,7 @@ setInterval(()=>{
   });
 }, 1000);
 
-function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;tareaEditId=null;}
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;tareaEditId=null;itemParaCompraConsumido=null;}
 function openPhotoModal(){
   document.getElementById('modal-photo').classList.add('open');
   document.getElementById('photo-preview').style.display='none';
@@ -2309,11 +2451,11 @@ document.getElementById('photo-input').addEventListener('change', async function
 // 'analizar-etiqueta'. Es el que va en la URL y no se puede renombrar, igual que
 // 'bright-worker' y 'super-responder'.
 const FN_ETIQUETA = 'analizaretiqueta';
-// El Cloudflare Worker que hacia esto antes. Queda de respaldo SOLO para que el
-// escaneo no se caiga entre que este codigo sale y la funcion nueva esta desplegada.
-// Una vez que veas 'analizar-etiqueta' andando, borra esta constante, la rama que la
-// usa, y el Worker desde el panel de Cloudflare.
-const WORKER_ETIQUETA_VIEJO = 'https://long-breeze-5893.duqes-j.workers.dev';
+// La carpeta se llama 'notificar-vencimientos' pero el slug que le toco fue
+// 'super-responder' (ver supabase/functions/notificar-vencimientos/index.ts): ese
+// mismo archivo ahora tambien estima la fecha de vencimiento, asi que se invoca por
+// aca en vez de por el nombre de carpeta.
+const FN_VENCIMIENTOS = 'super-responder';
 
 async function analizarEtiqueta(b64){
   try{
@@ -2322,37 +2464,174 @@ async function analizarEtiqueta(b64){
     });
     if(!error && data && data.ok) return data;
     console.log('analizar-etiqueta:', (error && error.message) || (data && data.error) || 'respuesta vacía');
+    return {};
   }catch(e){
     console.log('analizar-etiqueta:', e.message);
-  }
-  // Respaldo: el Worker viejo. No conoce los tipos nuevos ni devuelve ubicacion, pero
-  // lee la fecha, que es el dato por el que se saca la foto.
-  try{
-    const resp = await fetch(WORKER_ETIQUETA_VIEJO, {
-      method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ imageData:b64, mediaType:'image/jpeg' }),
-    });
-    const crudo = await resp.text();
-    console.log('worker viejo:', crudo);
-    return JSON.parse(crudo);
-  }catch(e){
-    console.log('worker viejo:', e.message);
     return {};
   }
 }
 
-function savePhoto(){
+async function savePhoto(){
   const fecha=document.getElementById('p-fecha').value;
-  if(!fecha){alert('Falta la fecha de vencimiento');return;}
-  saveItem({tipo:document.getElementById('p-tipo').value,desc:document.getElementById('p-desc').value.trim(),fecha,ubicacion:document.getElementById('p-ubicacion').value});
+  const tipo=document.getElementById('p-tipo').value;
+  const desc=document.getElementById('p-desc').value.trim();
+  const ubicacion=document.getElementById('p-ubicacion').value;
+
+  let fechaFinal = fecha;
+  if(!fechaFinal){
+    // No se proporcionó fecha, estimarla con IA basada en tipo y ubicación
+    const btn = document.querySelector('#modal-photo .btn-save-green');
+    const originalText = btn.textContent;
+    btn.textContent = 'Estimando fecha…';
+    btn.disabled = true;
+
+    try {
+      const {data, error} = await sb.functions.invoke(FN_VENCIMIENTOS, {
+        body: { tipo, desc, ubicacion }
+      });
+      if(error){
+        throw new Error(error.message || 'falló la llamada');
+      }
+      if(!data || !data.fecha_estimada){
+        alert('No se pudo estimar la fecha de vencimiento. Por favor, ingresela manualmente.');
+        return;
+      }
+      fechaFinal = data.fecha_estimada;
+      // Mostrar notificación de que la fecha fue estimada
+      const fechaObj = new Date(fechaFinal);
+      const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+      const fechaFormateada = fechaObj.toLocaleDateString('es-ES', opciones);
+      alert(`Fecha estimada: ${fechaFormateada}`);
+    } catch (err) {
+      alert('No se pudo estimar la fecha: ' + err.message);
+      return;
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  saveItem({tipo, desc, fecha: fechaFinal, ubicacion});
   closeModals();
 }
-function saveManual(){
+async function saveManual(){
   const fecha=document.getElementById('m-fecha').value;
-  if(!fecha){alert('Falta la fecha de vencimiento');return;}
-  saveItem({tipo:document.getElementById('m-tipo').value,desc:document.getElementById('m-desc').value.trim(),fecha,ubicacion:document.getElementById('m-ubicacion').value});
+  const tipo=document.getElementById('m-tipo').value;
+  const desc=document.getElementById('m-desc').value.trim();
+  const ubicacion=document.getElementById('m-ubicacion').value;
+
+  let fechaFinal = fecha;
+  if(!fechaFinal){
+    // No se proporcionó fecha, estimarla con IA basada en tipo y ubicación
+    const btn = document.querySelector('#modal-manual .btn-save-green');
+    const originalText = btn.textContent;
+    btn.textContent = 'Estimando fecha…';
+    btn.disabled = true;
+
+    try {
+      const {data, error} = await sb.functions.invoke(FN_VENCIMIENTOS, {
+        body: { tipo, desc, ubicacion }
+      });
+      if(error){
+        throw new Error(error.message || 'falló la llamada');
+      }
+      if(!data || !data.fecha_estimada){
+        alert('No se pudo estimar la fecha de vencimiento. Por favor, ingresela manualmente.');
+        return;
+      }
+      fechaFinal = data.fecha_estimada;
+      // Mostrar notificación de que la fecha fue estimada
+      const fechaObj = new Date(fechaFinal);
+      const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+      const fechaFormateada = fechaObj.toLocaleDateString('es-ES', opciones);
+      alert(`Fecha estimada: ${fechaFormateada}`);
+    } catch (err) {
+      alert('No se pudo estimar la fecha: ' + err.message);
+      return;
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  saveItem({tipo, desc, fecha: fechaFinal, ubicacion});
   closeModals();
 }
+
+// ---- Lectura de foto de producto para compras ----
+document.getElementById('cmp-foto-input').addEventListener('change', async function(){
+  const file=this.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const preview=document.getElementById('cmp-photo-preview');
+    preview.src=e.target.result;preview.style.display='block';
+    document.getElementById('cmp-photo-icon').style.display='none';
+    document.getElementById('cmp-photo-hint').style.display='none';
+  };reader.readAsDataURL(file);
+  document.getElementById('cmp-scanning-msg').textContent='⏳ Analizando producto con IA…';
+  document.getElementById('cmp-scanning-msg').classList.add('active');
+  document.getElementById('cmp-prefilled-msg').classList.remove('show');
+  try{
+    const b64=await new Promise((res,rej)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const MAX=1024;let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        res(canvas.toDataURL('image/jpeg',0.8).split(',')[1]);
+      };img.onerror=rej;img.src=URL.createObjectURL(file);
+    });
+    const parsed = await analizarEtiqueta(b64);
+    document.getElementById('cmp-scanning-msg').classList.remove('active');
+    document.getElementById('cmp-foto-nombre').value = parsed.desc || parsed.tipo || '';
+    document.getElementById('cmp-foto-cantidad').value = '1 unidad'; // Valor por defecto
+    document.getElementById('cmp-foto-fecha').value = parsed.fecha || '';
+    // Store AI-detected values for date estimation later
+    const modal = document.getElementById("modal-compra-foto");
+    modal.dataset.aiTipo = parsed.tipo || "";
+    modal.dataset.aiUbicacion = parsed.ubicacion || "";
+
+    // Establecer categoría basada en el tipo detectado
+    const categoriaMap = {
+      'Res / ternera': 'carniceria',
+      'Pollo': 'carniceria',
+      'Cerdo': 'carniceria',
+      'Pescado': 'pescaderia',
+      'Mariscos': 'pescaderia',
+      'Embutidos': 'carniceria',
+      'Lácteos': 'supermercado',
+      'Huevos': 'supermercado',
+      'Frutas y verduras': 'verduleria',
+      'Pan y panadería': 'panaderia',
+      'Conservas': 'supermercado',
+      'Pasta y arroz': 'supermercado',
+      'Legumbres': 'supermercado',
+      'Salsas y condimentos': 'supermercado',
+      'Bebidas': 'supermercado',
+      'Snacks y dulces': 'supermercado',
+      'Congelados': 'supermercado',
+      'Otro': 'supermercado'
+    };
+
+    const tipoDetectado = parsed.tipo || '';
+    const categoriaDetectada = categoriaMap[tipoDetectado] || 'supermercado';
+
+    catsFoto = [categoriaDetectada];
+    renderChipsCompraFotoModal();
+
+    if(parsed.fecha){
+      document.getElementById('cmp-prefilled-msg').textContent = '✅ IA detectó los datos — revisa y confirma';
+    } else {
+      document.getElementById('cmp-prefilled-msg').textContent = '⚠️ IA leyó el producto pero no encontró la fecha de vencimiento — sera estimada al guardar';
+    }
+    document.getElementById('cmp-prefilled-msg').classList.add('show');
+  }catch(e){
+    document.getElementById('cmp-scanning-msg').textContent='⚠️ No se pudo leer el producto. Llena los datos manualmente.';
+  }
+});
+
 function toggleCamposGym(grupo) {
   const esCardio = grupo === 'Cardio';
   document.getElementById('g-campos-fuerza').style.display = esCardio ? 'none' : 'block';
@@ -5812,12 +6091,41 @@ function toggleCatManual(id){
   if(i === -1) catsManual.push(id); else catsManual.splice(i, 1);
   renderChipsCompraModal();
 }
+let catsFoto = [];
+function renderChipsCompraFotoModal(){
+  const el = document.getElementById('cmp-foto-categoria');
+  if(el) el.innerHTML = chipsCategoriasHTML(catsFoto, id=>`toggleCatFoto('${id}')`);
+}
+function toggleCatFoto(id){
+  const i = catsFoto.indexOf(id);
+  if(i === -1) catsFoto.push(id); else catsFoto.splice(i, 1);
+  renderChipsCompraFotoModal();
+}
 function openCompraModal(){
   document.getElementById('cmp-nombre').value = '';
   document.getElementById('cmp-cantidad').value = '';
   catsManual = [ lugarActual ? lugarActual.lugar.categoria : 'supermercado' ];
   renderChipsCompraModal();
   document.getElementById('modal-compra').classList.add('open');
+}
+
+function openCompraPhotoModal(){
+  document.getElementById('cmp-foto-nombre').value = '';
+  document.getElementById('cmp-foto-cantidad').value = '';
+  document.getElementById('cmp-foto-fecha').value = '';
+  catsFoto = [ lugarActual ? lugarActual.lugar.categoria : 'supermercado' ];
+  renderChipsCompraFotoModal();
+  document.getElementById('modal-compra-foto').classList.add('open');
+  document.getElementById('cmp-foto-preview').style.display='none';
+  document.getElementById('cmp-foto-icon').style.display='';
+  document.getElementById('cmp-foto-hint').style.display='';
+  document.getElementById('cmp-scanning-msg').classList.remove('active');
+  document.getElementById('cmp-prefilled-msg').classList.remove('show');
+  document.getElementById('cmp-foto-input').value='';
+  // Clear previously stored AI-detected values
+  const modalFoto = document.getElementById("modal-compra-foto");
+  delete modalFoto.dataset.aiTipo;
+  delete modalFoto.dataset.aiUbicacion;
 }
 async function guardarCompraManual(){
   const nombre = document.getElementById('cmp-nombre').value.trim();
@@ -5830,6 +6138,69 @@ async function guardarCompraManual(){
     categorias: catsManual.slice(),
     nota: null,
   }]);
+  if(ok) closeModals();
+}
+
+async function guardarCompraFoto(){
+  const nombre = document.getElementById('cmp-foto-nombre').value.trim();
+  const cantidad = document.getElementById('cmp-foto-cantidad').value.trim() || null;
+  const fecha = document.getElementById('cmp-foto-fecha').value;
+
+  if(!nombre){ alert('Falta el nombre del producto.'); return; }
+
+  if(!catsFoto.length){
+    alert('Marcá al menos una tienda donde se consiga.');
+    return;
+  }
+
+    // Si no hay fecha, estimarla con IA basada en tipo y ubicación detectados
+  let fechaFinal = fecha;
+  if(!fechaFinal){
+    // No se proporcionó fecha, estimarla con IA basada en tipo y ubicación
+    const btn = document.querySelector('#modal-compra-foto .btn-save-green');
+    const originalText = btn.textContent;
+    btn.textContent = 'Estimando fecha…';
+    btn.disabled = true;
+
+    try {
+      // Usar el tipo y ubicacion detectados por IA para la estimación
+      const modal = document.getElementById('modal-compra-foto');
+      const tipo = modal.dataset.aiTipo || 'Otro';
+      const ubicacion = modal.dataset.aiUbicacion || 'Despensa';
+
+      const {data, error} = await sb.functions.invoke(FN_VENCIMIENTOS, {
+        body: { tipo, desc: nombre, ubicacion }
+      });
+      if(error){
+        throw new Error(error.message || 'falló la llamada');
+      }
+      if(!data || !data.fecha_estimada){
+        alert('No se pudo estimar la fecha de vencimiento. Por favor, ingresela manualmente.');
+        return;
+      }
+      fechaFinal = data.fecha_estimada;
+      // Mostrar notificación de que la fecha fue estimada
+      const fechaObj = new Date(fechaFinal);
+      const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+      const fechaFormateada = fechaObj.toLocaleDateString('es-ES', opciones);
+      alert(`Fecha estimada: ${fechaFormateada}`);
+    } catch (err) {
+      alert('No se pudo estimar la fecha: ' + err.message);
+      return;
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  const ok = await agregarCompras([{
+    nombre,
+    cantidad,
+    categoria: catsFoto[0],
+    categorias: catsFoto.slice(),
+    nota: fecha ? null : `Fecha estimada por IA: ${fechaFinal}`, // Nota indicando que la fecha fue estimada
+  }]);
+
   if(ok) closeModals();
 }
 function openLugarModal(){
@@ -5942,13 +6313,14 @@ function tareasDeLocal(){
 function filaDeTarea(t){
   return { id:t.id, texto:t.texto, urgencia:t.urgencia, hecho:!!t.hecho,
            created:t.created || t.id, template_key:t.templateKey || null,
-           recordar:t.recordar || null };
+           recordar:t.recordar || null, hecho_at:t.hechoAt || null };
 }
 function tareaDeFila(f){
   const t = { id:Number(f.id), texto:f.texto, urgencia:Number(f.urgencia) || 3,
               hecho:!!f.hecho, created:Number(f.created || f.id) };
   if(f.template_key) t.templateKey = f.template_key;
   if(f.recordar) t.recordar = f.recordar;
+  if(f.hecho_at) t.hechoAt = Number(f.hecho_at);
   return t;
 }
 
@@ -6249,6 +6621,9 @@ function toggleTarea(id){
   const t = tareas.find(x => x.id === id);
   if(!t) return;
   t.hecho = !t.hecho;
+  // Para las recurrentes, el intervalo hasta la proxima cuenta desde aca, no desde
+  // que se creo esta tarea: ver regenerarTareasRecurrentes().
+  t.hechoAt = t.hecho ? Date.now() : null;
   guardarTareas();
   renderTareas();
 }
@@ -6580,10 +6955,12 @@ function regenerarTareasRecurrentes(){
   for(const p of tareasRecur){
     if(!p.activa) continue;
     const ultima = ultimaTareaDePlantilla(p.key);
-    // Se regenera solo si no hay pendiente y pasó el intervalo desde la última creación.
+    // Se regenera solo si no hay pendiente y pasó el intervalo desde que se completó
+    // la última (hechoAt). Las tareas hechas antes de que existiera esa columna no la
+    // tienen: para esas se cae a 'created', que era el comportamiento de siempre.
     const hayPendiente = ultima && !ultima.hecho;
     if(hayPendiente) continue;
-    const desde = Math.max(p.ultimaGeneracion || 0, ultima ? (ultima.created || 0) : 0);
+    const desde = Math.max(p.ultimaGeneracion || 0, ultima ? (ultima.hechoAt || ultima.created || 0) : 0);
     const dias = (ahora - desde) / DIA_MS;
     if(dias >= p.intervaloDias || !desde){
       tareas.push({
@@ -6720,6 +7097,82 @@ function gymDelDia(fecha){ return gymItems.filter(i => diaLocalDe(i.created_at) 
 function fmtTonelaje(kg){
   if(!kg) return '0';
   return kg >= 1000 ? (kg / 1000).toFixed(1).replace('.', ',') + ' t' : Math.round(kg) + ' kg';
+}
+
+// ---- Pasos del dia ----
+// Una metrica de constancia: sirve para ver si te estas moviendo mas o menos que la
+// semana pasada, y para nada mas.
+//
+// Los pasos NO se convierten a calorias en ninguna parte de la app. No hay una funcion
+// que lo haga, a proposito. Son NEAT: la recalibracion ya los cobro (salen en la
+// balanza) y el suelo de vigilia del balance (basal x 1,2) ya asume que una persona
+// despierta camina. Convertirlos seria contarlos dos veces contra las dos cosas.
+//
+// El dato entra a mano porque una PWA en el navegador no puede leer Samsung Health.
+const PASOS_MAXIMO = 100000;   // por encima de esto es un error de tecleo, no un dia
+
+function fmtPasos(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function pasosDe(fecha){
+  const f = pasosRows.find(p => p.fecha === fecha);
+  return f ? Number(f.pasos) : null;
+}
+// Media de los ultimos 7 dias contando solo los que tienen dato: con tres dias
+// cargados, dividir por siete daria una media falsamente baja.
+function pasosMedia7d(){
+  const hoy = fechaLocal(new Date());
+  const v = [];
+  for(let i = 0; i < 7; i++){
+    const p = pasosDe(pesoFechaMas(hoy, -i));
+    if(p != null) v.push(p);
+  }
+  if(!v.length) return null;
+  return { media: v.reduce((a, b) => a + b, 0) / v.length, dias: v.length };
+}
+
+async function loadPasos(){
+  const desde = pesoFechaMas(fechaLocal(new Date()), -29);
+  const { data, error } = await sb.from('pasos').select('*').gte('fecha', desde).order('fecha');
+  if(error){ console.log('pasos:', error.code, error.message); pasosRows = []; }
+  else pasosRows = data || [];
+  renderPasos();
+}
+// Upsert por fecha: corregir el numero de hoy actualiza la fila, no agrega otra.
+async function guardarPasos(){
+  const el = document.getElementById('pasos-input'); if(!el) return;
+  const bruto = el.value.trim().replace(/\s/g, '');
+  if(bruto === ''){ alert('Escribí cuántos pasos.'); return; }
+  // El punto se acepta como separador de miles (8.400), nunca como decimal: medio
+  // paso no existe, y tomar "8.4" por 84 seria peor que decir que no se entiende.
+  const txt = /^\d{1,3}(\.\d{3})+$/.test(bruto) ? bruto.replace(/\./g, '') : bruto;
+  if(!/^\d+$/.test(txt)){ alert('Eso no es un número de pasos.'); return; }
+  const n = parseInt(txt, 10);
+  if(n > PASOS_MAXIMO){ alert('¿' + fmtPasos(n) + ' pasos? Eso parece un error de tecleo.'); return; }
+  const fecha = fechaLocal(new Date());
+  const { error } = await sb.from('pasos').upsert({ fecha, pasos:n }, { onConflict:'fecha' });
+  if(error){ alert('No se pudieron guardar: ' + (error.message || 'revisá la conexión')); return; }
+  await loadPasos();   // se dibuja con lo que quedo en la base
+}
+function renderPasos(){
+  const cont = document.getElementById('pasos-box'); if(!cont) return;
+  const hoy = pasosDe(fechaLocal(new Date()));
+  const m   = pasosMedia7d();
+  const el  = document.getElementById('pasos-input');
+  // El campo muestra lo que ya hay para hoy: guardar de nuevo es corregir.
+  if(el && document.activeElement !== el) el.value = hoy == null ? '' : hoy;
+  cont.innerHTML =
+    '<div class="pasos-cifras">' +
+      '<div class="pasos-item">' +
+        '<div class="pasos-num" style="color:' + (hoy == null ? 'rgba(255,255,255,0.5)' : '#C9A227') + ';">' +
+          (hoy == null ? '—' : fmtPasos(hoy)) + '</div>' +
+        '<div class="pasos-lbl">pasos hoy</div></div>' +
+      '<div style="width:1px;background:rgba(255,255,255,0.1);margin:12px 0;"></div>' +
+      '<div class="pasos-item">' +
+        '<div class="pasos-num" style="color:rgba(255,255,255,0.75);">' +
+          (m ? fmtPasos(m.media) : '—') + '</div>' +
+        '<div class="pasos-lbl">media ' + (m ? (m.dias === 7 ? '7 días' : m.dias + (m.dias === 1 ? ' día' : ' días')) : '7 días') + '</div></div>' +
+    '</div>' +
+    '<div class="peso-nota" style="margin-top:2px;">Informativo: no afecta tu déficit ni tu balance. ' +
+      'Lo que caminás ya está contado en el gasto base y en lo que mide la balanza.</div>';
 }
 
 // ---- Progreso por ejercicio ----
@@ -7630,6 +8083,7 @@ loadCompras();
 loadLugares();
 loadEstudio();
 loadPeso();
+loadPasos();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
 // pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las

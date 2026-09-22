@@ -1,15 +1,29 @@
-// Envía las notificaciones push diarias: alimentos que vencen (Mi DLC) y recordatorios
-// de tareas pospuestas con el botón "3 días hábiles".
-// Se ejecuta una vez por día desde un cron de Supabase (ver supabase/cron.sql).
+// Dos usos en un mismo archivo, porque comparten slug y no vale la pena gastar otro:
+//
+// 1. Sin body (o con ?test=1 en la URL): el aviso push diario de siempre — alimentos
+//    que vencen (Mi DLC) y recordatorios de tareas pospuestas. Lo dispara un cron de
+//    Supabase una vez al día (ver supabase/cron.sql).
+// 2. Con { tipo, ubicacion } en el body: index.html la llama cuando el usuario deja la
+//    fecha de vencimiento vacía al cargar un producto, y le devuelve una fecha estimada
+//    por IA en vez de obligarlo a tipearla.
 //
 // Variables de entorno necesarias (Project Settings -> Edge Functions -> Secrets):
 //   VAPID_PUBLIC_KEY   la misma que está en index.html
 //   VAPID_PRIVATE_KEY  la privada (NUNCA en el repo)
 //   VAPID_SUBJECT      "mailto:tu@correo.com"
+//   ANTHROPIC_API_KEY  clave de la API de Claude (console.anthropic.com), la misma que
+//                      ya usan interpretar-compras, interpretar-tareas y analizar-etiqueta
 // SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY las inyecta Supabase sola.
 
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import Anthropic from "npm:@anthropic-ai/sdk@0.125.0";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 // Zona horaria en la que se interpretan "hoy" y "mañana".
 const TZ = "Europe/Paris";
@@ -21,6 +35,80 @@ function fechaEnTZ(offsetDias = 0): string {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
+  // Un body con 'tipo' y 'ubicacion' es index.html pidiendo una fecha estimada; el
+  // cron no manda body, así que cualquier otra cosa cae en el aviso diario de siempre.
+  let cuerpo: { tipo?: string; desc?: string; ubicacion?: string } | null = null;
+  try { cuerpo = await req.json(); } catch { /* sin body: es el cron */ }
+
+  if (cuerpo && cuerpo.tipo && cuerpo.ubicacion) {
+    return estimarFecha(cuerpo.tipo, cuerpo.desc, cuerpo.ubicacion);
+  }
+  return avisarVencimientos(req);
+});
+
+async function estimarFecha(tipo: string, desc: string | undefined, ubicacion: string) {
+  try {
+    const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY")! });
+
+    const prompt = `Estima la vida útil típica, en días desde hoy, de "${tipo}"${desc ? ` (${desc})` : ""} guardado en "${ubicacion}" (Refrigerador, Congelador o Despensa).
+
+Da una estimación conservadora y realista, basada en las prácticas de seguridad alimentaria habituales. Ejemplos de referencia:
+- Leche entera en Refrigerador: 7
+- Huevos en Refrigerador: 21
+- Carne molida en Congelador: 90
+- Pan blanco en Despensa: 3
+- Arroz blanco en Despensa: 365
+- Yogur natural en Refrigerador: 14`;
+
+    const response = await client.messages.create({
+      model: "claude-opus-5",
+      max_tokens: 200,
+      output_config: {
+        effort: "low",
+        format: {
+          type: "json_schema",
+          schema: {
+            type: "object",
+            properties: { dias: { type: "integer", minimum: 1 } },
+            required: ["dias"],
+          },
+        },
+      },
+      system: "Eres un experto en seguridad alimentaria y vida útil de productos. Das estimaciones conservadoras y realistas.",
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const salida = response.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { text: string }).text)
+      .join("");
+
+    let datos: { dias?: unknown };
+    try {
+      datos = JSON.parse(salida);
+    } catch {
+      return Response.json({ ok: false, error: "respuesta ilegible del modelo" }, { status: 502, headers: cors });
+    }
+
+    const dias = Number(datos.dias);
+    if (!Number.isFinite(dias) || dias <= 0) {
+      return Response.json({ ok: false, error: `estimación inválida: "${salida}"` }, { status: 502, headers: cors });
+    }
+
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + dias);
+    const fecha_estimada = fecha.toISOString().split("T")[0];
+
+    return Response.json({ ok: true, fecha_estimada, dias_estimados: dias, uso: response.usage }, { headers: cors });
+  } catch (e: unknown) {
+    const err = e as { message?: string };
+    return Response.json({ ok: false, error: err?.message ?? String(e) }, { status: 500, headers: cors });
+  }
+}
+
+async function avisarVencimientos(req: Request) {
   try {
     webpush.setVapidDetails(
       Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com",
@@ -72,7 +160,7 @@ Deno.serve(async (req: Request) => {
     if (errTareas) console.log("recordatorios no disponibles:", errTareas.message);
 
     if (!esPrueba && carnes.length === 0 && recordatorios.length === 0) {
-      return Response.json({ ok: true, enviadas: 0, motivo: "nada vence hoy ni mañana", hoy });
+      return Response.json({ ok: true, enviadas: 0, motivo: "nada vence hoy ni mañana", hoy }, { headers: cors });
     }
 
     const vencenHoy = carnes.filter((c) => c.fecha === hoy);
@@ -154,8 +242,8 @@ Deno.serve(async (req: Request) => {
 
     return Response.json({ ok: true, hoy, vencenHoy: vencenHoy.length, vencenManana: vencenManana.length,
                            recordatorios: recordatorios.length, recordatoriosApagados,
-                           enviadas, eliminadas, errores });
+                           enviadas, eliminadas, errores }, { headers: cors });
   } catch (e: any) {
-    return Response.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
+    return Response.json({ ok: false, error: e?.message ?? String(e) }, { status: 500, headers: cors });
   }
-});
+}
