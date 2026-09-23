@@ -612,16 +612,6 @@
     .peso-fila-kcal { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.45); }
     .peso-nota { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.45; margin-top: 8px; }
 
-    /* Pasos: una tarjeta chica, fuera de la ecuacion del balance */
-    .pasos-box { margin: 0 16px 12px; background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.25); border-radius: 14px; padding: 12px 14px; }
-    .pasos-cifras { display: flex; }
-    .pasos-item { flex: 1; text-align: center; padding: 4px 6px; min-width: 0; }
-    .pasos-num { font-size: 23px; font-weight: 700; line-height: 1; }
-    .pasos-lbl { font-size: 11px; margin-top: 5px; color: rgba(255,255,255,0.4); line-height: 1.25; }
-    .pasos-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
-    .pasos-form input { width: 100%; padding: 11px 12px; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
-    .pasos-btn { padding: 11px 16px; border: none; border-radius: 10px; background: #C9A227; color: #1a1a1a; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
-    .pasos-btn:active { background: #A8851C; }
 
     /* Diario de comidas */
     .peso-kcal-auto { width: 100%; padding: 11px 12px; font-size: 15px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.75); }
@@ -737,14 +727,6 @@
             <button class="crono-btn crono-reset" onclick="gymReset()" title="Reiniciar">↺</button>
           </div>
           <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">Se registra en Mi Tiempo → Deporte</div>
-        </div>
-        <p class="inner-title">Pasos del día</p>
-        <div class="pasos-box" id="pasos-box-wrap">
-          <div id="pasos-box"></div>
-          <div class="pasos-form">
-            <input type="text" id="pasos-input" inputmode="numeric" placeholder="p. ej. 8400">
-            <button class="pasos-btn" onclick="guardarPasos()">Guardar</button>
-          </div>
         </div>
         <p class="inner-title">Últimas sesiones</p>
         <div id="gym-groups-list"></div>
@@ -1451,9 +1433,6 @@ let gymEditId = null;
 let ropaItems = [];
 let openGroups = new Set();
 let openMenus = new Set();
-// Pasos del dia: se teclean a mano y solo se muestran. No se convierten a kcal.
-let pasosRows = [];
-
 // Mi Peso: las pesadas y la config viven en la base, y la pantalla se dibuja siempre
 // con lo que ella devuelve. Se declaran aca arriba, con el resto del estado, porque
 // la pantalla Hoy las mira desde el primer segundo.
@@ -1836,7 +1815,6 @@ function renderGym(){
   // Lo nuevo se dibuja antes que nada: mas abajo hay un return temprano cuando no hay
   // ejercicios cargados, y el resumen tiene que verse igual.
   renderEjercicioResumen();
-  renderPasos();
   renderProgresoFuerza();
   // Contador días sin ir - móvil
   const hoyM = new Date(); hoyM.setHours(0,0,0,0);
@@ -7264,82 +7242,6 @@ function fmtTonelaje(kg){
   return kg >= 1000 ? (kg / 1000).toFixed(1).replace('.', ',') + ' t' : Math.round(kg) + ' kg';
 }
 
-// ---- Pasos del dia ----
-// Una metrica de constancia: sirve para ver si te estas moviendo mas o menos que la
-// semana pasada, y para nada mas.
-//
-// Los pasos NO se convierten a calorias en ninguna parte de la app. No hay una funcion
-// que lo haga, a proposito. Son NEAT: la recalibracion ya los cobro (salen en la
-// balanza) y el suelo de vigilia del balance (basal x 1,2) ya asume que una persona
-// despierta camina. Convertirlos seria contarlos dos veces contra las dos cosas.
-//
-// El dato entra a mano porque una PWA en el navegador no puede leer Samsung Health.
-const PASOS_MAXIMO = 100000;   // por encima de esto es un error de tecleo, no un dia
-
-function fmtPasos(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-function pasosDe(fecha){
-  const f = pasosRows.find(p => p.fecha === fecha);
-  return f ? Number(f.pasos) : null;
-}
-// Media de los ultimos 7 dias contando solo los que tienen dato: con tres dias
-// cargados, dividir por siete daria una media falsamente baja.
-function pasosMedia7d(){
-  const hoy = fechaLocal(new Date());
-  const v = [];
-  for(let i = 0; i < 7; i++){
-    const p = pasosDe(pesoFechaMas(hoy, -i));
-    if(p != null) v.push(p);
-  }
-  if(!v.length) return null;
-  return { media: v.reduce((a, b) => a + b, 0) / v.length, dias: v.length };
-}
-
-async function loadPasos(){
-  const desde = pesoFechaMas(fechaLocal(new Date()), -29);
-  const { data, error } = await sb.from('pasos').select('*').gte('fecha', desde).order('fecha');
-  if(error){ console.log('pasos:', error.code, error.message); pasosRows = []; }
-  else pasosRows = data || [];
-  renderPasos();
-}
-// Upsert por fecha: corregir el numero de hoy actualiza la fila, no agrega otra.
-async function guardarPasos(){
-  const el = document.getElementById('pasos-input'); if(!el) return;
-  const bruto = el.value.trim().replace(/\s/g, '');
-  if(bruto === ''){ alert('Escribí cuántos pasos.'); return; }
-  // El punto se acepta como separador de miles (8.400), nunca como decimal: medio
-  // paso no existe, y tomar "8.4" por 84 seria peor que decir que no se entiende.
-  const txt = /^\d{1,3}(\.\d{3})+$/.test(bruto) ? bruto.replace(/\./g, '') : bruto;
-  if(!/^\d+$/.test(txt)){ alert('Eso no es un número de pasos.'); return; }
-  const n = parseInt(txt, 10);
-  if(n > PASOS_MAXIMO){ alert('¿' + fmtPasos(n) + ' pasos? Eso parece un error de tecleo.'); return; }
-  const fecha = fechaLocal(new Date());
-  const { error } = await sb.from('pasos').upsert({ fecha, pasos:n }, { onConflict:'fecha' });
-  if(error){ alert('No se pudieron guardar: ' + (error.message || 'revisá la conexión')); return; }
-  await loadPasos();   // se dibuja con lo que quedo en la base
-}
-function renderPasos(){
-  const cont = document.getElementById('pasos-box'); if(!cont) return;
-  const hoy = pasosDe(fechaLocal(new Date()));
-  const m   = pasosMedia7d();
-  const el  = document.getElementById('pasos-input');
-  // El campo muestra lo que ya hay para hoy: guardar de nuevo es corregir.
-  if(el && document.activeElement !== el) el.value = hoy == null ? '' : hoy;
-  cont.innerHTML =
-    '<div class="pasos-cifras">' +
-      '<div class="pasos-item">' +
-        '<div class="pasos-num" style="color:' + (hoy == null ? 'rgba(255,255,255,0.5)' : '#C9A227') + ';">' +
-          (hoy == null ? '—' : fmtPasos(hoy)) + '</div>' +
-        '<div class="pasos-lbl">pasos hoy</div></div>' +
-      '<div style="width:1px;background:rgba(255,255,255,0.1);margin:12px 0;"></div>' +
-      '<div class="pasos-item">' +
-        '<div class="pasos-num" style="color:rgba(255,255,255,0.75);">' +
-          (m ? fmtPasos(m.media) : '—') + '</div>' +
-        '<div class="pasos-lbl">media ' + (m ? (m.dias === 7 ? '7 días' : m.dias + (m.dias === 1 ? ' día' : ' días')) : '7 días') + '</div></div>' +
-    '</div>' +
-    '<div class="peso-nota" style="margin-top:2px;">Informativo: no afecta tu déficit ni tu balance. ' +
-      'Lo que caminás ya está contado en el gasto base y en lo que mide la balanza.</div>';
-}
-
 // ---- Progreso por ejercicio ----
 // El ultimo entreno de cada ejercicio, su mejor marca y si el tonelaje subio o bajo
 // respecto de la vez anterior. Contesta "¿estoy progresando?" sin leer la lista de
@@ -8248,7 +8150,6 @@ loadCompras();
 loadLugares();
 loadEstudio();
 loadPeso();
-loadPasos();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
 // pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las
@@ -8277,9 +8178,11 @@ iniciarCronometro().then(()=>{
   restaurarTiempoTimer();
 });
 
-// Mientras haya un cronómetro corriendo, la grilla se refresca sola para que el bloque en curso
-// vaya creciendo. Cada 30s alcanza: a este zoom un minuto mide menos de un píxel.
-setInterval(()=>{ if(hayCronoEnCurso()) refrescarGrid(); }, 30000);
+// La grilla se refresca sola mientras esa pantalla esta abierta: la linea de "ahora"
+// tiene que moverse y un bloque en curso tiene que ir creciendo, aunque no haya ningun
+// cronometro corriendo. Antes solo refrescaba con un cronometro activo, asi que en
+// escritorio (sin cronometros tipicamente) quedaba congelada hasta cambiar de pantalla.
+setInterval(()=>{ if(pantallaActual==='tiempo') refrescarGrid(); }, 15000);
 
 // Un PWA no puede vigilar la ubicacion en segundo plano, asi que el momento util
 // para mirar es cuando volves a la app: ahi se revisa si entraste a una tienda.
