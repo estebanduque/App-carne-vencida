@@ -3687,6 +3687,40 @@ async function loadPuntosRepaso(){
 function puntosDe(tema, subtema){
   return puntosRepaso.filter(p=>p.tema===tema && p.subtema===subtema);
 }
+
+// Subtemas marcados a mano como terminados: para cuando lo diste por estudiado antes
+// de llegar a las horas de la meta. No toca la meta ni las horas hechas, solo hace
+// que subtemasCumplidos() lo trate como si hubiera pasado el 90% (ver mas abajo).
+let subtemasTerminados = [];
+async function loadSubtemasTerminados(){
+  const {data,error} = await sb.from('subtemas_terminados').select('*');
+  if(!error){ subtemasTerminados = data || []; }
+  else { subtemasTerminados = []; console.log('subtemas_terminados no disponible:', error.message); }
+  renderEstudio();
+}
+function estaTerminado(tema, subtema){
+  return subtemasTerminados.some(s=>s.tema===tema && s.subtema===subtema);
+}
+async function toggleSubtemaTerminado(tema, subtema){
+  const actual = subtemasTerminados.find(s=>s.tema===tema && s.subtema===subtema);
+  if(actual){
+    const { error } = await sb.from('subtemas_terminados').delete().eq('id', actual.id);
+    if(error){ alert('No se pudo actualizar: ' + error.message); return; }
+    subtemasTerminados = subtemasTerminados.filter(s=>s.id!==actual.id);
+  } else {
+    const { data, error } = await sb.from('subtemas_terminados').insert({ tema, subtema }).select();
+    if(error){
+      const msg = error.message || '';
+      if(error.code === '42P01' || /subtemas_terminados.*not.*(exist|found)/i.test(msg))
+        alert('Falta crear la tabla subtemas_terminados: corre supabase/setup-subtemas-terminados.sql en el SQL Editor.');
+      else
+        alert('No se pudo guardar: ' + msg);
+      return;
+    }
+    subtemasTerminados.push(data[0]);
+  }
+  renderEstudio();
+}
 const PLAN_DEONTOLOGIE = [
   { bloque:'1. Principes Essentiels, Serment et Éthique', subtemas:[
     { nombre:'Principes du serment (5 vertus)', preguntas:7, meta:7.80 },
@@ -4180,12 +4214,14 @@ function excesoHTML(hecho, meta){
 function filaSubtemaPlan(t, nombre, hechoH, metaH, sd){
   const subOpen = openSubtemas.has(t.nombre+'||'+nombre);
   const sn = escAttrJs(nombre), tn = escAttrJs(t.nombre);
+  const terminado = metaH>0 && estaTerminado(t.nombre, nombre);
   return `<div>
     <div class="sub-row" onclick="toggleSubtema('${tn}','${sn}')">
-      <span class="plan-nombre" ${attrsNombreLargo(nombre)}>${nombre}</span>
+      <span class="plan-nombre" ${attrsNombreLargo(nombre)}>${terminado?'✅ ':''}${nombre}</span>
       <span class="plan-hrs">${fmtHorasCompacta(hechoH)}${metaH>0?' / '+fmtHorasCompacta(metaH):''}${excesoHTML(hechoH, metaH)}</span>
       <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${tn}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
       <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${tn}','${sn}')" title="Registrar aquí">➕</button>
+      ${metaH>0 ? `<button class="sub-btn" style="opacity:${terminado?1:0.4};" onclick="event.stopPropagation();toggleSubtemaTerminado('${tn}','${sn}')" title="${terminado?'Terminado: click para desmarcar':'Marcar como terminado antes de tiempo'}">✅</button>` : ''}
       ${metaH>0 ? `<button class="sub-btn" style="opacity:${puntosDe(t.nombre,nombre).length?1:0.4};" onclick="event.stopPropagation();openPuntosModal('${tn}','${sn}')" title="Puntos de repaso">✂️</button>` : ''}
       <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
     </div>
@@ -4352,7 +4388,7 @@ function subtemasCumplidos(){
       b.subtemas.forEach(s=>{
         if(!(s.meta > 0)) return;
         const hecho = horasSubtemaPlan(tema, s.nombre);
-        if(hecho / s.meta > UMBRAL_RULETA){
+        if(hecho / s.meta > UMBRAL_RULETA || estaTerminado(tema, s.nombre)){
           out.push({ tema, bloque:b.bloque, nombre:s.nombre, hecho, meta:s.meta });
         }
       });
@@ -8168,6 +8204,7 @@ addEventListener('resize', ()=>{
 });
 pintarPantallas();
 loadPuntosRepaso();
+loadSubtemasTerminados();
 loadNotasEstudio();
 loadTiempo();
 // Primero se lee el cronometro (la base manda), y despues cada modulo pinta lo suyo
