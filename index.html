@@ -4214,18 +4214,30 @@ function excesoHTML(hecho, meta){
 function filaSubtemaPlan(t, nombre, hechoH, metaH, sd){
   const subOpen = openSubtemas.has(t.nombre+'||'+nombre);
   const sn = escAttrJs(nombre), tn = escAttrJs(t.nombre);
-  const terminado = metaH>0 && estaTerminado(t.nombre, nombre);
+  // Superar el 90% por tiempo ya alcanza para entrar al sorteo (subtemasCumplidos):
+  // no hace falta marcarlo a mano, asi que el boton se deshabilita para no preguntar
+  // dos veces lo mismo.
+  const cumplidoPorTiempo = metaH>0 && (hechoH/metaH > UMBRAL_RULETA);
+  const terminadoManual = metaH>0 && estaTerminado(t.nombre, nombre);
+  const terminado = cumplidoPorTiempo || terminadoManual;
+  // La marca manual llena la barra para que se vea "listo" de un vistazo, pero solo
+  // la barra: las horas mostradas y las que se suman al total del bloque son las
+  // reales, sin inflar nada.
+  const horasBarra = terminadoManual ? metaH : hechoH;
+  const btnTerminado = metaH<=0 ? '' : cumplidoPorTiempo
+    ? `<button class="sub-btn" disabled style="opacity:1;cursor:default;" title="Ya superó su meta de horas: entra al sorteo solo">✅</button>`
+    : `<button class="sub-btn" style="opacity:${terminadoManual?1:0.4};" onclick="event.stopPropagation();toggleSubtemaTerminado('${tn}','${sn}')" title="${terminadoManual?'Terminado: click para desmarcar':'Marcar como terminado antes de tiempo'}">✅</button>`;
   return `<div>
     <div class="sub-row" onclick="toggleSubtema('${tn}','${sn}')">
       <span class="plan-nombre" ${attrsNombreLargo(nombre)}>${terminado?'✅ ':''}${nombre}</span>
       <span class="plan-hrs">${fmtHorasCompacta(hechoH)}${metaH>0?' / '+fmtHorasCompacta(metaH):''}${excesoHTML(hechoH, metaH)}</span>
       <button class="sub-btn" onclick="event.stopPropagation();iniciarCronoEstudioDesdeSubtema('${tn}','${sn}', this, '${t.color}')" title="Iniciar cronómetro">▶</button>
       <button class="sub-btn" onclick="event.stopPropagation();registrarEnSubtema('${tn}','${sn}')" title="Registrar aquí">➕</button>
-      ${metaH>0 ? `<button class="sub-btn" style="opacity:${terminado?1:0.4};" onclick="event.stopPropagation();toggleSubtemaTerminado('${tn}','${sn}')" title="${terminado?'Terminado: click para desmarcar':'Marcar como terminado antes de tiempo'}">✅</button>` : ''}
+      ${btnTerminado}
       ${metaH>0 ? `<button class="sub-btn" style="opacity:${puntosDe(t.nombre,nombre).length?1:0.4};" onclick="event.stopPropagation();openPuntosModal('${tn}','${sn}')" title="Puntos de repaso">✂️</button>` : ''}
       <span class="chevron ${subOpen?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
     </div>
-    ${metaH>0 ? `<div class="plan-sub-barra">${barraProgresoHTML(hechoH, metaH, t.color)}</div>` : ''}
+    ${metaH>0 ? `<div class="plan-sub-barra">${barraProgresoHTML(horasBarra, metaH, t.color)}</div>` : ''}
     <div class="ses-list ${subOpen?'open':''}">${sesionesSubtemaHTML(sd)}</div>
   </div>`;
 }
