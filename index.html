@@ -3674,19 +3674,6 @@ function subtemasDe(tema){
 
 // Planes de estudio: metas de tiempo (en horas) por subtema, agrupadas por bloque.
 function planDe(tema){ return PLANES_ESTUDIO[tema] || null; }
-// Horas hechas y meta de un tema entero (todos sus bloques juntos). Un tema se da por
-// completado cuando esto pasa del 100%, aunque algun bloque individual no haya
-// llegado: es la suma la que manda a este nivel, no que cada parte este lista.
-function avanceTemaPlan(tema){
-  const plan = planDe(tema);
-  if(!plan) return { hecho:0, meta:0 };
-  let hecho = 0, meta = 0;
-  plan.forEach(b=>{
-    meta += metaBloque(b);
-    hecho += b.subtemas.reduce((a,s)=>a+horasSubtemaPlan(tema, s.nombre), 0);
-  });
-  return { hecho, meta };
-}
 
 // Puntos de repaso: trozos concretos de un subtema, solo para el sorteo.
 // No forman parte del plan ni alteran metas ni barras.
@@ -4266,13 +4253,16 @@ function renderPlanTemaHTML(t, st, plan){
       .map(s=>filaSubtemaPlan(t, s.nombre, horasSubtemaPlan(t.nombre, s.nombre), s.meta, st.subs[s.nombre]))
       .join('');
     // El bloque no tiene boton propio: se da por listo solo cuando TODOS sus subtemas
-    // lo estan (por tiempo o marcados a mano). Igual que con un subtema marcado a
-    // mano, solo se infla la barra visual; las horas mostradas siguen siendo las reales.
-    const bloqueTerminado = b.subtemas.length>0 && b.subtemas.every(s=>{
+    // lo estan (por tiempo o marcados a mano), o cuando el bloque entero ya paso del
+    // 100% de su propia meta (algunos subtemas pueden ir sobrados y otros cortos, pero
+    // la suma ya alcanza). Igual que con un subtema marcado a mano, si no llego al 100%
+    // de verdad solo se infla la barra visual; las horas mostradas siguen siendo las reales.
+    const todosSubtemasListos = b.subtemas.length>0 && b.subtemas.every(s=>{
       const h = horasSubtemaPlan(t.nombre, s.nombre);
       return s.meta>0 && (h/s.meta > UMBRAL_RULETA || estaTerminado(t.nombre, s.nombre));
     });
-    const horasBarraBloque = bloqueTerminado ? meta : hecho;
+    const bloqueTerminado = (meta>0 && hecho > meta) || todosSubtemasListos;
+    const horasBarraBloque = bloqueTerminado ? Math.max(hecho, meta) : hecho;
     return `<div class="plan-bloque">
       <div class="plan-linea" style="cursor:pointer;" onclick="toggleBloque('${escAttrJs(claveB)}')">
         <span class="plan-nombre" ${attrsNombreLargo(b.bloque)}>${bloqueTerminado?'✅ ':''}${b.bloque}</span>
@@ -4562,8 +4552,6 @@ function renderTemasEn(containerId){
     const st = statsTema(t.nombre);
     const vSem = ventajaSemTema(t.nombre), vGen = ventajaGenTema(t.nombre);
     const isOpen = openTemas.has(t.nombre);
-    const avanceT = avanceTemaPlan(t.nombre);
-    const temaCompletado = avanceT.meta>0 && avanceT.hecho > avanceT.meta;
     const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
     const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
       const subKey = t.nombre+'||'+sname;
@@ -4593,7 +4581,7 @@ function renderTemasEn(containerId){
     return `<div class="tema-area" style="border-color:${t.bd};">
       <div class="tema-head" style="background:${t.bg};" onclick="toggleTema('${t.nombre}')">
         <div class="tema-dot" style="background:${t.color};"></div>
-        <div class="tema-name">${temaCompletado?'✅ ':''}${t.nombre}</div>
+        <div class="tema-name">${t.nombre}</div>
         <div class="tema-total" style="color:${t.color};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
