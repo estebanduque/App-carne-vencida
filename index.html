@@ -4252,14 +4252,22 @@ function renderPlanTemaHTML(t, st, plan){
     const subs = b.subtemas
       .map(s=>filaSubtemaPlan(t, s.nombre, horasSubtemaPlan(t.nombre, s.nombre), s.meta, st.subs[s.nombre]))
       .join('');
+    // El bloque no tiene boton propio: se da por listo solo cuando TODOS sus subtemas
+    // lo estan (por tiempo o marcados a mano). Igual que con un subtema marcado a
+    // mano, solo se infla la barra visual; las horas mostradas siguen siendo las reales.
+    const bloqueTerminado = b.subtemas.length>0 && b.subtemas.every(s=>{
+      const h = horasSubtemaPlan(t.nombre, s.nombre);
+      return s.meta>0 && (h/s.meta > UMBRAL_RULETA || estaTerminado(t.nombre, s.nombre));
+    });
+    const horasBarraBloque = bloqueTerminado ? meta : hecho;
     return `<div class="plan-bloque">
       <div class="plan-linea" style="cursor:pointer;" onclick="toggleBloque('${escAttrJs(claveB)}')">
-        <span class="plan-nombre" ${attrsNombreLargo(b.bloque)}>${b.bloque}</span>
+        <span class="plan-nombre" ${attrsNombreLargo(b.bloque)}>${bloqueTerminado?'✅ ':''}${b.bloque}</span>
         <span class="plan-hrs">${fmtHorasCompacta(hecho)} / ${fmtHorasCompacta(meta)}${excesoHTML(hecho, meta)}</span>
         <span class="plan-pct">${Math.round(meta>0?(hecho/meta)*100:0)}%</span>
         <span class="chevron ${abierto?'open':''}" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>
       </div>
-      ${barraProgresoHTML(hecho, meta, t.color)}
+      ${barraProgresoHTML(horasBarraBloque, meta, t.color)}
       <div class="plan-sub"${abierto?'':' style="display:none;"'}>${subs}</div>
     </div>`;
   }).join('');
