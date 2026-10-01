@@ -3674,6 +3674,19 @@ function subtemasDe(tema){
 
 // Planes de estudio: metas de tiempo (en horas) por subtema, agrupadas por bloque.
 function planDe(tema){ return PLANES_ESTUDIO[tema] || null; }
+// Horas hechas y meta de un tema entero (todos sus bloques juntos). Un tema se da por
+// completado cuando esto pasa del 100%, aunque algun bloque individual no haya
+// llegado: es la suma la que manda a este nivel, no que cada parte este lista.
+function avanceTemaPlan(tema){
+  const plan = planDe(tema);
+  if(!plan) return { hecho:0, meta:0 };
+  let hecho = 0, meta = 0;
+  plan.forEach(b=>{
+    meta += metaBloque(b);
+    hecho += b.subtemas.reduce((a,s)=>a+horasSubtemaPlan(tema, s.nombre), 0);
+  });
+  return { hecho, meta };
+}
 
 // Puntos de repaso: trozos concretos de un subtema, solo para el sorteo.
 // No forman parte del plan ni alteran metas ni barras.
@@ -4549,6 +4562,8 @@ function renderTemasEn(containerId){
     const st = statsTema(t.nombre);
     const vSem = ventajaSemTema(t.nombre), vGen = ventajaGenTema(t.nombre);
     const isOpen = openTemas.has(t.nombre);
+    const avanceT = avanceTemaPlan(t.nombre);
+    const temaCompletado = avanceT.meta>0 && avanceT.hecho > avanceT.meta;
     const subsEntries = Object.entries(st.subs).sort((a,b)=>b[1].min-a[1].min);
     const subsHTML = subsEntries.length ? subsEntries.map(([sname,sd])=>{
       const subKey = t.nombre+'||'+sname;
@@ -4578,7 +4593,7 @@ function renderTemasEn(containerId){
     return `<div class="tema-area" style="border-color:${t.bd};">
       <div class="tema-head" style="background:${t.bg};" onclick="toggleTema('${t.nombre}')">
         <div class="tema-dot" style="background:${t.color};"></div>
-        <div class="tema-name">${t.nombre}</div>
+        <div class="tema-name">${temaCompletado?'✅ ':''}${t.nombre}</div>
         <div class="tema-total" style="color:${t.color};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
