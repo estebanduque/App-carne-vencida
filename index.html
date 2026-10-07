@@ -648,6 +648,10 @@
     .peso-mini-btn.mas { background: rgba(139,195,74,0.18); border-color: rgba(139,195,74,0.45); color: #C7E58A; font-size: 17px; font-weight: 700; }
 
     /* Banco de comidas */
+    .peso-plegable { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: none; font-family: inherit; cursor: pointer; text-align: left; }
+    .peso-plegable-chev { font-size: 14px; transition: transform 0.2s ease; }
+    .peso-plegable.cerrado .peso-plegable-chev { transform: rotate(-90deg); }
+    #peso-banco.cerrado { display: none; }
     .peso-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-top: 10px; scrollbar-width: none; }
     .peso-tabs::-webkit-scrollbar { display: none; }
     .peso-chip.on { background: rgba(139,195,74,0.22); border-color: rgba(139,195,74,0.55); color: #C7E58A; }
@@ -825,7 +829,9 @@
         <div class="peso-card" id="peso-comida"></div>
         <input type="file" id="peso-foto-input" accept="image/*" capture="environment"
                style="display:none;" onchange="fotoComidaElegida(this)">
-        <p class="inner-title">Banco de comidas</p>
+        <button class="inner-title peso-plegable" id="peso-banco-tit" onclick="plegarBancoPeso()">
+          <span>Banco de comidas<span id="peso-banco-n"></span></span><span class="peso-plegable-chev">▾</span>
+        </button>
         <div class="peso-card" id="peso-banco"></div>
         <p class="inner-title">Meta</p>
         <div class="peso-card" id="peso-meta"></div>
@@ -7961,6 +7967,7 @@ function renderPeso(){
   document.getElementById('peso-balance').innerHTML = pesoBalanceHTML() + pesoContrasteHTML();
   document.getElementById('peso-comida').innerHTML = pesoComidaHTML();
   document.getElementById('peso-banco').innerHTML = pesoBancoHTML();
+  pintarPliegueBanco();
   document.getElementById('peso-meta').innerHTML = pesoMetaHTML();
 
   // Mirando un dia que no es hoy, se dice en la cara: si no, es facil sumarle la cena
@@ -8416,6 +8423,25 @@ function pesoResolverCategoria(sel){
   sel.innerHTML = pesoOpcionesCategoria(nom);
   sel.dataset.prev = nom;
   return nom;
+}
+
+// El banco es largo y no se usa en cada visita: arranca plegado, y si se deja abierto
+// queda abierto en este dispositivo. Es una comodidad de pantalla, no un dato.
+function pesoBancoAbierto(){
+  try{ return localStorage.getItem('peso-banco-abierto') === '1'; }catch(e){ return false; }
+}
+function plegarBancoPeso(){
+  const abrir = !pesoBancoAbierto();
+  try{ localStorage.setItem('peso-banco-abierto', abrir ? '1' : '0'); }catch(e){}
+  pintarPliegueBanco(abrir);
+}
+function pintarPliegueBanco(abierto){
+  if(abierto == null) abierto = pesoBancoAbierto();
+  const card = document.getElementById('peso-banco'), tit = document.getElementById('peso-banco-tit');
+  if(card) card.classList.toggle('cerrado', !abierto);
+  if(tit) tit.classList.toggle('cerrado', !abierto);
+  const n = document.getElementById('peso-banco-n');
+  if(n) n.textContent = pesoAlimentos.length ? ' · ' + pesoAlimentos.length : '';
 }
 
 function elegirCategoriaBanco(cat){
