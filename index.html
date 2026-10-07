@@ -634,6 +634,28 @@
     .peso-prev-row label { font-size: 10px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 4px; }
     .peso-prev-row input { width: 100%; padding: 9px 10px; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); border-radius: 9px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
     .peso-prev-x { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 16px; cursor: pointer; padding: 0 0 10px; font-family: inherit; }
+    .peso-prev-row select, .peso-card select { width: 100%; margin-top: 6px; padding: 9px 10px; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); border-radius: 9px; background: rgba(255,255,255,0.07); color: #fff; font-family: inherit; }
+    .peso-prev-row select option, .peso-card select option { background: #1A2D45; color: #fff; }
+
+    /* Dias anteriores: la lista se toca para mirar y corregir ese dia */
+    #peso-registro { scroll-margin-top: 90px; }   /* que la cabecera fija no tape la franja del dia */
+    .peso-fila.dia { cursor: pointer; }
+    .peso-fila.dia.activa { background: rgba(139,195,74,0.1); border-radius: 9px; margin: 0 -8px; padding-left: 8px; padding-right: 8px; }
+    .peso-fila-chev { color: rgba(255,255,255,0.25); font-size: 16px; flex-shrink: 0; }
+    .peso-dia-banner { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; padding: 9px 11px; border-radius: 10px; background: rgba(123,200,240,0.12); border: 1px solid rgba(123,200,240,0.3); font-size: 12px; color: #A9DCF5; }
+    .peso-dia-banner button { margin-left: auto; background: none; border: none; color: #fff; font-weight: 600; font-size: 12px; font-family: inherit; cursor: pointer; white-space: nowrap; padding: 0; }
+    .peso-mini-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 13px; width: 32px; height: 30px; flex-shrink: 0; cursor: pointer; font-family: inherit; }
+    .peso-mini-btn.mas { background: rgba(139,195,74,0.18); border-color: rgba(139,195,74,0.45); color: #C7E58A; font-size: 17px; font-weight: 700; }
+
+    /* Banco de comidas */
+    .peso-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-top: 10px; scrollbar-width: none; }
+    .peso-tabs::-webkit-scrollbar { display: none; }
+    .peso-chip.on { background: rgba(139,195,74,0.22); border-color: rgba(139,195,74,0.55); color: #C7E58A; }
+    .peso-chip-n { opacity: 0.55; margin-left: 3px; }
+    .peso-banco-info { flex: 1; min-width: 0; }
+    .peso-banco-nom { font-size: 14px; color: #fff; overflow-wrap: anywhere; }
+    .peso-banco-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .peso-banco-kcal { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.75); white-space: nowrap; flex-shrink: 0; }
 
     /* Ejercicio: resumen y progreso */
     .gym-resumen { margin: 0 16px 12px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; overflow: hidden; }
@@ -777,8 +799,9 @@
         <div id="peso-aviso-box"></div>
         <p class="inner-title">Tendencia</p>
         <div class="peso-card" id="peso-grafica"></div>
-        <p class="inner-title">Registro del día</p>
+        <p class="inner-title" id="peso-registro">Registro del día</p>
         <div class="peso-card">
+          <div id="peso-dia-banner"></div>
           <div class="peso-form">
             <div style="grid-column:span 2;">
               <label for="peso-fecha">Fecha</label>
@@ -796,12 +819,14 @@
           <button class="peso-btn" style="margin-top:11px;" onclick="guardarPesoDia()">Guardar el día</button>
           <div class="peso-nota">Una fila por fecha: si te volvés a pesar hoy, se corrige la de hoy.</div>
         </div>
-        <p class="inner-title">Balance del día</p>
+        <p class="inner-title" id="peso-tit-balance">Balance del día</p>
         <div class="peso-card" id="peso-balance"></div>
-        <p class="inner-title">Comida del día</p>
+        <p class="inner-title" id="peso-tit-comida">Comida del día</p>
         <div class="peso-card" id="peso-comida"></div>
         <input type="file" id="peso-foto-input" accept="image/*" capture="environment"
                style="display:none;" onchange="fotoComidaElegida(this)">
+        <p class="inner-title">Banco de comidas</p>
+        <div class="peso-card" id="peso-banco"></div>
         <p class="inner-title">Meta</p>
         <div class="peso-card" id="peso-meta"></div>
         <p class="inner-title">Últimos registros</p>
@@ -1287,17 +1312,39 @@
 <div class="modal-overlay" id="modal-comida">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>🍽️ Lo que comiste</h2>
+    <h2 id="peso-prev-titulo">🍽️ Lo que comiste</h2>
     <div class="peso-nota" id="peso-prev-nota" style="margin:0 0 10px;"></div>
     <div id="peso-prev-lista"></div>
-    <button class="peso-btn ghost" style="margin-top:10px;" onclick="agregarFilaPropuesta()">+ Agregar otro</button>
+    <button class="peso-btn ghost" id="peso-prev-agregar" style="margin-top:10px;" onclick="agregarFilaPropuesta()">+ Agregar otro</button>
     <div class="peso-dato" style="margin-top:12px;">
       <span class="peso-dato-lbl">Total</span>
       <span class="peso-dato-val" id="peso-prev-total">0 kcal</span>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
-      <button class="btn-save-green" style="background:#7CB342;" onclick="guardarComidas()">Guardar en el día</button>
+      <button class="btn-save-green" id="peso-prev-guardar" style="background:#7CB342;" onclick="guardarComidas()">Guardar en el día</button>
+    </div>
+  </div>
+</div>
+
+<!-- Una comida del banco: se corrige, se cambia de categoria o se borra -->
+<div class="modal-overlay" id="modal-alimento">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📚 Comida del banco</h2>
+    <div class="form-row"><label>Nombre</label><input type="text" id="al-nombre" maxlength="60"></div>
+    <div class="two-col-row">
+      <div class="form-row" style="margin:0"><label>Porción</label><input type="text" id="al-cantidad" maxlength="40" placeholder="1 unidad"></div>
+      <div class="form-row" style="margin:0"><label>kcal</label><input type="number" id="al-kcal" inputmode="numeric" min="0"></div>
+    </div>
+    <div class="form-row"><label>Categoría</label>
+      <select id="al-categoria" onchange="pesoResolverCategoria(this)"></select>
+    </div>
+    <div class="peso-nota" id="al-usos" style="margin:0 0 6px;"></div>
+    <button class="peso-btn ghost" style="color:#F09595;margin-top:6px;" onclick="borrarAlimentoBanco()">🗑 Borrar del banco</button>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModals()">Cancelar</button>
+      <button class="btn-save-green" style="background:#7CB342;" onclick="guardarAlimentoBanco()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1447,8 +1494,13 @@ let pesoConfig = null;
 let pesoAvisoOculto = false;   // el "ahora no" del aviso dura hasta recargar la app
 // El diario de comidas: de aca salen las kcal de cada dia.
 let pesoComidas = [];
-let pesoAlimentos = [];
+let pesoAlimentos = [];        // el banco entero, no solo los mas usados
 let pesoPropuesta = [];        // lo que la IA propuso y todavia no se guardo
+let pesoComidaEditId = null;   // el cuadro de revision corrigiendo una comida ya guardada
+let pesoAlimentoEditId = null; // la comida del banco abierta en su cuadro
+let pesoBancoCat = '';         // la pestaña del banco; '' son las frecuentes
+let pesoCategoriasExtra = [];  // las creadas en esta sesion que todavia no tienen comida
+let pesoListaTodos = false;    // la lista de dias muestra 14 o la ventana entera
 
 // ===== MI DLC (antes "Mis Carnes") =====
 // El modulo lleva ahora la despensa entera, no solo lo que va al frigorifico. La tabla
@@ -2360,7 +2412,7 @@ setInterval(()=>{
   });
 }, 1000);
 
-function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;tareaEditId=null;itemParaCompraConsumido=null;}
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));gymEditId=null;estudioEditId=null;tiempoEditId=null;tareaEditId=null;itemParaCompraConsumido=null;pesoComidaEditId=null;pesoAlimentoEditId=null;}
 function openPhotoModal(){
   document.getElementById('modal-photo').classList.add('open');
   document.getElementById('photo-preview').style.display='none';
@@ -7908,20 +7960,70 @@ function renderPeso(){
   document.getElementById('peso-grafica').innerHTML = pesoGraficaHTML();
   document.getElementById('peso-balance').innerHTML = pesoBalanceHTML() + pesoContrasteHTML();
   document.getElementById('peso-comida').innerHTML = pesoComidaHTML();
+  document.getElementById('peso-banco').innerHTML = pesoBancoHTML();
   document.getElementById('peso-meta').innerHTML = pesoMetaHTML();
 
-  const ultimos = pesoRows.slice(-14).reverse();
-  document.getElementById('peso-lista').innerHTML = ultimos.length
-    ? ultimos.map(f => '<div class="peso-fila">' +
-          '<span class="peso-fila-fecha">' + pesoFechaCorta(f.fecha) + '</span>' +
-          '<span class="peso-fila-kg">' + pesoNum(Number(f.peso_kg), 1) + ' kg</span>' +
-          '<span class="peso-fila-kcal">' + (f.kcal_ingeridas == null ? 'sin kcal' : Math.round(Number(f.kcal_ingeridas)) + ' kcal') + '</span>' +
-          '<button class="delete-btn" onclick="borrarPesoDia(&quot;' + f.fecha + '&quot;)">🗑</button>' +
-        '</div>').join('') +
-      (r.ok ? '' : '<div class="peso-nota">Recalibración: ' + r.motivo + '</div>')
-    : '<div class="empty-msg" style="padding:16px 0;">Todavía no registraste ninguna pesada.</div>';
+  // Mirando un dia que no es hoy, se dice en la cara: si no, es facil sumarle la cena
+  // de hoy al martes pasado sin darse cuenta.
+  const activa = pesoFechaActiva(), hoy = fechaLocal(new Date());
+  const delDia = activa === hoy ? '' : ' · ' + pesoFechaCorta(activa);
+  document.getElementById('peso-dia-banner').innerHTML = activa === hoy ? ''
+    : '<div class="peso-dia-banner">📅 Estás viendo el ' + pesoFechaLarga(activa) +
+        '<button onclick="verDiaPeso(&quot;' + hoy + '&quot;)">Volver a hoy</button></div>';
+  document.getElementById('peso-tit-balance').textContent = 'Balance del día' + delDia;
+  document.getElementById('peso-tit-comida').textContent = 'Comida del día' + delDia;
+
+  document.getElementById('peso-lista').innerHTML = pesoListaHTML() +
+    (r.ok ? '' : '<div class="peso-nota">Recalibración: ' + r.motivo + '</div>');
 
   prefillPeso();
+}
+function pesoFechaLarga(fechaISO){
+  return new Date(fechaISO + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' });
+}
+// Los dias con algo cargado: una pesada, comidas, o las dos. Un dia en que se anoto
+// la comida pero no hubo balanza tambien es un registro, y antes no aparecia.
+// Solo los que caen en la ventana de comidas cargada: mas atras, el dia se veria
+// sin sus comidas aunque las tenga.
+function pesoDiasRegistrados(){
+  const desde = pesoFechaMas(fechaLocal(new Date()), -(PESO_DIAS_GRAFICA - 1));
+  const dias = new Set(pesoRows.map(r => r.fecha));
+  pesoComidas.forEach(c => dias.add(c.fecha));
+  return Array.from(dias).filter(f => f >= desde).sort().reverse();
+}
+function pesoListaHTML(){
+  const dias = pesoDiasRegistrados();
+  if(!dias.length) return '<div class="empty-msg" style="padding:16px 0;">Todavía no registraste ningún día.</div>';
+  const activa = pesoFechaActiva();
+  const vis = pesoListaTodos ? dias : dias.slice(0, 14);
+  return vis.map(f => {
+      const fila = pesoRows.find(r => r.fecha === f);
+      const kcal = pesoKcalDia(f);
+      const n = pesoComidasDe(f).length;
+      return '<div class="peso-fila dia' + (f === activa ? ' activa' : '') + '" onclick="verDiaPeso(&quot;' + f + '&quot;)">' +
+          '<span class="peso-fila-fecha">' + pesoFechaCorta(f) + '</span>' +
+          (fila ? '<span class="peso-fila-kg">' + pesoNum(Number(fila.peso_kg), 1) + ' kg</span>'
+                : '<span class="peso-fila-kg" style="font-size:12px;font-weight:500;color:rgba(255,255,255,0.35);">sin pesada</span>') +
+          '<span class="peso-fila-kcal">' + (kcal == null ? 'sin kcal' : Math.round(kcal) + ' kcal' +
+            (n ? ' · ' + n + (n === 1 ? ' comida' : ' comidas') : '')) + '</span>' +
+          (fila ? '<button class="delete-btn" onclick="event.stopPropagation();borrarPesoDia(&quot;' + f + '&quot;)">🗑</button>' : '') +
+          '<span class="peso-fila-chev">›</span>' +
+        '</div>';
+    }).join('') +
+    (dias.length > 14
+      ? '<button class="peso-btn ghost" style="margin-top:10px;" onclick="pesoListaTodos=!pesoListaTodos;renderPeso()">' +
+          (pesoListaTodos ? 'Ver menos' : 'Ver los ' + dias.length + ' días') + '</button>'
+      : '') +
+    '<div class="peso-nota">Tocá un día para verlo y corregirlo: la pesada, las comidas y el balance pasan a ese día.</div>';
+}
+// Mirar otro dia es solo mover la fecha del formulario: todo lo demas ya se dibuja
+// para pesoFechaActiva(). Se sube hasta el formulario porque la lista esta al fondo.
+function verDiaPeso(fecha){
+  const el = document.getElementById('peso-fecha'); if(!el) return;
+  el.value = fecha;
+  renderPeso();
+  const tit = document.getElementById('peso-registro');
+  if(tit && fecha !== fechaLocal(new Date())) tit.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 // El formulario arranca mostrando lo que la base ya tiene para esa fecha: asi se ve
 // de entrada si el dia esta cargado, y guardar de nuevo es corregir, no duplicar.
@@ -7978,7 +8080,9 @@ async function loadComidas(){
   const { data, error } = await sb.from('comidas').select('*').gte('fecha', desde).order('created_at');
   if(error) console.log('comidas:', error.code, error.message);
   else pesoComidas = data || [];
-  const al = await sb.from('alimentos').select('*').order('veces', { ascending:false }).limit(12);
+  // El banco entero: antes se pedian solo los 12 mas usados, y todo lo demas estaba
+  // guardado en la base pero no se podia volver a usar desde la app.
+  const al = await sb.from('alimentos').select('*').order('veces', { ascending:false });
   if(al.error) console.log('alimentos:', al.error.code, al.error.message);
   else pesoAlimentos = al.data || [];
 }
@@ -8064,18 +8168,45 @@ async function calcularComidaTexto(){
   const texto = el ? el.value.trim() : '';
   if(!texto){ alert('Escribí qué comiste.'); return; }
   el.value = '';
+  // Lo que ya esta en el banco no se vuelve a calcular: si cada cosa escrita es una
+  // comida conocida, el cuadro se arma con sus kcal y la IA ni se entera.
+  const delBanco = pesoTextoDesdeBanco(texto);
+  if(delBanco){
+    abrirPropuesta(delBanco, 'Sacado de tu banco de comidas, sin consultar a la IA.');
+    return;
+  }
   await analizarComida({ texto }, 'Calculando…');
 }
 function cargarComidaAMano(){ abrirPropuesta([], ''); }
 
 // ---- Cuadro de revision ----
-function abrirPropuesta(items, nota){
+// Cada fila lleva su categoria: la del banco si la comida ya esta, y si no una que se
+// adivina por el nombre. Se puede cambiar ahi mismo, y es la que queda en el banco.
+// 'bancoId' y 'factor' dicen que la fila salio del banco y cuantas porciones son.
+function abrirPropuesta(items, nota, editId){
   const lista = (items && items.length) ? items : [{ nombre:'', cantidad:'', kcal:0 }];
-  pesoPropuesta = lista.map(it => ({ nombre:it.nombre || '', cantidad:it.cantidad || '',
-                                     kcal:Number(it.kcal) || 0 }));
+  pesoPropuesta = lista.map(it => {
+    const b = it.nombre ? pesoBuscarEnBanco(it.nombre) : null;
+    return { nombre:it.nombre || '', cantidad:it.cantidad || '', kcal:Number(it.kcal) || 0,
+             categoria:it.categoria || (b ? pesoCatDe(b) : pesoAdivinarCategoria(it.nombre || '')),
+             bancoId:it.bancoId || null, factor:it.factor || 1 };
+  });
+  pesoComidaEditId = editId || null;
+  document.getElementById('peso-prev-titulo').textContent = editId ? '✏️ Corregir comida' : '🍽️ Lo que comiste';
+  document.getElementById('peso-prev-guardar').textContent = editId ? 'Guardar cambios' : 'Guardar en el día';
+  document.getElementById('peso-prev-agregar').style.display = editId ? 'none' : '';
   document.getElementById('peso-prev-nota').textContent = nota || '';
   document.getElementById('modal-comida').classList.add('open');
   renderPropuesta();
+}
+function abrirEditarComida(id){
+  const c = pesoComidas.find(x => x.id === id); if(!c) return;
+  // "2 × 1 unidad" es una comida que salio del banco multiplicada: corregirla no puede
+  // dejarle al banco el doble como si fuera una porcion.
+  const m = /^(\d+(?:,\d+)?)\s*×/.exec(c.cantidad || '');
+  const factor = m ? parseFloat(m[1].replace(',', '.')) : 1;
+  abrirPropuesta([{ nombre:c.nombre, cantidad:c.cantidad || '', kcal:Number(c.kcal), factor }],
+                 'Del ' + pesoFechaLarga(c.fecha) + '.', id);
 }
 function renderPropuesta(){
   document.getElementById('peso-prev-lista').innerHTML = pesoPropuesta.map((it, i) =>
@@ -8085,6 +8216,9 @@ function renderPropuesta(){
           'oninput="editarPropuesta(' + i + ',\'nombre\',this.value)">' +
         '<input type="text" value="' + escHtmlAttr(it.cantidad) + '" placeholder="Cantidad" style="margin-top:6px;" ' +
           'oninput="editarPropuesta(' + i + ',\'cantidad\',this.value)">' +
+        '<select data-prev="' + escHtmlAttr(it.categoria) + '" ' +
+          'onchange="const v=pesoResolverCategoria(this);if(v)editarPropuesta(' + i + ',\'categoria\',v)">' +
+          pesoOpcionesCategoria(it.categoria) + '</select>' +
       '</div>' +
       '<div><label>kcal</label>' +
         '<input type="number" inputmode="numeric" value="' + Math.round(it.kcal) + '" ' +
@@ -8116,31 +8250,66 @@ function quitarFilaPropuesta(i){
 }
 async function guardarComidas(){
   const fecha = pesoFechaActiva();
-  const filas = pesoPropuesta
-    .filter(it => (it.nombre || '').trim())
-    .map(it => ({ fecha, nombre:it.nombre.trim().slice(0, 60),
-                  cantidad:(it.cantidad || '').trim().slice(0, 40) || null,
-                  kcal:Math.max(0, Math.round(Number(it.kcal) || 0)), origen:'ia' }));
-  if(!filas.length){ alert('No hay nada que guardar: falta el nombre del alimento.'); return; }
+  const validas = pesoPropuesta.filter(it => (it.nombre || '').trim()).map(it => ({
+    nombre:it.nombre.trim().slice(0, 60), cantidad:(it.cantidad || '').trim().slice(0, 40) || null,
+    kcal:Math.max(0, Math.round(Number(it.kcal) || 0)),
+    categoria:it.categoria || 'Otros', bancoId:it.bancoId, factor:it.factor || 1,
+  }));
+  if(!validas.length){ alert('No hay nada que guardar: falta el nombre del alimento.'); return; }
+
+  // Corregir una comida ya guardada: se pisa esa fila y se mantiene su dia, aunque en
+  // pantalla se este mirando otro. El banco no cuenta un uso mas: es la misma comida.
+  if(pesoComidaEditId){
+    const orig = pesoComidas.find(x => x.id === pesoComidaEditId);
+    const v = validas[0];
+    const { error } = await sb.from('comidas')
+      .update({ nombre:v.nombre, cantidad:v.cantidad, kcal:v.kcal }).eq('id', pesoComidaEditId);
+    if(error){ alert('No se pudo corregir: ' + (error.message || 'revisá la conexión')); return; }
+    await recordarAlimentos([v], { sinSumar:true });
+    closeModals();
+    await refrescarDiaComida(orig ? orig.fecha : fecha);
+    return;
+  }
+
+  const filas = validas.map(v => ({ fecha, nombre:v.nombre, cantidad:v.cantidad, kcal:v.kcal,
+                                    origen:v.bancoId ? 'guardado' : 'ia' }));
   const { error } = await sb.from('comidas').insert(filas);
   if(error){ alert('No se pudo guardar la comida: ' + (error.message || 'revisá la conexión')); return; }
-  await recordarAlimentos(filas);
+  await recordarAlimentos(validas);
   closeModals();
   await refrescarDiaComida(fecha);
 }
-// La memoria del modulo: lo que se estimo una vez queda guardado con su porcion, asi
-// el desayuno de todos los dias se agrega con un toque y sin gastar otra llamada. El
-// contador de usos es el que ordena los chips.
-async function recordarAlimentos(filas){
+// La memoria del modulo: todo lo que se guarda en un dia queda en el banco con su
+// porcion, sus kcal y su categoria, asi la proxima vez sale con un toque y sin gastar
+// otra llamada a la IA. El contador de usos es el que ordena las frecuentes.
+//
+// Las kcal del banco son las de UNA porcion. Si la fila salio del banco multiplicada
+// ("2 huevo cocido"), lo guardado es el doble y no puede pisar la porcion del banco.
+let pesoAvisoCategoriaSQL = false;
+async function recordarAlimentos(filas, opts){
+  const sumar = !(opts && opts.sinSumar);
   for(const f of filas){
     const clave = f.nombre.toLowerCase();
-    // Se pregunta por el contador en vez de usar la lista de chips: ahi solo estan los
-    // doce mas usados, y un alimento fuera de esa lista volveria a empezar de cero.
-    const { data } = await sb.from('alimentos').select('veces').eq('nombre', clave).maybeSingle();
-    const { error } = await sb.from('alimentos').upsert({
-      nombre:clave, etiqueta:f.nombre, cantidad:f.cantidad, kcal:f.kcal,
-      veces:((data && data.veces) || 0) + 1, ultima_vez:new Date().toISOString(),
-    }, { onConflict:'nombre' });
+    // Se pregunta a la base y no a la copia de la pantalla: si la copia esta vieja,
+    // un alimento conocido volveria a empezar de cero.
+    const { data } = await sb.from('alimentos').select('id,veces').eq('nombre', clave).maybeSingle();
+    const fila = { etiqueta:f.nombre, categoria:f.categoria || 'Otros' };
+    if(sumar){ fila.veces = ((data && data.veces) || 0) + 1; fila.ultima_vez = new Date().toISOString(); }
+    if(!data || !(f.factor > 1)){ fila.cantidad = f.cantidad; fila.kcal = f.kcal; }
+    const escribir = () => data
+      ? sb.from('alimentos').update(fila).eq('id', data.id)
+      : sb.from('alimentos').insert(Object.assign({ nombre:clave, veces:sumar ? 1 : 0 }, fila));
+    let { error } = await escribir();
+    if(error && /categoria/i.test((error.message || '') + (error.details || ''))){
+      // Sin setup-banco-comidas.sql la columna no existe: se guarda la comida igual y
+      // se avisa una vez, en vez de perderla por la categoria.
+      delete fila.categoria;
+      ({ error } = await escribir());
+      if(!pesoAvisoCategoriaSQL){
+        pesoAvisoCategoriaSQL = true;
+        alert('La comida quedó en el banco, pero sin categoría: falta correr setup-banco-comidas.sql en Supabase.');
+      }
+    }
     if(error) console.log('alimentos:', error.code, error.message);
   }
 }
@@ -8161,6 +8330,192 @@ async function borrarComida(id){
   const { error } = await sb.from('comidas').delete().eq('id', id);
   if(error){ alert('No se pudo quitar: ' + (error.message || 'revisá la conexión')); return; }
   await refrescarDiaComida(c.fecha);
+}
+
+// ---- Banco de comidas ----
+// Las categorias de partida. Las que se crean desde la app se guardan como texto en
+// la comida misma, asi que no hay tabla de categorias que mantener: una categoria
+// existe mientras tenga alguna comida.
+const PESO_CATEGORIAS = ['Bebidas', 'Comida rápida', 'Proteínas', 'Carbohidratos', 'Ensaladas',
+                         'Snacks y dulces', 'Otros'];
+function pesoNorm(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function pesoCategorias(){
+  const out = PESO_CATEGORIAS.slice();
+  const ya = c => out.some(x => pesoNorm(x) === pesoNorm(c));
+  pesoAlimentos.forEach(a => { if(a.categoria && !ya(a.categoria)) out.splice(out.length - 1, 0, a.categoria); });
+  pesoCategoriasExtra.forEach(c => { if(!ya(c)) out.splice(out.length - 1, 0, c); });
+  return out;
+}
+// Una comida sin categoria (vieja, o sin el SQL corrido) igual cae en algun lado.
+function pesoCatDe(a){ return a.categoria || pesoAdivinarCategoria(a.etiqueta || a.nombre); }
+// Solo una primera propuesta para lo nuevo; la que vale es la que se elige en el cuadro.
+const PESO_PISTAS_CAT = [
+  ['Bebidas', /cerveza|vino|\bgin\b|tonic|\bron\b|vodka|whisky|champ|\bcava\b|sangria|tinto de verano|coca|refresco|soda|jugo|zumo|batido|leche|cafe|\bte\b|infusion|\bagua\b|bebida|smoothie/],
+  ['Comida rápida', /hamburguesa|burger|pizza|hot ?dog|perrito|kebab|nugget|tender|wrap|mcdonald|mc ?muffin|burrito|taco|papas fritas|patatas fritas|sandwic|sandwich|bocadillo|five guys/],
+  ['Ensaladas', /ensalada|lechuga|tomate|pepino|aguacate|verdura|brocoli|espinaca|zanahoria|\bcol\b|hinojo|calabac|pimiento/],
+  ['Snacks y dulces', /galleta|chocolate|helado|pastel|tarta|bizcocho|dulce|caramelo|nachos|chips|mani|cacahuete|anacardo|nuez|almendra|arandano|pasa|barrita|donut|croissant|miel|nata/],
+  ['Proteínas', /pollo|carne|ternera|\bres\b|cerdo|chuleta|cote|jamon|salchich|chorizo|pavo|pescado|salmon|atun|merluza|bacalao|pulpo|gamba|marisco|huevo|queso|yogur|tofu|proteina|whey|filete/],
+  ['Carbohidratos', /arroz|pasta|espagueti|macarron|pan\b|baguette|tostada|arepa|avena|cereal|papa|patata|lenteja|garbanzo|frijol|judia|quinoa|cuscus|tortilla|harina/],
+];
+function pesoAdivinarCategoria(nombre){
+  const n = pesoNorm(nombre);
+  if(!n) return 'Otros';
+  const hit = PESO_PISTAS_CAT.find(p => p[1].test(n));
+  return hit ? hit[0] : 'Otros';
+}
+function pesoBuscarEnBanco(nombre){
+  const n = pesoNorm(nombre);
+  return n ? pesoAlimentos.find(a => pesoNorm(a.nombre) === n || pesoNorm(a.etiqueta) === n) || null : null;
+}
+// "huevo cocido, 2 cerveza y arroz blanco cocido" -> tres filas del banco, sin IA. Si
+// una sola parte no esta en el banco, devuelve null y el texto entero va a la IA: un
+// cuadro a medias haria creer que se calculo todo.
+const PESO_NUMEROS = { un:1, uno:1, una:1, dos:2, tres:3, cuatro:4, cinco:5, seis:6 };
+function pesoTextoDesdeBanco(texto){
+  const entero = pesoBuscarEnBanco(texto);
+  if(entero) return [pesoFilaDeBanco(entero, 1)];
+  const partes = texto.split(/\s*(?:,|;|\+|\s+y\s+|\s+e\s+)\s*/i).filter(Boolean);
+  const filas = [];
+  for(const p of partes){
+    let a = pesoBuscarEnBanco(p), factor = 1;
+    if(!a){
+      const m = pesoNorm(p).match(/^(\d+(?:[.,]\d+)?|un|uno|una|dos|tres|cuatro|cinco|seis)\s*(?:x\s*)?(.+)$/);
+      if(m){
+        a = pesoBuscarEnBanco(m[2]);
+        factor = PESO_NUMEROS[m[1]] || parseFloat(m[1].replace(',', '.'));
+      }
+    }
+    if(!a || !(factor > 0)) return null;
+    filas.push(pesoFilaDeBanco(a, factor));
+  }
+  return filas.length ? filas : null;
+}
+function pesoFilaDeBanco(a, factor){
+  return { nombre:a.etiqueta, kcal:Math.round(Number(a.kcal) * factor), categoria:pesoCatDe(a),
+           cantidad:factor === 1 ? (a.cantidad || '') : pesoNum(factor, factor % 1 ? 1 : 0) + ' × ' + (a.cantidad || 'porción'),
+           bancoId:a.id, factor };
+}
+
+function pesoOpcionesCategoria(sel){
+  return pesoCategorias().map(c => '<option' + (pesoNorm(c) === pesoNorm(sel) ? ' selected' : '') + '>' +
+      escHtmlAttr(c) + '</option>').join('') +
+    '<option value="__nueva">＋ Nueva categoría…</option>';
+}
+// El select de categoria trae al final "Nueva categoría…": si se elige, se pide el
+// nombre y queda elegida. Devuelve la categoria final, o null si se cancelo.
+function pesoResolverCategoria(sel){
+  if(sel.value !== '__nueva'){ sel.dataset.prev = sel.value; return sel.value; }
+  let nom = (prompt('Nombre de la nueva categoría (ej: Desayunos, Frutas)') || '').trim().slice(0, 30);
+  if(!nom){ sel.value = sel.dataset.prev || 'Otros'; return null; }
+  nom = nom.charAt(0).toUpperCase() + nom.slice(1);
+  const existe = pesoCategorias().find(c => pesoNorm(c) === pesoNorm(nom));
+  if(existe) nom = existe; else pesoCategoriasExtra.push(nom);
+  sel.innerHTML = pesoOpcionesCategoria(nom);
+  sel.dataset.prev = nom;
+  return nom;
+}
+
+function elegirCategoriaBanco(cat){
+  pesoBancoCat = cat;
+  const b = document.getElementById('peso-banco-busca');
+  if(b) b.value = '';
+  document.getElementById('peso-banco').innerHTML = pesoBancoHTML();
+}
+// La busqueda solo redibuja la lista, no la tarjeta: rehacer el input le saca el foco
+// al teclado en mitad de una palabra.
+function buscarEnBanco(txt){
+  const el = document.getElementById('peso-banco-lista');
+  if(el) el.innerHTML = pesoBancoListaHTML(txt);
+}
+function pesoBancoListaHTML(busca){
+  const q = pesoNorm(busca);
+  let lista;
+  if(q) lista = pesoAlimentos.filter(a => pesoNorm(a.etiqueta).includes(q));
+  else if(!pesoBancoCat) lista = pesoAlimentos.slice(0, 12);
+  else lista = pesoAlimentos.filter(a => pesoCatDe(a) === pesoBancoCat);
+  if(!lista.length){
+    return '<div class="empty-msg" style="padding:14px 0;">' +
+      (q ? 'Nada con ese nombre. Escribilo en "Qué comiste" y queda guardado.' : 'Esta categoría está vacía.') + '</div>';
+  }
+  return lista.map(a => '<div class="peso-fila">' +
+      '<div class="peso-banco-info">' +
+        '<div class="peso-banco-nom">' + escHtmlAttr(a.etiqueta) + '</div>' +
+        '<div class="peso-banco-sub">' + (a.cantidad ? escHtmlAttr(a.cantidad) : 'sin porción') +
+          (q || !pesoBancoCat ? ' · ' + escHtmlAttr(pesoCatDe(a)) : '') + '</div>' +
+      '</div>' +
+      '<span class="peso-banco-kcal">' + Math.round(Number(a.kcal)) + '</span>' +
+      '<button class="peso-mini-btn" title="Editar" onclick="abrirAlimentoBanco(' + a.id + ')">✏️</button>' +
+      '<button class="peso-mini-btn mas" title="Sumar al día" onclick="agregarAlimentoGuardado(' + a.id + ')">+</button>' +
+    '</div>').join('');
+}
+function pesoBancoHTML(){
+  if(!pesoAlimentos.length){
+    return '<div class="empty-msg" style="padding:14px 0;">Todavía está vacío. Cada comida que guardes en un día queda acá, ' +
+      'con sus kcal, para no tener que volver a calcularla.</div>';
+  }
+  const cats = pesoCategorias().filter(c => pesoAlimentos.some(a => pesoCatDe(a) === c));
+  if(pesoBancoCat && !cats.includes(pesoBancoCat)) pesoBancoCat = '';
+  const tab = (val, txt, n) => '<button class="peso-chip' + (pesoBancoCat === val ? ' on' : '') + '" ' +
+    'onclick="elegirCategoriaBanco(&quot;' + escHtmlAttr(val) + '&quot;)">' + escHtmlAttr(txt) +
+    (n != null ? '<span class="peso-chip-n">' + n + '</span>' : '') + '</button>';
+  const activa = pesoFechaActiva();
+  return '<div class="peso-dato"><span class="peso-dato-lbl">' + pesoAlimentos.length + ' comidas guardadas</span>' +
+      '<span class="peso-dato-val" style="font-weight:500;color:rgba(255,255,255,0.5);font-size:12px;">+ suma al ' +
+        (activa === fechaLocal(new Date()) ? 'día de hoy' : pesoFechaCorta(activa)) + '</span></div>' +
+    '<div class="peso-tabs">' + tab('', '★ Frecuentes') +
+      cats.map(c => tab(c, c, pesoAlimentos.filter(a => pesoCatDe(a) === c).length)).join('') + '</div>' +
+    '<input type="search" id="peso-banco-busca" placeholder="🔎 Buscar en el banco" style="margin-top:8px;" ' +
+      'oninput="buscarEnBanco(this.value)">' +
+    '<div id="peso-banco-lista" style="margin-top:4px;">' + pesoBancoListaHTML('') + '</div>';
+}
+
+function abrirAlimentoBanco(id){
+  const a = pesoAlimentos.find(x => x.id === id); if(!a) return;
+  pesoAlimentoEditId = id;
+  document.getElementById('al-nombre').value = a.etiqueta;
+  document.getElementById('al-cantidad').value = a.cantidad || '';
+  document.getElementById('al-kcal').value = Math.round(Number(a.kcal));
+  const sel = document.getElementById('al-categoria');
+  sel.innerHTML = pesoOpcionesCategoria(pesoCatDe(a));
+  sel.dataset.prev = pesoCatDe(a);
+  document.getElementById('al-usos').textContent = 'La usaste ' + (a.veces || 0) + (a.veces === 1 ? ' vez' : ' veces') +
+    '. Cambiarla acá no toca los días ya cargados.';
+  document.getElementById('modal-alimento').classList.add('open');
+}
+async function guardarAlimentoBanco(){
+  const id = pesoAlimentoEditId; if(!id) return;
+  const etiqueta = document.getElementById('al-nombre').value.trim().slice(0, 60);
+  const kcal = parseFloat(String(document.getElementById('al-kcal').value).replace(',', '.'));
+  const sel = document.getElementById('al-categoria');
+  if(!etiqueta){ alert('Falta el nombre.'); return; }
+  if(!(kcal >= 0)){ alert('Faltan las kcal.'); return; }
+  const fila = { nombre:etiqueta.toLowerCase(), etiqueta,
+                 cantidad:document.getElementById('al-cantidad').value.trim().slice(0, 40) || null,
+                 kcal:Math.round(kcal), categoria:sel.value === '__nueva' ? (sel.dataset.prev || 'Otros') : sel.value };
+  const { error } = await sb.from('alimentos').update(fila).eq('id', id);
+  if(error){
+    const txt = (error.message || '') + (error.details || '');
+    alert(error.code === '23505' ? 'Ya hay otra comida con ese nombre en el banco.'
+        : /categoria/i.test(txt) ? 'Falta correr setup-banco-comidas.sql en Supabase para poder guardar categorías.'
+        : 'No se pudo guardar: ' + (error.message || 'revisá la conexión'));
+    return;
+  }
+  // La pestaña sigue a la comida: si se paso a otra categoria, se ve donde quedo.
+  if(pesoBancoCat) pesoBancoCat = fila.categoria;
+  closeModals();
+  await loadPeso();
+}
+async function borrarAlimentoBanco(){
+  const id = pesoAlimentoEditId; if(!id) return;
+  const a = pesoAlimentos.find(x => x.id === id);
+  if(!confirm('¿Borrar "' + (a ? a.etiqueta : 'esta comida') + '" del banco?\n\nLos días donde ya la cargaste no cambian.')) return;
+  const { error } = await sb.from('alimentos').delete().eq('id', id);
+  if(error){ alert('No se pudo borrar: ' + (error.message || 'revisá la conexión')); return; }
+  closeModals();
+  await loadPeso();
 }
 
 // ---- Tarjeta del dia ----
@@ -8185,21 +8540,17 @@ function pesoComidaHTML(){
         '<span class="peso-dato-val">objetivo ' + objetivo + ' kcal</span></div>';
 
   const filas = delDia.map(c => '<div class="peso-fila">' +
-      '<span class="peso-fila-kg" style="font-size:14px;">' + escHtmlAttr(c.nombre) + '</span>' +
-      '<span class="peso-fila-kcal">' + (c.cantidad ? escHtmlAttr(c.cantidad) + ' · ' : '') +
-        Math.round(Number(c.kcal)) + ' kcal</span>' +
+      '<div class="peso-banco-info" style="cursor:pointer;" onclick="abrirEditarComida(' + c.id + ')">' +
+        '<div class="peso-banco-nom" style="font-weight:600;">' + escHtmlAttr(c.nombre) + '</div>' +
+        (c.cantidad ? '<div class="peso-banco-sub">' + escHtmlAttr(c.cantidad) + '</div>' : '') +
+      '</div>' +
+      '<span class="peso-banco-kcal">' + Math.round(Number(c.kcal)) + ' kcal</span>' +
+      '<button class="peso-mini-btn" title="Corregir" onclick="abrirEditarComida(' + c.id + ')">✏️</button>' +
       '<button class="delete-btn" onclick="borrarComida(' + c.id + ')">🗑</button>' +
     '</div>').join('');
 
-  const chips = pesoAlimentos.length
-    ? '<div class="peso-chips">' + pesoAlimentos.map(a =>
-        '<button class="peso-chip" onclick="agregarAlimentoGuardado(' + a.id + ')">' +
-          escHtmlAttr(a.etiqueta) + ' · ' + Math.round(Number(a.kcal)) + '</button>').join('') + '</div>'
-    : '';
-
   return cab +
     (filas ? '<div style="margin-top:8px;">' + filas + '</div>' : '') +
-    chips +
     '<div style="margin-top:12px;"><label for="peso-texto">Qué comiste</label>' +
       '<input type="text" id="peso-texto" placeholder="dos huevos fritos y un café con leche"></div>' +
     '<div class="peso-acciones">' +
@@ -8207,6 +8558,7 @@ function pesoComidaHTML(){
       '<button class="peso-btn" onclick="calcularComidaTexto()">Calcular kcal</button>' +
     '</div>' +
     '<button class="peso-btn ghost" style="margin-top:8px;" onclick="cargarComidaAMano()">✏️ Cargar a mano</button>' +
+    '<div class="peso-nota">Si lo que escribís ya está en el banco (ej: "huevo cocido, 2 cerveza"), sale de ahí sin consultar a la IA.</div>' +
     '<div class="peso-cargando" id="peso-comida-estado"></div>';
 }
 
