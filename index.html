@@ -498,6 +498,13 @@
        break-word evita que haga falta ni eso, partiendo la palabra si no entra. */
     .plan-sub .plan-nombre { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9); white-space: normal; overflow-wrap: break-word; }
     .plan-sub .sub-row { padding: 9px 14px 5px 0; border-top: none; }
+    /* En la misma linea que las horas y los cuatro botones, al nombre le quedaba en el
+       celular una columna de ~70 px y se partia hasta en mitad de palabra ("Resol /
+       ución"). El nombre va en su propio renglon a todo el ancho, y debajo las horas a
+       la izquierda y los botones a la derecha. */
+    .plan-sub .sub-row { flex-wrap: wrap; row-gap: 2px; }
+    .plan-sub .sub-row .plan-nombre { flex: 1 1 100%; }
+    .plan-sub .sub-row .plan-hrs { margin-right: auto; }
     .plan-sub-barra { padding: 0 14px 9px 0; }
     .plan-sub .ses-list { margin-right: 14px; }
 
