@@ -138,6 +138,10 @@
     .form-row input::placeholder { color: rgba(255,255,255,0.3); }
     .form-row select option { background: #1A2D45; color: #fff; }
     .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    /* Fuerza se mide en repeticiones, salvo los isometricos (plancha) que van en segundos */
+    .gym-modo { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 11px; background: rgba(255,255,255,0.06); }
+    .gym-modo button { padding: 8px; border: none; border-radius: 8px; background: none; color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .gym-modo button.on { background: rgba(255,255,255,0.14); color: #fff; }
     .two-col-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
     .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
     .btn-cancel { background: rgba(255,255,255,0.08); border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; color: rgba(255,255,255,0.6); font-family: inherit; }
@@ -1246,10 +1250,14 @@
       <select id="g-grupo" onchange="toggleCamposGym(this.value)"><option>Pecho</option><option>Espalda</option><option>Piernas</option><option>Hombros</option><option>Bíceps</option><option>Tríceps</option><option>Abdomen</option><option>Glúteos</option><option>Cardio</option><option>Otro</option></select>
     </div>
     <div id="g-campos-fuerza">
-      <div class="form-row"><label>Máquina / Ejercicio</label><input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea alta…"></div>
+      <div class="form-row"><label>Máquina / Ejercicio</label><input type="text" id="g-maquina" placeholder="Ej: Press banca, Polea alta…" oninput="sugerirModoGym(this.value)"></div>
+      <div class="gym-modo">
+        <button type="button" id="g-modo-reps" class="on" onclick="setModoGym(false, true)">Repeticiones</button>
+        <button type="button" id="g-modo-seg" onclick="setModoGym(true, true)">⏱ Segundos</button>
+      </div>
       <div class="three-col">
         <div class="form-row" style="margin:0"><label>Series</label><input type="number" id="g-series" placeholder="3" min="1"></div>
-        <div class="form-row" style="margin:0"><label>Reps</label><input type="number" id="g-reps" placeholder="12" min="1"></div>
+        <div class="form-row" style="margin:0"><label id="g-reps-lbl">Reps</label><input type="number" id="g-reps" placeholder="12" min="1"></div>
         <div class="form-row" style="margin:0"><label>Peso kg</label><input type="number" id="g-peso" placeholder="20" min="0" step="0.5"></div>
       </div>
     </div>
@@ -1575,11 +1583,32 @@ async function loadGym() {
 // esa migracion todavia no corrio, el ejercicio se guarda igual y lo unico que falta
 // es el dato informativo: perder el registro por eso seria mucho peor.
 function filaGym(item){
-  return { grupo:item.grupo, maquina:item.maquina, series:item.series, reps:item.reps,
+  const fila = { grupo:item.grupo, maquina:item.maquina, series:item.series, reps:item.reps,
            peso:item.peso, tiempo:item.tiempo,
            distancia_km: item.distancia_km != null ? item.distancia_km : null,
            kcal_est:     item.kcal_est     != null ? item.kcal_est     : null };
+  // 'segundos' (setup-gym-segundos.sql) solo viaja cuando hace falta: un ejercicio por
+  // repeticiones se sigue guardando aunque esa columna todavia no exista. Al editar uno
+  // que paso de segundos a reps se manda null para limpiarla.
+  if(item.segundos != null || item.limpiarSegundos) fila.segundos = item.segundos != null ? item.segundos : null;
+  return fila;
 }
+// Un isometrico (la plancha) no tiene repeticiones: se aguanta. Esa fila guarda los
+// segundos de cada serie en 'segundos' y deja 'reps' vacio.
+function esPorTiempoGym(ex){ return ex && ex.grupo !== 'Cardio' && ex.segundos != null; }
+function fmtSegundosGym(s){
+  s = Math.round(Number(s) || 0);
+  return s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' min' : s + ' s';
+}
+// "Abdomen · 3 series × 45 s" o "Pecho · 4 series × 12 reps"; corto: "3×45 s" / "4×12".
+function detalleFuerzaGym(ex, corto){
+  const carga = esPorTiempoGym(ex) ? fmtSegundosGym(ex.segundos) : ex.reps + (corto ? '' : ' reps');
+  return ex.grupo + ' · ' + ex.series + (corto ? '×' : ' series × ') + carga;
+}
+function esErrorSegundosGym(error){
+  return !!error && /segundos/i.test((error.message || '') + (error.details || ''));
+}
+const AVISO_SQL_SEGUNDOS = 'Para guardar ejercicios en segundos falta correr setup-gym-segundos.sql en Supabase (SQL Editor).';
 function sinColumnasNuevas(fila){
   const g = Object.assign({}, fila);
   delete g.distancia_km; delete g.kcal_est;
@@ -1592,6 +1621,7 @@ async function saveGymItem(item) {
   const fila = filaGym(item);
   let {data,error} = await sb.from('gym').insert([fila]).select();
   if(esErrorColumnaGym(error)) ({data,error} = await sb.from('gym').insert([sinColumnasNuevas(fila)]).select());
+  if(esErrorSegundosGym(error)){ alert(AVISO_SQL_SEGUNDOS); return; }
   if(!error && data) { gymItems.push(data[0]); openGroups.add(data[0].grupo); renderGym(); renderDesktop(); renderPeso(); }
   else if(error) alert('No se pudo registrar: ' + (error.message || 'revisá la conexión'));
 }
@@ -2024,7 +2054,7 @@ function renderCardDia(fecha, exs){
         <div class="ex-num">${GYM_ICONS[ex.grupo]||'⚡'}</div>
         <div class="ex-info">
           <div class="ex-name">${ex.maquina}</div>
-          <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+' series × '+ex.reps+' reps'}</div>
+          <div class="ex-detail">${ex.grupo==='Cardio'?ex.tiempo+' min':detalleFuerzaGym(ex)}</div>
         </div>
         ${ex.peso?`<span class="ex-peso">${ex.peso} kg</span>`:''}
         ${ex.tiempo&&ex.grupo==='Cardio'?`<span class="ex-peso" style="background:rgba(26,122,181,0.2);color:#7BC8F0;">${ex.tiempo} min</span>`:''}
@@ -2045,10 +2075,11 @@ async function repetirGym(id){
   if(!ex) return;
   if(!confirm('¿Registrar "'+ex.maquina+'" de nuevo hoy?')) return;
   const fila = filaGym({ grupo:ex.grupo, maquina:ex.maquina, series:ex.series, reps:ex.reps,
-    peso:ex.peso, tiempo:ex.tiempo, distancia_km:ex.distancia_km,
+    segundos:ex.segundos, peso:ex.peso, tiempo:ex.tiempo, distancia_km:ex.distancia_km,
     kcal_est: ex.grupo === 'Cardio' ? kcalPorMet(metDeActividad(ex.maquina), ex.tiempo) : null });
   let {data,error} = await sb.from('gym').insert([fila]).select();
   if(esErrorColumnaGym(error)) ({data,error} = await sb.from('gym').insert([sinColumnasNuevas(fila)]).select());
+  if(esErrorSegundosGym(error)){ alert(AVISO_SQL_SEGUNDOS); return; }
   if(!error && data){
     gymItems.push(data[0]);
     if(data[0].created_at) openGroups.add(diaLocalDe(data[0].created_at));
@@ -2446,6 +2477,26 @@ function openGymModal(){
   document.getElementById('g-actividad').value='';document.getElementById('g-tiempo').value='';
   document.getElementById('g-distancia').value='';
   document.getElementById('g-grupo').value='Pecho';toggleCamposGym('Pecho');
+  gymModoTocado = false; setModoGym(false);
+}
+// Repeticiones o segundos. El modo se propone solo por el nombre (la plancha, o un
+// ejercicio que la ultima vez se hizo en segundos) hasta que se toca el interruptor:
+// desde ahi manda lo que eligio la persona.
+let gymPorTiempo = false, gymModoTocado = false;
+const GYM_ISOMETRICOS = /plancha|plank|isometr|hollow|l-sit|wall ?sit|sentadilla (en|contra) (la )?pared|colgad|dead ?hang|superman/i;
+function setModoGym(porTiempo, aMano){
+  gymPorTiempo = !!porTiempo;
+  if(aMano) gymModoTocado = true;
+  document.getElementById('g-modo-reps').classList.toggle('on', !gymPorTiempo);
+  document.getElementById('g-modo-seg').classList.toggle('on', gymPorTiempo);
+  document.getElementById('g-reps-lbl').textContent = gymPorTiempo ? 'Segundos' : 'Reps';
+  document.getElementById('g-reps').placeholder = gymPorTiempo ? '45' : '12';
+}
+function sugerirModoGym(nombre){
+  if(gymModoTocado) return;
+  const n = (nombre || '').trim().toLowerCase();
+  const previo = n ? gymItems.filter(e => (e.maquina || '').trim().toLowerCase() === n).pop() : null;
+  setModoGym(previo ? esPorTiempoGym(previo) : GYM_ISOMETRICOS.test(n));
 }
 function editarGym(id){
   const ex = gymItems.find(i=>i.id===id);
@@ -2462,7 +2513,12 @@ function editarGym(id){
   } else {
     document.getElementById('g-maquina').value = ex.maquina || '';
     document.getElementById('g-series').value = ex.series != null ? ex.series : '';
-    document.getElementById('g-reps').value = ex.reps != null ? ex.reps : '';
+    const porTiempo = esPorTiempoGym(ex);
+    // Una plancha vieja cargada con "0 reps" (antes no habia otra forma) se abre ya en
+    // segundos y vacia, para corregirla con los segundos de verdad.
+    const plancha0 = !porTiempo && !Number(ex.reps) && GYM_ISOMETRICOS.test(ex.maquina || '');
+    gymModoTocado = true; setModoGym(porTiempo || plancha0);
+    document.getElementById('g-reps').value = porTiempo ? ex.segundos : (plancha0 || ex.reps == null ? '' : ex.reps);
     document.getElementById('g-peso').value = ex.peso != null ? ex.peso : '';
   }
 }
@@ -2721,10 +2777,18 @@ function saveGym(){
     const maquina=document.getElementById('g-maquina').value.trim();
     const series=document.getElementById('g-series').value;
     const reps=document.getElementById('g-reps').value;
-    if(!maquina||!series||!reps){alert('Faltan datos');return;}
+    if(!maquina||!series||!reps){alert(gymPorTiempo ? 'Faltan datos: series y segundos.' : 'Faltan datos');return;}
+    if(!(parseInt(reps) > 0)){alert(gymPorTiempo ? 'Los segundos tienen que ser más de 0.' : 'Las reps tienen que ser más de 0.');return;}
     const pesoVal = document.getElementById('g-peso').value;
     // Fuerza no lleva kcal estimadas a proposito: lo que se mide aca es el tonelaje.
-    item = {grupo,maquina,series:parseInt(series),reps:parseInt(reps),peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null,distancia_km:null,kcal_est:null};
+    // En segundos, 'reps' queda vacio: el tonelaje de una plancha es 0 y no ensucia el
+    // del dia; su progreso se mide en tiempo aguantado (progresoFuerza).
+    const previo = gymEditId ? gymItems.find(i=>i.id===gymEditId) : null;
+    item = {grupo,maquina,series:parseInt(series),
+            reps: gymPorTiempo ? null : parseInt(reps),
+            segundos: gymPorTiempo ? parseInt(reps) : null,
+            limpiarSegundos: !gymPorTiempo && !!previo && previo.segundos != null,
+            peso:pesoVal!==''?parseFloat(pesoVal):null,tiempo:null,distancia_km:null,kcal_est:null};
   }
   if(gymEditId){
     updateGymItem(gymEditId, item);
@@ -2738,6 +2802,7 @@ async function updateGymItem(id, item){
   const fila = filaGym(item);
   let {data,error} = await sb.from('gym').update(fila).eq('id',id).select();
   if(esErrorColumnaGym(error)) ({data,error} = await sb.from('gym').update(sinColumnasNuevas(fila)).eq('id',id).select());
+  if(esErrorSegundosGym(error)){ alert(AVISO_SQL_SEGUNDOS); gymEditId = null; return; }
   if(!error && data && data[0]){
     const idx = gymItems.findIndex(i=>i.id===id);
     if(idx!==-1) gymItems[idx] = data[0];
@@ -3378,7 +3443,7 @@ function openGymDayModal(fecha) {
       <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">${GYM_ICONS[ex.grupo]||'⚡'}</div>
       <div>
         <div style="font-size:14px;font-weight:500;color:#fff;">${ex.maquina}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);">${ex.grupo==='Cardio'?ex.tiempo+' min':ex.grupo+' · '+ex.series+'×'+ex.reps+(ex.peso?' · '+ex.peso+'kg':'')}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">${ex.grupo==='Cardio'?ex.tiempo+' min':detalleFuerzaGym(ex, true)+(ex.peso?' · '+ex.peso+'kg':'')}</div>
       </div>
     </div>`).join('');
   const modal = document.getElementById('gym-day-modal');
@@ -7382,15 +7447,23 @@ function progresoFuerza(){
   gymItems.filter(e => e.grupo !== 'Cardio' && e.maquina).forEach(e => {
     const clave = e.maquina.trim().toLowerCase();
     const fecha = diaLocalDe(e.created_at) || '';
-    if(!porEj[clave]) porEj[clave] = { nombre:e.maquina.trim(), grupo:e.grupo, dias:{}, mejor:0 };
+    if(!porEj[clave]) porEj[clave] = { nombre:e.maquina.trim(), grupo:e.grupo, dias:{}, mejor:0, porTiempo:false };
     const g = porEj[clave];
+    // Un isometrico no tiene tonelaje: se compara el tiempo total aguantado en el dia
+    // (series × segundos) y la mejor marca es la serie mas larga.
+    if(esPorTiempoGym(e)){
+      g.porTiempo = true;
+      g.dias[fecha] = (g.dias[fecha] || 0) + (Number(e.series) || 0) * (Number(e.segundos) || 0);
+      if(Number(e.segundos) > g.mejor) g.mejor = Number(e.segundos);
+      return;
+    }
     g.dias[fecha] = (g.dias[fecha] || 0) + tonelajeDe([e]);
     const p = Number(e.peso) || 0;
     if(p > g.mejor) g.mejor = p;
   });
   return Object.values(porEj).map(g => {
     const fechas = Object.keys(g.dias).sort((a, b) => b.localeCompare(a));
-    return { nombre:g.nombre, grupo:g.grupo, mejor:g.mejor,
+    return { nombre:g.nombre, grupo:g.grupo, mejor:g.mejor, porTiempo:g.porTiempo,
              ultimo: fechas[0] ? g.dias[fechas[0]] : 0,
              previo: fechas[1] ? g.dias[fechas[1]] : null,
              fecha: fechas[0] || '', veces: fechas.length };
@@ -7437,8 +7510,11 @@ function renderProgresoFuerza(){
         '<div class="ex-num">' + (GYM_ICONS[p.grupo] || '⚡') + '</div>' +
         '<div class="gym-prog-info">' +
           '<div class="gym-prog-nombre">' + escHtmlAttr(p.nombre) + '</div>' +
-          '<div class="gym-prog-sub">' + fmtTonelaje(p.ultimo) + ' el ' + cuando +
-            (p.mejor ? ' · mejor marca ' + p.mejor + ' kg' : '') + '</div>' +
+          '<div class="gym-prog-sub">' + (p.porTiempo
+              ? fmtSegundosGym(p.ultimo) + ' en total el ' + cuando +
+                (p.mejor ? ' · mejor serie ' + fmtSegundosGym(p.mejor) : '')
+              : fmtTonelaje(p.ultimo) + ' el ' + cuando +
+                (p.mejor ? ' · mejor marca ' + p.mejor + ' kg' : '')) + '</div>' +
         '</div>' + delta +
       '</div>';
   }).join('');
