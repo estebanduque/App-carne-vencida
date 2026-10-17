@@ -7614,23 +7614,33 @@ function pesoPerdidaSemanal(){
 
 // Los MET salen del Compendium of Physical Activities. La bici de transporte es 4,0
 // (menos de 16 km/h, ir a algun lado), no la de 6,0 que es salir a rodar en serio.
+//
+// Lo liviano de todos los dias (comer, vestirse, ducharse, cocinar, lavar platos,
+// hacer compras) NO se cobra: ya esta dentro del factor 1,2 de la base, que es
+// justamente "la vida de estar despierto". Antes se cobraba aparte y salian ~850 kcal
+// de actividad al dia, y la recalibracion, al restarlas, dejo la base por debajo del
+// metabolismo basal. Solo cuenta lo que es esfuerzo de verdad (MET >= 2,5).
+//
+// Gym va en 3,5 y no 5,0: una sesion de pesas cronometrada incluye los descansos entre
+// series, y el MET de 5 es para trabajo continuo. Caminar va en 3,0 (paso normal,
+// ~4 km/h, con paradas), no en 3,5 que es paso ligero sostenido.
 const MET_ACTIVIDADES = [
   { cat:'Transporte',       sub:/bici|velo|cicl/,            met:4.0 },
-  { cat:'Transporte',       sub:/camin|a pie|marcha/,        met:3.5 },
-  { cat:'Deporte',          sub:/gym|pesas|fuerza|muscul/,   met:5.0 },
+  { cat:'Transporte',       sub:/camin|a pie|marcha/,        met:3.0 },
+  { cat:'Deporte',          sub:/gym|pesas|fuerza|muscul/,   met:3.5 },
   { cat:'Deporte',          sub:/corr|runn|trot|footing/,    met:9.8 },
   { cat:'Deporte',          sub:/nad|pisc|natac/,            met:6.0 },
   { cat:'Deporte',          sub:null,                        met:6.0 },
   { cat:'Hogar',            sub:/carga|pesad|mudan|mueble/,  met:5.0 },
   { cat:'Hogar',            sub:/limpi|barr|fregar|aspir/,   met:3.3 },
-  { cat:'Hogar',            sub:/compra/,                    met:2.3 },
-  { cat:'Hogar',            sub:null,                        met:2.0 },
-  { cat:'Cuidado personal', sub:null,                        met:2.0 },
 ];
-// Por debajo de esto la actividad no se distingue de estar sentado, y sumar decimales
-// de un viaje en tren solo mete ruido. Lo que no esta en la tabla no cuenta: inventar
-// gasto para 'Ocio' o 'Trabajo' seria adivinar.
-const MET_MINIMO_QUE_CUENTA = 1.5;
+// Lo que no esta en la tabla, o queda por debajo de esto, no cuenta: inventar gasto
+// para 'Ocio', 'Trabajo' o lo cotidiano seria adivinar o cobrarlo dos veces.
+const MET_MINIMO_QUE_CUENTA = 2.5;
+// Y lo que si cuenta se cobra al 80%: el tiempo cronometrado siempre incluye pausas
+// (semaforos, esperar una maquina, mirar el celular) y las tablas de MET estan medidas
+// con esfuerzo sostenido. Se puede cambiar con la columna peso_config.factor_actividad.
+function pesoFactorActividad(){ return pesoConfigNum('factor_actividad', 0.8); }
 
 function metDeTiempo(categoria, subcategoria){
   const sub = sinAcentos(subcategoria || '');
@@ -7654,7 +7664,41 @@ function pesoFactorBase(){ return pesoConfigNum('factor_base', 1.2); }
 // numero: sale de lo que hizo la balanza y le gana a cualquier formula.
 function pesoBaseDiaria(){
   const v = pesoConfig ? pesoConfig.base_kcal : null;
-  return (v != null && v !== '') ? Number(v) : pesoBMR() * pesoFactorBase();
+  return (v != null && v !== '') ? pesoBaseAcotada(Number(v)) : pesoBMR() * pesoFactorBase();
+}
+// Ninguna medicion puede dejar la base fuera de lo fisiologico. Por debajo del basal
+// ×1,1 no se vive (el basal es estar en coma, y digerir ya cuesta un 10%), y por
+// encima de ×1,5 seria la base de alguien que trabaja de pie todo el dia. Si la
+// balanza "dice" algo fuera de eso, lo que esta mal es el dato que entro (comidas sin
+// anotar, actividad de mas), no tu metabolismo.
+const PESO_BASE_MIN = 1.1, PESO_BASE_MAX = 1.5;
+function pesoBaseAcotada(kcal){
+  const bmr = pesoBMR();
+  return Math.min(bmr * PESO_BASE_MAX, Math.max(bmr * PESO_BASE_MIN, kcal));
+}
+function pesoBaseFueraDeRango(){
+  const v = pesoConfig ? pesoConfig.base_kcal : null;
+  return v != null && v !== '' && Math.round(pesoBaseAcotada(Number(v))) !== Math.round(Number(v));
+}
+
+// ---- Poner en duda lo anotado ----
+// Lo que se anota que se comio casi siempre se queda corto: el aceite de la sarten,
+// la salsa, el picoteo, la porcion que era mas grande. Los estudios lo ponen entre
+// 10 y 30% en gente que anota con cuidado. Se suma un 10% de margen a lo anotado en
+// TODAS las cuentas (deficit del dia, contraste y recalibracion), para que sean
+// coherentes entre si; el numero "comiste" que se muestra sigue siendo el anotado.
+// Se puede cambiar con la columna peso_config.subregistro (0,10 = 10%).
+function pesoSubregistro(){ return pesoConfigNum('subregistro', 0.10); }
+function pesoKcalReales(fecha){
+  const v = pesoKcalDia(fecha);
+  return v == null ? null : v * (1 + pesoSubregistro());
+}
+// Un dia con muy poco anotado (menos del 80% del basal) casi seguro es un dia en que
+// no se anoto todo, no un ayuno. Entra en la pantalla del dia, pero no en la
+// recalibracion ni en el contraste: un solo dia asi tira la media para abajo.
+function pesoDiaDudoso(fecha){
+  const v = pesoKcalDia(fecha);
+  return v != null && v < pesoBMR() * 0.8;
 }
 function pesoBaseEsMedida(){
   const v = pesoConfig ? pesoConfig.base_kcal : null;
@@ -7667,13 +7711,13 @@ function detalleActividadDia(fecha){
   const por = {};
   tiempoItems.forEach(i => {
     const met = metDeTiempo(i.categoria, i.subcategoria);
-    if(met <= MET_MINIMO_QUE_CUENTA) return;
+    if(met < MET_MINIMO_QUE_CUENTA) return;
     const min = minutosItemEnDia(i, fecha);
     if(min <= 0) return;
     const clave = i.categoria + ' › ' + (i.subcategoria || 'General');
     if(!por[clave]) por[clave] = { etiqueta:clave, met, minutos:0, kcal:0 };
     por[clave].minutos += min;
-    por[clave].kcal    += (met - 1) * kg * (min / 60);
+    por[clave].kcal    += (met - 1) * kg * (min / 60) * pesoFactorActividad();
   });
   return Object.values(por)
     .map(x => ({ etiqueta:x.etiqueta, met:x.met, minutos:Math.round(x.minutos), kcal:Math.round(x.kcal) }))
@@ -7686,13 +7730,21 @@ function pesoGastoDia(fecha){ return Math.round(pesoBaseDiaria() + kcalActividad
 // El deficit del dia: lo que gastaste menos lo que comiste. Sin comidas cargadas no
 // hay deficit que mostrar, y un cero seria mentira.
 function pesoDeficitDia(fecha){
-  const comido = pesoKcalDia(fecha);
+  const comido = pesoKcalReales(fecha);
   if(comido == null) return null;
   return Math.round(pesoGastoDia(fecha) - comido);
 }
 // La ingesta objetivo ya no es un numero fijo: el dia que andas en bici podes comer
-// mas, porque gastaste mas. Eso es todo el punto del modelo aditivo.
-function pesoIngestaObjetivoDia(fecha){ return Math.round(pesoGastoDia(fecha) - pesoDeficit()); }
+// mas, porque gastaste mas. Eso es todo el punto del modelo aditivo. Se expresa en kcal
+// ANOTADAS (se le descuenta el margen), que es el numero que se compara en pantalla.
+// Y nunca por debajo del metabolismo basal: comer menos que eso no acelera nada, se
+// sostiene mal y come musculo. Un dia quieto el deficit queda mas chico que la meta, y
+// un dia de bici vuelve a la meta completa.
+function pesoIngestaObjetivoDia(fecha){
+  const real = Math.max(pesoGastoDia(fecha) - pesoDeficit(), pesoBMR());
+  return Math.round(real / (1 + pesoSubregistro()));
+}
+function pesoObjetivoEnPiso(fecha){ return pesoGastoDia(fecha) - pesoDeficit() < pesoBMR(); }
 
 // ---- El contraste: lo que predijo el modelo contra lo que dijo la balanza ----
 // 7700 kcal = 1 kg de grasa. Si el deficit acumulado dice -1,1 kg y la balanza dice
@@ -7704,7 +7756,9 @@ function pesoContraste(dias){
   if(ahora == null || antes == null) return null;
   let suma = 0, conDato = 0;
   for(let i = 0; i < dias; i++){
-    const d = pesoDeficitDia(pesoFechaMas(ref, -i));
+    const f = pesoFechaMas(ref, -i);
+    if(pesoDiaDudoso(f)) continue;
+    const d = pesoDeficitDia(f);
     if(d != null){ suma += d; conDato++; }
   }
   if(!conDato) return null;
@@ -7733,15 +7787,21 @@ function pesoRecalibracion(){
   if(antes == null || ahora == null) return { ok:false, motivo:'faltan pesadas en alguna de las dos semanas que se comparan.' };
   // Un dia cuenta si se sabe cuanto se comio, sea por las comidas cargadas o por el
   // numero que se escribio a mano antes de que existiera el diario.
+  // Los dias dudosos (muy poco anotado) se dejan afuera: casi seguro falto anotar.
   const kcal = [];
+  let dudosos = 0;
   for(let i = 0; i < 14; i++){
-    const v = pesoKcalDia(pesoFechaMas(ref, -i));
-    if(v != null) kcal.push(v);
+    const f = pesoFechaMas(ref, -i);
+    const v = pesoKcalReales(f);
+    if(v == null) continue;
+    if(pesoDiaDudoso(f)){ dudosos++; continue; }
+    kcal.push(v);
   }
   if(kcal.length < PESO_MIN_DIAS_KCAL){
     return { ok:false, motivo:'solo hay ' + kcal.length + (kcal.length === 1 ? ' día' : ' días') +
-                              ' con kcal en las últimas 2 semanas; con menos de ' + PESO_MIN_DIAS_KCAL + ' la media no dice nada.' };
+                              ' con kcal confiables en las últimas 2 semanas; con menos de ' + PESO_MIN_DIAS_KCAL + ' la media no dice nada.' };
   }
+  // La ingesta ya viene con el margen de lo no anotado (pesoKcalReales).
   const ingestaMedia   = kcal.reduce((a, b) => a + b, 0) / kcal.length;
   const perdidaSemanal = (antes - ahora) / 2;
   const deficitReal    = perdidaSemanal * PESO_KCAL_POR_KG / 7;
@@ -7752,8 +7812,17 @@ function pesoRecalibracion(){
   let actividad = 0;
   for(let i = 0; i < 14; i++) actividad += kcalActividadDia(pesoFechaMas(ref, -i));
   const actividadMedia = actividad / 14;
-  const baseReal = tdeeReal - actividadMedia;
-  return { ok:true, ingestaMedia, perdidaSemanal, deficitReal, tdeeReal, actividadMedia, baseReal,
+  const baseMedida = tdeeReal - actividadMedia;
+  // Lo medido no se aplica de golpe: la base se mueve la mitad del camino hacia el
+  // numero nuevo, y nunca fuera del rango fisiologico. Dos semanas de balanza tienen
+  // mucho ruido (agua, sal, un dia mal anotado), y un salto de 900 kcal como el que
+  // dejo la base en 1370 no lo justifica ninguna medicion de 14 dias. Si el gasto real
+  // es de verdad mas bajo, la proxima recalibracion termina de llevarlo ahi.
+  const actual   = pesoBaseDiaria();
+  const acotada  = pesoBaseAcotada(baseMedida);
+  const baseReal = actual + (acotada - actual) * 0.5;
+  return { ok:true, ingestaMedia, perdidaSemanal, deficitReal, tdeeReal, actividadMedia, baseMedida, baseReal,
+           recortada: Math.round(acotada) !== Math.round(baseMedida), dudosos,
            nuevaIngesta: tdeeReal - pesoDeficit(), diasKcal: kcal.length };
 }
 // Se propone cada 2 semanas, no cada vez que se abre el modulo: recalcular el gasto
@@ -7920,7 +7989,7 @@ function pesoBalanceHTML(){
 
   const lineas =
     '<div class="peso-dato"><span class="peso-dato-lbl">Gasto base' +
-      (pesoBaseEsMedida() ? ' (medido)' : ' (fórmula)') + '</span>' +
+      (pesoBaseFueraDeRango() ? ' (acotado)' : pesoBaseEsMedida() ? ' (medido)' : ' (fórmula)') + '</span>' +
       '<span class="peso-dato-val">' + base + ' kcal</span></div>' +
     acts.map(a => '<div class="peso-dato" style="padding-left:10px;">' +
         '<span class="peso-dato-lbl">' + escHtmlAttr(a.etiqueta) + ' · ' + a.minutos + ' min</span>' +
@@ -7932,7 +8001,12 @@ function pesoBalanceHTML(){
       '<span class="peso-dato-lbl">Gastaste</span>' +
       '<span class="peso-dato-val">' + gasto + ' kcal</span></div>' +
     '<div class="peso-dato"><span class="peso-dato-lbl">Comiste</span>' +
-      '<span class="peso-dato-val">' + (comido == null ? '—' : Math.round(comido) + ' kcal') + '</span></div>';
+      '<span class="peso-dato-val">' + (comido == null ? '—' : Math.round(comido) + ' kcal') + '</span></div>' +
+    (comido == null ? '' :
+      '<div class="peso-dato" style="padding-left:10px;"><span class="peso-dato-lbl">margen por lo no anotado (' +
+        Math.round(pesoSubregistro() * 100) + '%)</span>' +
+        '<span class="peso-dato-val" style="color:#E5883F;font-weight:500;">+' + Math.round(comido * pesoSubregistro()) + '</span></div>') +
+    (pesoDiaDudoso(fecha) ? '<div class="peso-nota">Este día tiene muy poco anotado: parece incompleto, y por eso no entra en la recalibración.</div>' : '');
 
   if(def == null){
     return lineas + '<div class="peso-nota">Cargá lo que comiste y acá sale el déficit del día.</div>';
@@ -7949,8 +8023,10 @@ function pesoBalanceHTML(){
     '<div class="peso-dato"><span class="peso-dato-lbl">Meta ' + Math.round(meta) + ' kcal/día</span>' +
       '<span class="peso-dato-val" style="color:rgba(255,255,255,0.6);font-weight:500;">' +
         (kg >= 0 ? '−' : '+') + pesoNum(Math.abs(kg), 3) + ' kg</span></div>' +
-    '<div class="peso-nota">Objetivo de hoy: comer ' + pesoIngestaObjetivoDia(fecha) + ' kcal. ' +
-      'Sube si te movés más.</div>';
+    '<div class="peso-nota">Objetivo de hoy: anotar hasta ' + pesoIngestaObjetivoDia(fecha) + ' kcal' +
+      (pesoObjetivoEnPiso(fecha)
+        ? ', tu piso: con lo poco que te moviste, bajar más sería comer menos que tu basal. Si te movés más, ese día se agranda el déficit.'
+        : '. Sube si te movés más.') + '</div>';
 }
 // Lo que predijo el modelo contra lo que dijo la balanza. Si no coinciden, el que
 // tiene razon es la balanza, y para eso esta el aviso de recalibrar.
@@ -8034,11 +8110,15 @@ function renderPeso(){
   document.getElementById('peso-aviso-box').innerHTML = pesoTocaRecalibrar()
     ? '<div class="peso-aviso">' +
         '<div class="peso-aviso-tit">⚖️ Toca recalibrar tu gasto</div>' +
-        '<div class="peso-aviso-txt">En estas 2 semanas comiste <b>' + Math.round(r.ingestaMedia) + ' kcal</b> al día de media (' +
-          r.diasKcal + ' días anotados) y el promedio bajó <b>' + pesoNum(r.perdidaSemanal, 2) + ' kg</b> por semana. ' +
+        '<div class="peso-aviso-txt">En estas 2 semanas comiste <b>' + Math.round(r.ingestaMedia) + ' kcal</b> al día de media, ' +
+          'contando un ' + Math.round(pesoSubregistro() * 100) + '% de margen por lo que no se anota (' + r.diasKcal + ' días' +
+          (r.dudosos ? '; dejé afuera ' + r.dudosos + (r.dudosos === 1 ? ' día' : ' días') + ' con tan poco anotado que parecen incompletos' : '') +
+          '), y el promedio bajó <b>' + pesoNum(r.perdidaSemanal, 2) + ' kg</b> por semana. ' +
           'Eso da un gasto real de <b>' + Math.round(r.tdeeReal) + ' kcal</b> al día; descontando las ' +
-          Math.round(r.actividadMedia) + ' kcal de actividad que registraste, tu gasto base medido es <b>' +
-          Math.round(r.baseReal) + ' kcal</b> y ahora uso ' + Math.round(pesoBaseDiaria()) + '.</div>' +
+          Math.round(r.actividadMedia) + ' kcal de actividad, la base medida es ' + Math.round(r.baseMedida) + ' kcal' +
+          (r.recortada ? ', fuera de lo posible para tu cuerpo, así que la acoto' : '') + '. ' +
+          'Para no saltar por el ruido de 2 semanas, la muevo la mitad del camino: de ' + Math.round(pesoBaseDiaria()) +
+          ' a <b>' + Math.round(r.baseReal) + ' kcal</b>.</div>' +
         '<div class="peso-aviso-btns">' +
           '<button class="peso-btn ghost" onclick="posponerRecalibracion()">Ahora no</button>' +
           '<button class="peso-btn" onclick="aceptarRecalibracion()">Aplicar</button>' +
