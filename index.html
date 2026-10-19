@@ -1814,18 +1814,18 @@ async function deshacerSalida(id){
 // contador— y si el consumo se deshace se retira, siempre que no se haya comprado.
 // Los errores de la lista de compras no rompen el marcado: es un extra, no el acto.
 const MARCA_CONSUMIDO_COMPRAS = 'Consumido de Mi DLC';
-function nombreParaCompras(it){
-  const tipo = (it.tipo || '').trim();
-  const desc = (it.desc || '').trim();
-  return desc ? tipo + ' · ' + desc : tipo;
-}
+// Un solo nombre para lo que viene del DLC, el mismo que usan las sugerencias de
+// Compras (nombreParaCompra). Antes este camino guardaba "Tipo · desc" y las
+// sugerencias buscaban solo "desc": no se reconocian y el producto entraba dos veces.
+function nombreParaCompras(it){ return nombreParaCompra(it); }
 async function agregarConsumidoACompras(it){
   const nombre = nombreParaCompras(it);
   if(!nombre) return;
-  const yaPendiente = comprasItems.some(c =>
-    !c.comprado && (c.nombre||'').toLowerCase() === nombre.toLowerCase());
-  if(yaPendiente) return;
-  const fila = { nombre, categoria:'supermercado', categorias:['supermercado'], nota:MARCA_CONSUMIDO_COMPRAS };
+  // Agregado por aca, la sugerencia de Compras de ese mismo consumo ya no hace falta.
+  marcarSugerenciaResuelta(it.id);
+  if(nombreYaEnCompras(nombre)){ renderCompras(); return; }
+  const cats = tiendasParaTipoDlc(it.tipo);
+  const fila = { nombre, categoria:cats[0], categorias:cats, nota:MARCA_CONSUMIDO_COMPRAS };
   let {data,error} = await sb.from('compras').insert([fila]).select();
   if(error && /categorias/i.test((error.message||'') + (error.details||''))){
     const g = Object.assign({}, fila); delete g.categorias;
@@ -1842,7 +1842,7 @@ async function quitarConsumidoDeCompras(it){
   // no arrastre una compra vieja con el mismo nombre.
   const objetivo = [...comprasItems].reverse().find(c =>
     !c.comprado && c.nota === MARCA_CONSUMIDO_COMPRAS
-    && (c.nombre||'').toLowerCase() === nombre.toLowerCase());
+    && claveCompra(c.nombre) === claveCompra(nombre));
   if(!objetivo) return;
   const {error} = await sb.from('compras').delete().eq('id', objetivo.id);
   if(error){ console.log('compras auto-remove:', error.code, error.message); return; }
@@ -5822,9 +5822,17 @@ function marcarSugerenciaResuelta(dlcId){
   try { localStorage.setItem(SUG_COMPRAS_KEY, JSON.stringify([...s])); } catch(e){}
 }
 function normalizarNombre(s){ return sinAcentos(String(s||'')).toLowerCase().replace(/\s+/g,' ').trim(); }
+// La clave con la que se comparan dos articulos: sin acentos ni mayusculas, y sin el
+// prefijo "Tipo · " que dejaban las lineas viejas del DLC ("Frutas y verduras · tomate"
+// y "tomate" son lo mismo).
+function claveCompra(nombre){
+  const s = String(nombre || '');
+  const i = s.indexOf(' · ');
+  return normalizarNombre(i >= 0 ? s.slice(i + 3) : s);
+}
 function nombreYaEnCompras(nombre){
-  const n = normalizarNombre(nombre);
-  return comprasItems.some(i => !i.comprado && normalizarNombre(i.nombre) === n);
+  const n = claveCompra(nombre);
+  return comprasItems.some(i => !i.comprado && claveCompra(i.nombre) === n);
 }
 // Consumido en los ultimos 30 dias, no resuelto y todavia no anotado.
 function sugerenciasDeDlc(){
@@ -5917,6 +5925,16 @@ function errorTablaCompras(error, tabla){
 }
 async function agregarCompras(filas){
   if(!filas.length) return true;
+  // Lo que ya esta pendiente no se vuelve a agregar: la lista es un pedido, no un
+  // contador. Tampoco dos veces lo mismo dentro de un mismo dictado.
+  const vistas = new Set();
+  const nuevas = filas.filter(f => {
+    const k = claveCompra(f.nombre);
+    if(!k || vistas.has(k) || nombreYaEnCompras(f.nombre)) return false;
+    vistas.add(k); return true;
+  });
+  if(!nuevas.length){ renderCompras(); return true; }
+  filas = nuevas;
   let {data,error} = await sb.from('compras').insert(filas).select();
   // Si la columna 'categorias' todavia no existe, se reintenta sin ella: perder una nota
   // de voz recien dictada por una migracion pendiente seria el peor momento para fallar.
