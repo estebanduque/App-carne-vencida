@@ -603,6 +603,33 @@
 
     /* ===== MI PESO ===== */
     .menu-icon.peso { background: rgba(139,195,74,0.2); }
+    .menu-icon.cand { background: rgba(201,162,39,0.2); }
+    /* Mis Candidaturas */
+    .cand-prog-cab { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .cand-prog-esc { font-size: 16px; font-weight: 700; color: #fff; }
+    .cand-prog-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+    .cand-pill { font-size: 11px; font-weight: 600; border: 1px solid; border-radius: 999px; padding: 3px 9px; white-space: nowrap; flex-shrink: 0; }
+    .cand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
+    .cand-grid select, .cand-grid input { margin-top: 0; }
+    .cand-sec { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.4); margin: 16px 0 4px; }
+    .cand-doc { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 9px 0; background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; font-family: inherit; cursor: pointer; color: inherit; }
+    .cand-doc:last-of-type { border-bottom: none; }
+    .cand-doc-ico { font-size: 17px; line-height: 1.1; width: 18px; flex-shrink: 0; }
+    .cand-doc-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .cand-doc-nom { font-size: 14px; color: #fff; }
+    .cand-doc-opc { font-size: 10px; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 0 5px; margin-left: 4px; }
+    .cand-doc-det { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.4; }
+    .cand-doc-est { font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
+    .cand-regla { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.45; padding: 3px 0 3px 12px; position: relative; }
+    .cand-regla::before { content: '•'; position: absolute; left: 0; color: #E8C766; }
+    .cand-link { display: inline-block; margin-top: 12px; font-size: 12px; color: #E8C766; text-decoration: none; }
+    .cand-cal-nom { font-size: 13px; color: rgba(255,255,255,0.85); flex: 1; min-width: 0; }
+    .cand-abierto { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .cand-abierto:last-child { border-bottom: none; }
+    .cand-check { width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; border: 1.5px solid rgba(255,255,255,0.3); background: none; color: #1a1a1a; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .cand-check.on { background: #A8D45C; border-color: #A8D45C; }
+    .cand-abierto-t { font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.4; }
+    .peso-card input.cand-abierto-nota { margin-top: 7px; padding: 8px 10px; font-size: 13px; }
     .peso-cifras { border-radius: 12px; margin: 0 16px 10px; background: rgba(255,255,255,0.05); display: flex; overflow: hidden; }
     .peso-cifra { flex: 1; text-align: center; padding: 16px 6px; min-width: 0; }
     .peso-cifra-num { font-size: 25px; font-weight: 700; line-height: 1; color: #A8D45C; }
@@ -1105,6 +1132,21 @@
         <button id="tar-toggle-hechos-btn" class="tar-toggle-hechos" onclick="toggleTareasHechas()" style="display:none;"></button>
         <div id="tar-hechas-lista" style="display:none;"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== MIS CANDIDATURAS (la dibuja renderCand) ===== -->
+  <div class="menu-section" data-modulo="cand" style="margin-top:12px;">
+    <button class="menu-toggle" id="toggle-cand" onclick="toggleMenu('cand')">
+      <div class="menu-icon cand">🎓</div>
+      <div class="menu-title">
+        <h2>Mis Candidaturas</h2>
+        <p>HEC · ESSEC · ESCP · rentrée 2027</p>
+      </div>
+      <span class="menu-chevron" id="chevron-cand">▾</span>
+    </button>
+    <div class="menu-body" id="body-cand">
+      <div class="menu-inner" id="cand-cont"></div>
     </div>
   </div>
 
@@ -2138,17 +2180,18 @@ function ordenarModulosPorUso(){ pintarTabs(); }
 // ---- Navegacion por pantallas (solo movil) ----
 // El escritorio tiene su propia maqueta y no pasa por aca. La direccion vive en el
 // hash, asi que el boton Atras de Android funciona solo, sin codigo extra.
-const MODULOS_APP = ['carnes','gym','peso','ropa','lentes','estudio','tiempo','compras','tareas'];
+const MODULOS_APP = ['carnes','gym','peso','ropa','lentes','estudio','tiempo','compras','tareas','cand'];
 const TABS_FIJAS  = ['tiempo','estudio'];
-const ICONO_MOD  = { carnes:'🥫', gym:'💪', peso:'⚖️', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒', tareas:'📋' };
+const ICONO_MOD  = { carnes:'🥫', gym:'💪', peso:'⚖️', ropa:'👖', lentes:'👁️', estudio:'📚', tiempo:'⏱️', compras:'🛒', tareas:'📋', cand:'🎓' };
 const NOMBRE_MOD = { carnes:'Mi DLC', gym:'Mi Gym', peso:'Mi Peso', ropa:'Mi Ropa', lentes:'Lentes de Contacto',
-                     estudio:'Mi Estudio', tiempo:'Mi Tiempo', compras:'Lista de Compras', tareas:'Mis Tareas' };
+                     estudio:'Mi Estudio', tiempo:'Mi Tiempo', compras:'Lista de Compras', tareas:'Mis Tareas',
+                     cand:'Mis Candidaturas' };
 const SUB_MOD    = { carnes:'Fechas de caducidad', gym:'Rutinas y ejercicios', peso:'Tendencia y calorías', ropa:'Qué ponerte',
                      lentes:'Cuándo cambiarlos', estudio:'Horas por tema',
                      tiempo:'En qué se te va el día', compras:'Dictada por voz',
-                     tareas:'Pendientes por urgencia' };
+                     tareas:'Pendientes por urgencia', cand:'HEC · ESSEC · ESCP' };
 const CORTO_MOD  = { hoy:'Hoy', mas:'Más', carnes:'DLC', gym:'Gym', peso:'Peso', ropa:'Ropa',
-                     lentes:'Lentes', estudio:'Estudio', tiempo:'Tiempo', compras:'Compras', tareas:'Tareas' };
+                     lentes:'Lentes', estudio:'Estudio', tiempo:'Tiempo', compras:'Compras', tareas:'Tareas', cand:'Máster' };
 let pantallaActual = 'hoy';
 
 // Hoy, Tiempo y Estudio son fijas. El cuarto lugar se lo gana el mas usado del resto,
@@ -2258,7 +2301,7 @@ function firmaHoy(){
           getLentesData(), Math.round(minutosHoyTiempo()),
           tareas.filter(t=>!t.hecho).length,
           tareas.filter(t=>!t.hecho && t.urgencia === 1).length,
-          pesoRows.length, (pesoRows[pesoRows.length - 1] || {}).peso_kg || 0].join('|');
+          pesoRows.length, (pesoRows[pesoRows.length - 1] || {}).peso_kg || 0, candFirma()].join('|');
 }
 let ultimaFirmaHoy = null;
 
@@ -2317,6 +2360,11 @@ function baldosasHoy(){
   const tu = tp.filter(t => t.urgencia === 1).length;
   b.push({ m:'tareas', num:tp.length,
     lbl: tu ? tu + (tu === 1 ? ' urgente' : ' urgentes') : 'pendientes', alerta: !!tu });
+
+  const cp = candProximoCierre();
+  b.push({ m:'cand', num: cp ? Math.max(0, Math.floor(cp.ms / 86400000)) : '—',
+    lbl: cp ? 'días al cierre de ' + escHtmlAttr(cp.p.escuela) + ' · ' + cp.listos + '/' + cp.total + ' listos' : 'sin cierres por delante',
+    alerta: !!cp && cp.ms < 14 * 86400000 && cp.listos < cp.total });
 
   return b;
 }
@@ -2400,6 +2448,18 @@ function renderHoy(){
       tit:quedan <= 0 ? 'Cambiá los lentes ya' : 'Cambiá los lentes en ' + quedan + ' d',
       sub:'llevás ' + usados + ' de ' + LENTES_DIAS, pastilla:quedan <= 0 ? 'vencido' : null,
       color:quedan <= 0 ? '#E24B4A' : '#EF9F27' });
+  }
+
+  // Candidaturas: un cierre a menos de 30 dias aparece; a menos de 14, y con papeles
+  // sin terminar, sube arriba de todo junto con las tareas urgentes.
+  const cp = candProximoCierre();
+  if(cp && cp.ms < 30 * 86400000){
+    const d = Math.floor(cp.ms / 86400000);
+    const apurado = cp.ms < 14 * 86400000 && cp.listos < cp.total;
+    avisos.push({ m:'cand', ico:'🎓', prioritario: apurado,
+      tit: escHtmlAttr(cp.p.escuela) + ' ' + escHtmlAttr(cp.s.nombre) + (d >= 1 ? ' cierra en ' + d + ' d' : ' cierra hoy'),
+      sub: cp.listos + ' de ' + cp.total + ' documentos listos',
+      pastilla: apurado ? 'cierre' : null, color: d <= 7 ? '#E24B4A' : '#EF9F27' });
   }
 
   // Lo que tiene fecha encima sube. El resto conserva el orden en que se armo, que
@@ -8769,11 +8829,427 @@ function pesoComidaHTML(){
     '<div class="peso-cargando" id="peso-comida-estado"></div>';
 }
 
+// ===== MIS CANDIDATURAS =====
+// Seguimiento de las tres candidaturas al MS/LL.M. (rentrée 2027). Lo que es de las
+// escuelas (sesiones, cierres, documentos, tasas, reglas) es publico y vive aca como
+// constante; lo unico que se guarda en la base es TU estado: a que sesion apuntas,
+// como va cada documento, el test de ingles y los puntos ya confirmados. Ningun
+// documento sube a ningun lado, y nada de esto se conecta a los portales.
+//
+// Todas las horas son de Paris (Europe/Paris). ESCP no publica la hora de cierre, asi
+// que se cuenta como 11:00: mejor llegar una hora antes que descubrir que era a las 12.
+const CAND_HORA_ESCP = '11:00';
+const CAND_PROGRAMAS = [
+  { id:'hec', escuela:'HEC Paris', programa:'MS/LLM Droit et Management International',
+    url:'https://www.hec.edu/fr/grande-ecole-masters/programmes-masters/mastere-specialise/llm-droit-et-management-international/admission',
+    sesiones:[
+      { id:'hec-r2', nombre:'Round 2', cierre:'2026-11-26', hora:'12:00', resultados:'admisibilidad 21 dic · admisión 1 feb' },
+      { id:'hec-r3', nombre:'Round 3', cierre:'2027-02-17', hora:'12:00', resultados:'admisibilidad 16 mar · admisión 12 abr' },
+      { id:'hec-r4', nombre:'Round 4', cierre:'2027-04-28', hora:'12:00', resultados:'admisibilidad 18 may · admisión 9 jun' },
+    ],
+    docs:[
+      { k:'cv',                  n:'CV' },
+      { k:'transcripts_postbac', n:'Relevés de notes post-bac', d:'con moyenne / GPA' },
+      { k:'diplomas',            n:'Certificat de scolarité y/o últimos diplomas' },
+      { k:'reco_1',              n:'Recomendación 1', d:'al menos una de las dos, académica' },
+      { k:'reco_2',              n:'Recomendación 2' },
+      { k:'english_test',        n:'Test de inglés', d:'TOEFL / TOEIC / IELTS / Cambridge · sin nota mínima' },
+      { k:'photo',               n:'Foto', d:'formato pasaporte' },
+    ],
+    tasa:'180 €', exencion:'EFB, HEDAC, ParisTech, ISAE, ENS Ulm, becarios CROUS (a verificar)',
+    reglas:[
+      'El expediente tiene que quedar validado en línea en el portal antes del cierre.',
+      'Hay una ruta de admisión específica para candidatos EFB/HEDAC en el portal.',
+      'El exposé oral es parte de la admisión (solo HEC).',
+    ],
+    test:{ vigencia:false, cambridge:true } },
+  { id:'essec', escuela:'ESSEC', programa:'MS DAIM / LL.M.',
+    url:'https://www.essec.edu/fr/programme/mastere-specialise-droit-affaires-internationales-management/?tab=admission',
+    sesiones:[
+      { id:'essec-s1', nombre:'Session 1', cierre:'2027-01-07', hora:'12:00', resultados:'admisibilidad 4 feb · entrevistas 9–12 feb · admisión 19 feb' },
+      { id:'essec-s2', nombre:'Session 2', cierre:'2027-02-22', hora:'12:00', resultados:'admisibilidad 31 mar · entrevistas 5–8 abr · admisión 14 abr' },
+      { id:'essec-s3', nombre:'Session 3', cierre:'2027-04-26', hora:'12:00', resultados:'admisibilidad 27 may · entrevistas 31 may–3 jun · admisión 9 jun' },
+    ],
+    docs:[
+      { k:'cv',                    n:'CV', d:'1 página máximo' },
+      { k:'motivation_letter',     n:'Carta de motivación', d:'manuscrita, 1 página máx., FR o EN, escaneada en PDF' },
+      { k:'english_test',          n:'Test de inglés', d:'TOEIC L&R / TOEFL iBT (código ESSEC 0520) / IELTS Academic u Online / Cambridge B2 First mín. · menos de 2 años al cierre' },
+      { k:'bac',                   n:'Bac', d:'copia oficial fechada, firmada y sellada (las capturas se rechazan)' },
+      { k:'diplomas_all',          n:'Todos los diplomas de enseñanza superior', d:'copias oficiales' },
+      { k:'transcripts_all_years', n:'Relevés de cada año desde el bac', d:'prépa incluida + año en curso · orden cronológico · sin saltar años' },
+      { k:'interruption_note',     n:'Nota sobre interrupciones', d:'en papel libre, solo si hubo años interrumpidos', opc:true },
+      { k:'enrollment_cert',       n:'Certificat de scolarité', d:'solo si sos estudiante ahora', opc:true },
+      { k:'reco_1',                n:'Recomendación 1', d:'vía portal: al guardar al referente le llega el correo AL INSTANTE' },
+      { k:'reco_2',                n:'Recomendación 2', d:'ídem: avisale antes de guardar sus datos' },
+      { k:'id',                    n:'Identidad', d:'CNI recto/verso o pasaporte' },
+      { k:'photo',                 n:'Foto', d:'formato pasaporte, reciente, buena calidad' },
+    ],
+    tasa:'120 €', exencion:'becarios CROUS, candidatos de CY Cergy Paris Université',
+    reglas:[
+      'Un expediente incompleto no se tramita.',
+      'Una vez depositado NO se puede modificar: revisá todo antes.',
+      'Una candidatura por año académico, dos como máximo en total.',
+      'Opcional: TAGE MAGE / GMAT / GRE.',
+    ],
+    test:{ vigencia:true, cambridge:true } },
+  { id:'escp', escuela:'ESCP', programa:'MSc Droit et Management International',
+    url:'https://escp.eu/programmes/specialised-masters-MScs/MSc-droit-management-international',
+    sesiones:[
+      { id:'escp-s1', nombre:'Session 1', cierre:'2027-01-06', hora:CAND_HORA_ESCP, sinHora:true, resultados:'resultados 10 feb' },
+      { id:'escp-s2', nombre:'Session 2', cierre:'2027-02-15', hora:CAND_HORA_ESCP, sinHora:true, resultados:'resultados 24 mar' },
+      { id:'escp-s3', nombre:'Session 3', cierre:'2027-03-30', hora:CAND_HORA_ESCP, sinHora:true, resultados:'resultados 5 may' },
+      { id:'escp-s4', nombre:'Session 4', cierre:'2027-06-02', hora:CAND_HORA_ESCP, sinHora:true, resultados:'resultados 30 jun' },
+    ],
+    docs:[
+      { k:'diplomas',            n:'Último diploma', d:'o certificat de scolarité del diploma en curso' },
+      { k:'transcripts_last_2y', n:'Relevés de los 2 últimos años' },
+      { k:'id',                  n:'Identidad', d:'pasaporte o carta de identidad (recto-verso)' },
+      { k:'cv',                  n:'CV', d:'actualizado' },
+      { k:'english_test',        n:'Test de inglés', d:'TOEFL / TOEIC L&R / IELTS · menos de 2 años · Cambridge NO' },
+      { k:'photo',               n:'Foto', d:'formato JPEG' },
+      { k:'reco_1',              n:'Recomendación 1', d:'muy recomendada; se puede enviar aparte y en otro formato', opc:true },
+      { k:'reco_2',              n:'Recomendación 2', d:'ídem, no bloquea el depósito', opc:true },
+    ],
+    tasa:'130 € (1 especialización) · 195 € (2) · 60 € si ya candidataste a otro MSc ESCP',
+    exencion:'becarios CROUS, estudiantes o diplomados del Bachelor ESCP',
+    reglas:['Depósito por formulario en línea.', 'ESCP no publica la hora de cierre: acá se cuenta 11:00 (París).'],
+    test:{ vigencia:true, cambridge:false } },
+];
+const CAND_ESTADOS = [
+  { v:'sin-empezar', n:'Sin empezar',  c:'rgba(255,255,255,0.5)' },
+  { v:'preparando',  n:'Preparando',   c:'#EF9F27' },
+  { v:'depositada',  n:'Depositada',   c:'#7BC8F0' },
+  { v:'admisible',   n:'Admisible',    c:'#B39DDB' },
+  { v:'admitida',    n:'Admitida 🎉',  c:'#A8D45C' },
+  { v:'rechazada',   n:'Rechazada',    c:'#F09595' },
+  { v:'descartada',  n:'No me presento', c:'rgba(255,255,255,0.35)' },
+];
+// Falta -> borrador -> listo, en ciclo, con un toque.
+const CAND_DOC_ESTADOS = [
+  { v:'missing', n:'falta',    ico:'○', c:'rgba(255,255,255,0.4)' },
+  { v:'draft',   n:'borrador', ico:'◐', c:'#EF9F27' },
+  { v:'ready',   n:'listo',    ico:'●', c:'#A8D45C' },
+];
+const CAND_TESTS = ['TOEFL iBT', 'TOEIC L&R', 'IELTS Academic', 'IELTS Online', 'Cambridge (B2 First o más)'];
+const CAND_ABIERTOS = [
+  { id:'hec-hedac',     t:'HEC: ¿ser candidato HEDAC da la exención de los 180 € y la ruta de admisión específica del portal?' },
+  { id:'essec-hedac',   t:'ESSEC: ¿el acuerdo HEDAC Versailles / EFB Paris da admisibilidad automática?' },
+  { id:'traducciones',  t:'ESSEC y HEC: ¿piden traducciones juradas o copias certificadas de diplomas extranjeros? Ninguna de las dos páginas lo dice.' },
+  { id:'escp-hora',     t:'ESCP: ¿a qué hora exacta cierra cada sesión?' },
+  { id:'escp-ects',     t:'ESCP: ¿cómo cuentan los ECTS de un diploma extranjero para la regla de 240 ECTS? (por debajo: 6 módulos en línea jul–sep, +3 600 €)' },
+];
+
+// Lo que vino de la base: clave -> valor. 'prog:hec', 'doc:essec:cv', 'test', 'abierto:escp-hora'.
+let candData = {};
+let candSinTabla = false;
+let candAbiertos = new Set();   // tarjetas de escuela desplegadas (las cerradas muestran el resumen)
+
+// ---- Hora de Paris ----
+// El instante exacto de "26 nov 12:00 en Paris", sea cual sea la zona del telefono.
+// Se adivina como si fuera UTC y se corrige con el desfase que tenia Paris en ese
+// momento; la segunda vuelta cubre un cierre que cae justo en el cambio de hora.
+function candDesfaseParis(ms){
+  const p = new Intl.DateTimeFormat('en-US', { timeZone:'Europe/Paris', hourCycle:'h23',
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).formatToParts(new Date(ms));
+  const g = t => Number(p.find(x => x.type === t).value);
+  return Math.round((Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute')) - ms) / 60000);
+}
+function candInstante(ses){
+  const [y, m, d] = ses.cierre.split('-').map(Number), [h, mi] = ses.hora.split(':').map(Number);
+  const guess = Date.UTC(y, m - 1, d, h, mi);
+  let t = guess - candDesfaseParis(guess) * 60000;
+  const d2 = candDesfaseParis(t);
+  if(d2 !== candDesfaseParis(guess)) t = guess - d2 * 60000;
+  return t;
+}
+function candFalta(ses){ return candInstante(ses) - Date.now(); }
+function candFaltaTxt(ses){
+  const ms = candFalta(ses);
+  if(ms <= 0) return 'cerrada';
+  const dias = Math.floor(ms / 86400000);
+  if(dias >= 2) return 'faltan ' + dias + ' d';
+  const h = Math.floor(ms / 3600000);
+  return h >= 1 ? 'faltan ' + h + ' h' : 'falta menos de 1 h';
+}
+function candColorFalta(ses){
+  const ms = candFalta(ses);
+  if(ms <= 0) return 'rgba(255,255,255,0.3)';
+  const d = ms / 86400000;
+  return d <= 7 ? '#F09595' : d <= 21 ? '#EF9F27' : '#A8D45C';
+}
+function candFechaTxt(ses){
+  const f = new Date(ses.cierre + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  return f + ' · ' + (ses.sinHora ? 'hora no publicada (cuento ' + ses.hora + ')' : ses.hora) + ' París';
+}
+
+// ---- Estado ----
+function candProg(id){ return CAND_PROGRAMAS.find(p => p.id === id); }
+function candEstadoProg(p){ return (candData['prog:' + p.id] || {}).estado || 'sin-empezar'; }
+// La sesion elegida; si no elegiste, la primera que sigue abierta.
+function candSesion(p){
+  const elegida = (candData['prog:' + p.id] || {}).sesion;
+  const s = p.sesiones.find(x => x.id === elegida);
+  if(s) return s;
+  return p.sesiones.find(x => candFalta(x) > 0) || p.sesiones[p.sesiones.length - 1];
+}
+function candDocEstado(p, k){ return (candData['doc:' + p.id + ':' + k] || {}).estado || 'missing'; }
+function candProgreso(p){
+  const oblig = p.docs.filter(d => !d.opc);
+  return { listos: oblig.filter(d => candDocEstado(p, d.k) === 'ready').length, total: oblig.length };
+}
+// Una candidatura sigue "en juego" mientras no se deposito ni se descarto.
+function candEnPreparacion(p){ return ['sin-empezar', 'preparando'].includes(candEstadoProg(p)); }
+
+// ---- Test de ingles ----
+// Vale para una sesion si la escuela lo acepta y, donde se exige, si la fecha del
+// test + 2 años cae despues del cierre. Se calcula por sesion: un test puede valer
+// para ESSEC S1 y ya no para la S3.
+function candTest(){ return candData['test'] || {}; }
+function candTestVale(p, ses){
+  const t = candTest();
+  if(!t.tipo || !t.fecha) return { ok:null, txt:'sin test cargado' };
+  if(/cambridge/i.test(t.tipo) && !p.test.cambridge) return { ok:false, txt:'Cambridge no se acepta' };
+  if(!p.test.vigencia) return { ok:true, txt:'vale (sin vencimiento exigido)' };
+  const vence = new Date(t.fecha + 'T00:00:00'); vence.setFullYear(vence.getFullYear() + 2);
+  const cierre = new Date(ses.cierre + 'T00:00:00');
+  return vence > cierre
+    ? { ok:true,  txt:'vale: vence el ' + vence.toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' }) }
+    : { ok:false, txt:'vencido para este cierre (más de 2 años)' };
+}
+
+// ---- Base ----
+async function loadCand(){
+  const { data, error } = await sb.from('candidaturas').select('*');
+  if(error){
+    candSinTabla = /candidaturas/i.test((error.message || '') + (error.details || '')) || error.code === '42P01' || error.code === 'PGRST205';
+    console.log('candidaturas:', error.code, error.message);
+  } else {
+    candSinTabla = false;
+    candData = {};
+    (data || []).forEach(r => { candData[r.clave] = r.valor || {}; });
+  }
+  renderCand(); renderDesktop();
+}
+async function candGuardar(clave, cambios){
+  const valor = Object.assign({}, candData[clave] || {}, cambios);
+  const { error } = await sb.from('candidaturas')
+    .upsert({ clave, valor, updated_at:new Date().toISOString() }, { onConflict:'clave' });
+  if(error){
+    alert(candSinTabla || error.code === '42P01' || error.code === 'PGRST205'
+      ? 'Falta crear la tabla: corré setup-candidaturas.sql en Supabase (SQL Editor).'
+      : 'No se pudo guardar: ' + (error.message || 'revisá la conexión'));
+    return false;
+  }
+  candData[clave] = valor;
+  renderCand(); renderDesktop();
+  return true;
+}
+function candCiclarDoc(pid, k){
+  const p = candProg(pid);
+  const i = CAND_DOC_ESTADOS.findIndex(e => e.v === candDocEstado(p, k));
+  const sig = CAND_DOC_ESTADOS[(i + 1) % CAND_DOC_ESTADOS.length].v;
+  // Empezar a mover un documento es empezar la candidatura.
+  if(sig !== 'missing' && candEstadoProg(p) === 'sin-empezar') candGuardar('prog:' + pid, { estado:'preparando' });
+  candGuardar('doc:' + pid + ':' + k, { estado:sig });
+}
+function candElegirSesion(pid, sid){ candGuardar('prog:' + pid, { sesion:sid }); }
+function candElegirEstado(pid, v){
+  const p = candProg(pid);
+  if(pid === 'essec' && v === 'depositada' && candProgreso(p).listos < candProgreso(p).total &&
+     !confirm('ESSEC no deja modificar el expediente después de depositarlo, y uno incompleto no se tramita.\n\n¿Lo marcás como depositado igual?')){
+    renderCand(); return;
+  }
+  candGuardar('prog:' + pid, { estado:v });
+}
+function candToggleTarjeta(pid){
+  if(candAbiertos.has(pid)) candAbiertos.delete(pid); else candAbiertos.add(pid);
+  renderCand();
+}
+async function candGuardarTest(){
+  const tipo = document.getElementById('cand-test-tipo').value;
+  const fecha = document.getElementById('cand-test-fecha').value;
+  const puntaje = document.getElementById('cand-test-puntaje').value.trim().slice(0, 30);
+  if(tipo && !fecha){ alert('Falta la fecha del test.'); return; }
+  await candGuardar('test', { tipo, fecha:fecha || null, puntaje });
+}
+function candToggleAbierto(id){
+  const v = candData['abierto:' + id] || {};
+  candGuardar('abierto:' + id, { resuelto:!v.resuelto });
+}
+function candNotaAbierto(id, txt){ candGuardar('abierto:' + id, { nota:String(txt || '').trim().slice(0, 300) }); }
+
+// ---- Lo que mira Hoy ----
+// El cierre mas proximo entre las candidaturas que siguen en preparacion.
+// Hoy la llama desde el primer segundo; el try/catch es por el orden del archivo, por
+// si se dibujara antes de que este bloque termine de evaluarse.
+function candProximoCierre(){
+  try{ return candProximoCierreCalc(); }catch(e){ return null; }
+}
+function candProximoCierreCalc(){
+  let mejor = null;
+  CAND_PROGRAMAS.forEach(p => {
+    if(!candEnPreparacion(p)) return;
+    const s = candSesion(p);
+    const ms = candFalta(s);
+    if(ms <= 0) return;
+    if(!mejor || ms < mejor.ms) mejor = Object.assign({ p, s, ms }, candProgreso(p));
+  });
+  return mejor;
+}
+function candFirma(){ try{ return candFirmaCalc(); }catch(e){ return ''; } }
+function candFirmaCalc(){ return Object.keys(candData).length + ':' + JSON.stringify(candData).length + ':' + Math.floor(Date.now() / 3600000); }
+
+// ---- Pantalla ----
+function candDocFilaHTML(p, d, ses){
+  const e = CAND_DOC_ESTADOS.find(x => x.v === candDocEstado(p, d.k));
+  let extra = '';
+  if(d.k === 'english_test'){
+    const v = candTestVale(p, ses);
+    if(v.ok != null) extra = '<div class="cand-doc-det" style="color:' + (v.ok ? '#A8D45C' : '#F09595') + ';">' +
+      (v.ok ? '✔ ' : '✖ ') + escHtmlAttr(v.txt) + ' · ' + escHtmlAttr(ses.nombre) + '</div>';
+  }
+  return '<button class="cand-doc" onclick="candCiclarDoc(&quot;' + p.id + '&quot;,&quot;' + d.k + '&quot;)">' +
+      '<span class="cand-doc-ico" style="color:' + e.c + ';">' + e.ico + '</span>' +
+      '<span class="cand-doc-txt"><span class="cand-doc-nom">' + escHtmlAttr(d.n) +
+        (d.opc ? ' <span class="cand-doc-opc">si aplica</span>' : '') + '</span>' +
+        (d.d ? '<span class="cand-doc-det">' + escHtmlAttr(d.d) + '</span>' : '') + extra + '</span>' +
+      '<span class="cand-doc-est" style="color:' + e.c + ';">' + e.n + '</span>' +
+    '</button>';
+}
+function candProgramaHTML(p){
+  const ses = candSesion(p);
+  const est = CAND_ESTADOS.find(e => e.v === candEstadoProg(p)) || CAND_ESTADOS[0];
+  const pr = candProgreso(p);
+  const pct = pr.total ? Math.round(pr.listos / pr.total * 100) : 0;
+  const abierto = candAbiertos.has(p.id);
+  const enJuego = candEnPreparacion(p);
+
+  const cab = '<div class="cand-prog-cab" onclick="candToggleTarjeta(&quot;' + p.id + '&quot;)">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="cand-prog-esc">' + escHtmlAttr(p.escuela) + '</div>' +
+        '<div class="cand-prog-sub">' + escHtmlAttr(p.programa) + '</div>' +
+      '</div>' +
+      '<span class="cand-pill" style="color:' + est.c + ';border-color:' + est.c + ';">' + est.n + '</span>' +
+      '<span class="chevron ' + (abierto ? 'open' : '') + '" style="font-size:13px;color:rgba(255,255,255,0.4);">▾</span>' +
+    '</div>' +
+    '<div class="peso-dato" style="margin-top:6px;"><span class="peso-dato-lbl">' + escHtmlAttr(ses.nombre) + ' · ' +
+        pr.listos + '/' + pr.total + ' listos</span>' +
+      '<span class="peso-dato-val" style="color:' + (enJuego ? candColorFalta(ses) : 'rgba(255,255,255,0.4)') + ';">' +
+        (enJuego ? candFaltaTxt(ses) : est.n) + '</span></div>' +
+    '<div class="peso-kcal-barra"><div class="peso-kcal-relleno" style="width:' + pct + '%;background:' +
+      (pct === 100 ? '#A8D45C' : '#C9A227') + ';"></div></div>';
+  if(!abierto) return '<div class="peso-card">' + cab + '</div>';
+
+  const opcSes = p.sesiones.map(s => '<option value="' + s.id + '"' + (s.id === ses.id ? ' selected' : '') + '>' +
+    escHtmlAttr(s.nombre) + ' · ' + new Date(s.cierre + 'T12:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'short' }) +
+    (candFalta(s) <= 0 ? ' (cerrada)' : '') + '</option>').join('');
+  const opcEst = CAND_ESTADOS.map(e => '<option value="' + e.v + '"' + (e.v === est.v ? ' selected' : '') + '>' + e.n + '</option>').join('');
+
+  return '<div class="peso-card">' + cab +
+    '<div class="cand-grid">' +
+      '<div><label>Apunto a</label><select onchange="candElegirSesion(&quot;' + p.id + '&quot;,this.value)">' + opcSes + '</select></div>' +
+      '<div><label>Estado</label><select onchange="candElegirEstado(&quot;' + p.id + '&quot;,this.value)">' + opcEst + '</select></div>' +
+    '</div>' +
+    '<div class="peso-nota">Cierra el ' + escHtmlAttr(candFechaTxt(ses)) + '. ' + escHtmlAttr(ses.resultados) + '.</div>' +
+    '<div class="cand-sec">Documentos · tocá para avanzar: falta → borrador → listo</div>' +
+    p.docs.map(d => candDocFilaHTML(p, d, ses)).join('') +
+    '<div class="cand-sec">Tasa</div>' +
+    '<div class="peso-nota" style="margin-top:0;color:rgba(255,255,255,0.6);">' + escHtmlAttr(p.tasa) +
+      '<br>Exención: ' + escHtmlAttr(p.exencion) + '</div>' +
+    '<div class="cand-sec">Ojo</div>' +
+    p.reglas.map(r => '<div class="cand-regla">' + escHtmlAttr(r) + '</div>').join('') +
+    '<a class="cand-link" href="' + p.url + '" target="_blank" rel="noopener">Página de admisión ↗</a>' +
+  '</div>';
+}
+function candCalendarioHTML(){
+  const elegidas = new Set(CAND_PROGRAMAS.filter(candEnPreparacion).map(p => candSesion(p).id));
+  const todas = [];
+  CAND_PROGRAMAS.forEach(p => p.sesiones.forEach(s => todas.push({ p, s })));
+  todas.sort((a, b) => candInstante(a.s) - candInstante(b.s));
+  return todas.map(({ p, s }) => {
+    const cerrada = candFalta(s) <= 0, mia = elegidas.has(s.id);
+    return '<div class="peso-fila" style="' + (cerrada ? 'opacity:0.4;' : '') + '">' +
+        '<span class="peso-fila-fecha">' + new Date(s.cierre + 'T12:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'short' }) + '</span>' +
+        '<span class="cand-cal-nom"' + (mia ? ' style="color:#E8C766;font-weight:600;"' : '') + '>' +
+          (mia ? '★ ' : '') + escHtmlAttr(p.escuela) + ' · ' + escHtmlAttr(s.nombre) + '</span>' +
+        '<span class="peso-fila-kcal" style="color:' + candColorFalta(s) + ';">' + candFaltaTxt(s) + '</span>' +
+      '</div>';
+  }).join('') + '<div class="peso-nota">★ = la sesión a la que apuntás en cada escuela. Horas de París.</div>';
+}
+function candTestHTML(){
+  const t = candTest();
+  const opc = '<option value="">— todavía no lo tengo —</option>' +
+    CAND_TESTS.map(x => '<option' + (x === t.tipo ? ' selected' : '') + '>' + x + '</option>').join('');
+  const filas = CAND_PROGRAMAS.map(p => {
+    const s = candSesion(p), v = candTestVale(p, s);
+    return '<div class="peso-dato"><span class="peso-dato-lbl">' + escHtmlAttr(p.escuela) + ' · ' + escHtmlAttr(s.nombre) + '</span>' +
+      '<span class="peso-dato-val" style="font-weight:500;color:' + (v.ok == null ? 'rgba(255,255,255,0.4)' : v.ok ? '#A8D45C' : '#F09595') + ';">' +
+        escHtmlAttr(v.txt) + '</span></div>';
+  }).join('');
+  return '<div class="cand-grid">' +
+      '<div style="grid-column:span 2;"><label>Test</label><select id="cand-test-tipo">' + opc + '</select></div>' +
+      '<div><label>Fecha del test</label><input type="date" id="cand-test-fecha" value="' + (t.fecha || '') + '"></div>' +
+      '<div><label>Puntaje</label><input type="text" id="cand-test-puntaje" placeholder="Ej: 945" value="' + escHtmlAttr(t.puntaje || '') + '"></div>' +
+    '</div>' +
+    '<button class="peso-btn" style="margin-top:10px;" onclick="candGuardarTest()">Guardar test</button>' +
+    '<div style="margin-top:10px;">' + filas + '</div>' +
+    '<div class="peso-nota">ESSEC y ESCP piden menos de 2 años a la fecha de cierre; HEC no pone mínimo ni vencimiento. ESCP no acepta Cambridge.</div>';
+}
+function candAbiertosHTML(){
+  return CAND_ABIERTOS.map(a => {
+    const v = candData['abierto:' + a.id] || {};
+    return '<div class="cand-abierto">' +
+        '<button class="cand-check' + (v.resuelto ? ' on' : '') + '" onclick="candToggleAbierto(&quot;' + a.id + '&quot;)">' + (v.resuelto ? '✓' : '') + '</button>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="cand-abierto-t"' + (v.resuelto ? ' style="color:rgba(255,255,255,0.45);text-decoration:line-through;"' : '') + '>' + escHtmlAttr(a.t) + '</div>' +
+          '<input type="text" class="cand-abierto-nota" placeholder="Lo que te contestaron…" value="' + escHtmlAttr(v.nota || '') + '" ' +
+            'onchange="candNotaAbierto(&quot;' + a.id + '&quot;,this.value)">' +
+        '</div>' +
+      '</div>';
+  }).join('');
+}
+function renderCand(){
+  const cont = document.getElementById('cand-cont'); if(!cont) return;
+  const prox = candProximoCierre();
+  const t = candTest();
+  const testOk = CAND_PROGRAMAS.filter(candEnPreparacion).every(p => candTestVale(p, candSesion(p)).ok);
+  let listos = 0, total = 0;
+  CAND_PROGRAMAS.filter(candEnPreparacion).forEach(p => { const pr = candProgreso(p); listos += pr.listos; total += pr.total; });
+  const dias = prox ? Math.floor(prox.ms / 86400000) : null;
+
+  cont.innerHTML =
+    (candSinTabla ? '<div class="peso-aviso"><div class="peso-aviso-tit">Falta un paso en Supabase</div>' +
+      '<div class="peso-aviso-txt">Corré <b>setup-candidaturas.sql</b> en el SQL Editor. Hasta entonces se ve todo, pero no se guarda nada.</div></div>' : '') +
+    '<div class="peso-cifras">' +
+      '<div class="peso-cifra"><div class="peso-cifra-num" style="color:' + (prox ? candColorFalta(prox.s) : 'rgba(255,255,255,0.45)') + ';">' +
+        (prox ? (dias >= 1 ? dias : '<1') : '—') + '</div>' +
+        '<div class="peso-cifra-lbl">' + (prox ? 'días · ' + escHtmlAttr(prox.p.escuela) + ' ' + escHtmlAttr(prox.s.nombre) : 'sin cierres por delante') + '</div></div>' +
+      '<div class="peso-sep"></div>' +
+      '<div class="peso-cifra"><div class="peso-cifra-num" style="color:' + (total && listos === total ? '#A8D45C' : '#E8C766') + ';">' +
+        listos + '/' + total + '</div><div class="peso-cifra-lbl">documentos listos</div></div>' +
+      '<div class="peso-sep"></div>' +
+      '<div class="peso-cifra"><div class="peso-cifra-num" style="font-size:20px;color:' + (!t.tipo ? 'rgba(255,255,255,0.45)' : testOk ? '#A8D45C' : '#F09595') + ';">' +
+        (!t.tipo ? '—' : testOk ? '✔' : '✖') + '</div><div class="peso-cifra-lbl">test de inglés</div></div>' +
+    '</div>' +
+    '<p class="inner-title">Calendario de cierres</p>' +
+    '<div class="peso-card">' + candCalendarioHTML() + '</div>' +
+    '<p class="inner-title">Por escuela</p>' +
+    CAND_PROGRAMAS.map(candProgramaHTML).join('') +
+    '<p class="inner-title">Test de inglés</p>' +
+    '<div class="peso-card">' + candTestHTML() + '</div>' +
+    '<p class="inner-title">Puntos a confirmar con las escuelas</p>' +
+    '<div class="peso-card">' + candAbiertosHTML() + '</div>' +
+    '<div class="peso-nota" style="margin:4px 16px 18px;">Acá solo se guarda el estado. Los documentos no salen de tu computadora y nada se conecta a los portales: el depósito lo hacés vos.</div>';
+}
+// Los "faltan X d" envejecen solos: se refrescan cada 10 minutos si el modulo esta a la vista.
+setInterval(()=>{ if(pantallaActual === 'cand') renderCand(); }, 600000);
+
 // ---- Inicialización (aquí las variables ya existen) ----
 loadCompras();
 loadLugares();
 loadEstudio();
 loadPeso();
+loadCand();
 cargarUsoModulos();
 // Las recurrentes se revisan cuando las tareas ya llegaron: si no, 'no hay ninguna
 // pendiente' seria mentira y se crearia una limpieza duplicada. Las plantillas las
