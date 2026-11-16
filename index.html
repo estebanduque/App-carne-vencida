@@ -412,6 +412,8 @@
   .tema-stat { flex: 1; text-align: center; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 6px; }
   .tema-stat-num { font-size: 22px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
   .tema-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+  .tema-fin { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: rgba(0,0,0,0.25); white-space: nowrap; }
+  .tema-fin-lbl { text-align: center; font-size: 11px; color: rgba(255,255,255,0.6); padding: 2px 0 4px; line-height: 1.4; }
   .tema-meta-lbl { text-align: center; font-size: 10px; color: rgba(255,255,255,0.3); padding: 3px 0 6px; }
   .sub-row { padding: 11px 14px 11px 18px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); cursor: pointer; }
   .sub-name { flex: 1; font-size: 14px; color: #fff; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3518,10 +3520,10 @@ function closeGymDayModal() {
 // El símbolo combina dos emojis: el primero identifica la materia y el segundo el soporte
 // (código, contrato, expediente, reglamento) para que se distingan de un vistazo.
 const TEMAS = [
-  { nombre:'Droit civil',      simbolo:'👥📜', color:'#F2C94C', bg:'rgba(242,201,76,0.15)',  bd:'rgba(242,201,76,0.35)', metaSem:9    },
-  { nombre:'Droit commercial', simbolo:'🏢💼', color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)', metaSem:12.5 },
-  { nombre:'Procédures',       simbolo:'⚖️📋', color:'#27AE60', bg:'rgba(39,174,96,0.15)',   bd:'rgba(39,174,96,0.35)',  metaSem:8    },
-  { nombre:'Déontologie',      simbolo:'🤝📖', color:'#EB5757', bg:'rgba(235,87,87,0.15)',   bd:'rgba(235,87,87,0.35)',  metaSem:10.5 },
+  { nombre:'Droit civil',      simbolo:'👥📜', color:'#F2C94C', bg:'rgba(242,201,76,0.15)',  bd:'rgba(242,201,76,0.35)', metaSem:9,    fin:'2026-12-03' },
+  { nombre:'Droit commercial', simbolo:'🏢💼', color:'#4C8DFF', bg:'rgba(76,141,255,0.15)',  bd:'rgba(76,141,255,0.35)', metaSem:12.5, fin:'2026-12-03' },
+  { nombre:'Procédures',       simbolo:'⚖️📋', color:'#27AE60', bg:'rgba(39,174,96,0.15)',   bd:'rgba(39,174,96,0.35)',  metaSem:8,    fin:'2026-12-09' },
+  { nombre:'Déontologie',      simbolo:'🤝📖', color:'#EB5757', bg:'rgba(235,87,87,0.15)',   bd:'rgba(235,87,87,0.35)',  metaSem:10.5, fin:'2026-12-10' },
 ];
 function temaInfo(nombre){ return TEMAS.find(t=>t.nombre===nombre) || { nombre:nombre||'—', color:'#F07AB0', bg:'rgba(214,71,143,0.15)', bd:'rgba(214,71,143,0.35)' }; }
 
@@ -4101,6 +4103,51 @@ function metaBloque(b){ return b.subtemas.reduce((a,s)=>a+s.meta, 0); }
 function horasSubtemaPlan(tema, subtema){
   return estudioItems.reduce((a,i)=>
     (i.tema===tema && (i.subtema||'General')===subtema) ? a+(parseInt(i.minutos)||0) : a, 0) / 60;
+}
+
+// ---- Fecha de finalización de cada tema ----
+// 'fin' es el último día para terminar el plan del tema: vence a la medianoche
+// (23:59 de ese día). Con lo que falta del plan se saca cuántas horas por día hacen
+// falta para llegar, contando hoy si todavía queda día.
+function finTemaInstante(t){ return t.fin ? new Date(t.fin+'T23:59:59') : null; }
+function diasParaFinTema(t){        // días que quedan, contando hoy; 0 si ya venció
+  const fin = finTemaInstante(t); if(!fin) return null;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const finDia = new Date(t.fin+'T00:00:00');
+  if(new Date() > fin) return 0;
+  return Math.round((finDia - hoy)/86400000) + 1;
+}
+function restantePlanTemaH(nombre){ // horas que faltan del plan; un subtema listo no suma
+  const plan = PLANES_ESTUDIO[nombre]; if(!plan) return 0;
+  return plan.reduce((a,b)=>a + b.subtemas.reduce((x,s)=>{
+    if(estaTerminado(nombre, s.nombre)) return x;
+    return x + Math.max(0, s.meta - horasSubtemaPlan(nombre, s.nombre));
+  }, 0), 0);
+}
+function colorFinTema(dias, ritmo){
+  if(dias===0) return '#EB5757';
+  if(ritmo > 8 || dias <= 3) return '#EB5757';
+  if(ritmo > 5 || dias <= 7) return '#FAC775';
+  return '#5DCAA5';
+}
+function finTemaBadgeHTML(t){
+  const dias = diasParaFinTema(t); if(dias==null) return '';
+  const ritmo = dias>0 ? restantePlanTemaH(t.nombre)/dias : 0;
+  const txt = dias===0 ? 'vencido' : (dias===1 ? 'hoy' : dias+' d');
+  return `<span class="tema-fin" style="color:${colorFinTema(dias, ritmo)};" title="Fecha de finalización">⏳ ${txt}</span>`;
+}
+function finTemaLineaHTML(t){
+  const dias = diasParaFinTema(t); if(dias==null) return '';
+  const fecha = new Date(t.fin+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  const resta = restantePlanTemaH(t.nombre);
+  let detalle;
+  if(resta <= 0) detalle = 'plan completo ✅';
+  else if(dias===0) detalle = 'venció con '+fmtHorasCompacta(resta)+' del plan sin hacer';
+  else {
+    const ritmo = resta/dias;
+    detalle = `faltan ${fmtHorasCompacta(resta)} del plan → <b style="color:${colorFinTema(dias, ritmo)};">${fmtHorasCompacta(ritmo)}/día</b> durante ${dias} día${dias>1?'s':''}`;
+  }
+  return `<div class="tema-fin-lbl">🏁 Termina el ${fecha} a medianoche<br>${detalle}</div>`;
 }
 
 // ---- Chips de tema y datalists ----
@@ -4778,6 +4825,7 @@ function renderTemasEn(containerId){
       <div class="tema-head" style="background:${t.bg};" onclick="toggleTema('${t.nombre}')">
         <div class="tema-dot" style="background:${t.color};"></div>
         <div class="tema-name">${t.nombre}</div>
+        ${finTemaBadgeHTML(t)}
         <div class="tema-total" style="color:${t.color};">${fmtHoras(st.total)}</div>
         <span class="chevron ${isOpen?'open':''}">▾</span>
       </div>
@@ -4786,6 +4834,7 @@ function renderTemasEn(containerId){
           <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vSem)};">${fmtVentaja(vSem)}</div><div class="tema-stat-lbl">ventaja semana</div></div>
           <div class="tema-stat"><div class="tema-stat-num" style="color:${colorVentaja(vGen)};">${fmtVentaja(vGen)}</div><div class="tema-stat-lbl">ventaja general</div></div>
         </div>
+        ${finTemaLineaHTML(t)}
         <div class="tema-meta-lbl">meta ${fmtHorasCompacta(t.metaSem||0)} / semana</div>
         ${planDe(t.nombre) ? renderPlanTemaHTML(t, st, planDe(t.nombre)) : subsHTML}
         <button class="tema-add" onclick="openEstudioModal('${t.nombre}')">+ Registrar en ${t.nombre}</button>
